@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { Download, Plus, ShoppingCart, X } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import ConfirmDeleteDialog from '../../components/ConfirmDeleteDialog';
-import { notifyError, notifySuccess } from '../../lib/notifications';
+import { notifyError, notifySuccess, friendlyError } from '../../lib/notifications';
 import { useDebouncedValue } from '../../hooks/useDebouncedValue';
 import ReceiveOrderPanel from './ReceiveOrderPanel';
 import { subtractQuantity } from '../inventory/stockNumber';
@@ -14,11 +14,57 @@ import {
   findPurchaseItems,
   listPurchaseOrders,
   listSuppliers,
+  listSupplierQuotes,
+  listPurchaseSuppliersForItems,
 } from '../../services/purchases';
 import './purchases.css';
 
 function newLine() {
   return { id: crypto.randomUUID(), item_id: '', item: null, quantity: '', unit_price: '' };
+}
+
+function PurchaseItemPicker({ companyId, userId, supplierId, line, onChange, disabled }) {
+  const [search, setSearch] = useState('');
+  const term = useDebouncedValue(search);
+  const query = useQuery({
+    queryKey: ['purchase-item-choices', userId, companyId, supplierId, term],
+    queryFn: () => findPurchaseItems(companyId, term, supplierId || null),
+    enabled: Boolean(companyId && !disabled),
+  });
+  const choices = line.item && !(query.data ?? []).some((item) => item.id === line.item.id)
+    ? [line.item, ...(query.data ?? [])] : (query.data ?? []);
+  return (
+    <div className="purchase-item-picker">
+      <label>Buscar ítem en esta línea
+        <input value={search} maxLength={100}
+          onChange={(event) => setSearch(event.target.value)}
+          placeholder="Código, nombre o código de barras"
+          disabled={disabled} />
+      </label>
+      <label>Ítem *
+        <select required value={line.item_id} disabled={disabled}
+          onChange={(event) => {
+            const item = choices.find((entry) => entry.id === event.target.value);
+            onChange({ item_id: event.target.value, item: item ?? null,
+              unit_price: supplierId
+                ? item?.supplier_unit_price ?? ''
+                : item?.reference_unit_cost ?? '' });
+          }}>
+          <option value="">{query.isPending ? 'Buscando…' : 'Seleccionar ítem'}</option>
+          {choices.map((item) => (
+            <option key={item.id} value={item.id}>
+              {item.code} · {item.name} ({item.unit_symbol})
+            </option>
+          ))}
+        </select>
+      </label>
+      {query.error && <small className="error">{friendlyError(query.error)}</small>}
+      {supplierId && !query.isPending && !query.error && choices.length === 0 && (
+        <small className="purchase-muted">Este proveedor no tiene otros ítems asociados.
+          Cargá la cotización en Proveedores para ofrecerlo aquí.</small>
+      )}
+    </div>
+  );
 }
 
 export default function PurchaseOrdersPage() {
@@ -28,22 +74,22 @@ export default function PurchaseOrdersPage() {
   const [selectedSupplier, setSelectedSupplier] = useState(null);
   const [supplierSearch, setSupplierSearch] = useState('');
   const [note, setNote] = useState('');
-  const [search, setSearch] = useState('');
+  const [choosingSupplier, setChoosingSupplier] = useState(false);
   const [lines, setLines] = useState([newLine()]);
   const [busy, setBusy] = useState(false);
   const [cancelTarget, setCancelTarget] = useState(null);
   const [receivingOrderId, setReceivingOrderId] = useState(null);
   const receiptPanelRef = useRef(null);
-  const term = useDebouncedValue(search);
+  const purchaseRequestRef = useRef({ fingerprint: null, id: crypto.randomUUID() });
   const supplierTerm = useDebouncedValue(supplierSearch);
 
   useEffect(() => {
+    purchaseRequestRef.current = { fingerprint: null, id: crypto.randomUUID() };
     setSupplierId('');
     setSelectedSupplier(null);
     setSupplierSearch('');
     setLines([newLine()]);
     setNote('');
-    setSearch('');
     setCancelTarget(null);
     setReceivingOrderId(null);
   }, [activeCompanyId]);
@@ -65,11 +111,47 @@ export default function PurchaseOrdersPage() {
     queryFn: () => listSuppliers(activeCompanyId, supplierTerm),
     enabled: Boolean(activeCompanyId),
   });
-  const itemsQuery = useQuery({
-    queryKey: ['purchase-items', user?.id, activeCompanyId, term, supplierId],
-    queryFn: () => findPurchaseItems(activeCompanyId, term, supplierId || null),
-    enabled: Boolean(activeCompanyId && can('purchases', 'read')),
+  const selectedItemIds = [...new Set(lines.map((line) => line.item_id).filter(Boolean))];
+  const supplierQuotesQuery = useQuery({
+    queryKey: ['purchase-providers-for-items', user?.id, activeCompanyId,
+      [...selectedItemIds].sort().join(',')],
+    queryFn: () => listPurchaseSuppliersForItems(activeCompanyId, selectedItemIds),
+    enabled: Boolean(activeCompanyId && !supplierId && selectedItemIds.length),
   });
+
+
+  async function chooseSupplier(nextId, options) {
+    if (!nextId) {
+      setSupplierId('');
+      setSelectedSupplier(null);
+      setLines((current) => current.map((line) => ({ ...line, unit_price: '' })));
+      return;
+    }
+    setChoosingSupplier(true);
+    try {
+      const quotes = await Promise.all(selectedItemIds.map((itemId) =>
+        listSupplierQuotes(activeCompanyId, nextId, itemId)));
+      if (quotes.some((rows) => !rows.some((row) => row.supplier_active
+        && row.unit_cost_ars != null))) {
+        throw new Error('Falta una cotización vigente para alguno de los ítems.');
+      }
+      const prices = new Map(quotes.map((rows, index) =>
+        [selectedItemIds[index], String(rows[0].unit_cost_ars)]));
+      setLines((current) => current.map((line) => ({
+        ...line,
+        unit_price: line.item_id ? prices.get(line.item_id) ?? '' : '',
+        item: line.item && line.item_id
+          ? { ...line.item, supplier_unit_price: prices.get(line.item_id) }
+          : line.item,
+      })));
+      setSupplierId(nextId);
+      setSelectedSupplier(options.find((entry) => entry.id === nextId) ?? null);
+    } catch (error) {
+      notifyError(error);
+    } finally {
+      setChoosingSupplier(false);
+    }
+  }
 
   const updateLine = (id, values) => {
     setLines((current) => current.map((line) => (
@@ -83,13 +165,24 @@ export default function PurchaseOrdersPage() {
 
   const submit = async (event) => {
     event.preventDefault();
+    if (!supplierId || choosingSupplier || lines.some((line) => !line.item_id)) {
+      notifyError(new Error('Seleccioná un proveedor y todos los ítems de la orden.'));
+      return;
+    }
     if (new Set(lines.map((line) => line.item_id)).size !== lines.length) {
       notifyError(new Error('Cada ítem puede aparecer una sola vez en la orden.'));
       return;
     }
     setBusy(true);
     try {
-      await createPurchaseOrder(activeCompanyId, supplierId, note, lines);
+      const fingerprint = JSON.stringify({ supplierId, note: note.trim(),
+        lines: lines.map((line) => [line.item_id, line.quantity, line.unit_price]) });
+      if (purchaseRequestRef.current.fingerprint !== fingerprint) {
+        purchaseRequestRef.current = { fingerprint, id: crypto.randomUUID() };
+      }
+      await createPurchaseOrder(activeCompanyId, supplierId, note, lines,
+        purchaseRequestRef.current.id);
+      purchaseRequestRef.current = { fingerprint: null, id: crypto.randomUUID() };
       await refresh();
       setSupplierId('');
       setSelectedSupplier(null);
@@ -122,9 +215,14 @@ export default function PurchaseOrdersPage() {
   const total = lines.reduce((sum, line) => (
     sum + Number(line.quantity || 0) * Number(line.unit_price || 0)
   ), 0);
-  const supplierOptions = selectedSupplier && !(suppliersQuery.data ?? []).some(
+  const availableSuppliers = selectedItemIds.length
+    ? (supplierQuotesQuery.data ?? []).filter((entry) =>
+      entry.name.toLowerCase().includes(supplierSearch.toLowerCase()))
+      .map((entry) => ({ ...entry, active: true }))
+    : (suppliersQuery.data ?? []);
+  const supplierOptions = selectedSupplier && !availableSuppliers.some(
     (entry) => entry.id === selectedSupplier.id,
-  ) ? [selectedSupplier, ...(suppliersQuery.data ?? [])] : (suppliersQuery.data ?? []);
+  ) ? [selectedSupplier, ...availableSuppliers] : availableSuppliers;
   const receivingOrder = (ordersQuery.data ?? []).find((entry) => (
     entry.id === receivingOrderId
   ));
@@ -159,29 +257,24 @@ export default function PurchaseOrdersPage() {
                   placeholder="Nombre del proveedor" />
               </label>
               <label>Proveedor *
-                <select required value={supplierId} onChange={(event) => {
-                  setSupplierId(event.target.value);
-                  setLines([newLine()]);
-                  setSelectedSupplier(supplierOptions.find(
-                    (entry) => entry.id === event.target.value,
-                  ) ?? null);
-                }}>
-                  <option value="">Seleccionar proveedor</option>
+                <select required value={supplierId} disabled={choosingSupplier}
+                  onChange={(event) => chooseSupplier(event.target.value, supplierOptions)}>
+                  <option value="">{choosingSupplier ? 'Verificando cotizaciones…'
+                    : 'Seleccionar proveedor'}</option>
                   {supplierOptions.filter((entry) => entry.active).map((entry) => (
                     <option value={entry.id} key={entry.id}>{entry.name}</option>
                   ))}
                 </select>
               </label>
-              {suppliersQuery.error && <small className="error">{suppliersQuery.error.message}</small>}
-              <label>Buscar ítem
-                <input value={search} onChange={(event) => setSearch(event.target.value)}
-                  placeholder="Nombre, código o código de barras" />
-              </label>
-              {itemsQuery.error && <small className="error">{itemsQuery.error.message}</small>}
+              {!supplierId && selectedItemIds.length > 0 && (
+                <small className="purchase-price-hint">Se muestran los proveedores que cotizan
+                  todos los ítems seleccionados.</small>
+              )}
+              {supplierQuotesQuery.error && (
+                <small className="error">{friendlyError(supplierQuotesQuery.error)}</small>
+              )}
+              {suppliersQuery.error && <small className="error">{friendlyError(suppliersQuery.error)}</small>}
               {lines.map((line, index) => {
-                const choices = line.item && !(itemsQuery.data ?? []).some(
-                  (entry) => entry.id === line.item.id,
-                ) ? [line.item, ...(itemsQuery.data ?? [])] : (itemsQuery.data ?? []);
                 return (
                   <div className="purchase-line" key={line.id}>
                     <div className="purchase-line-title">
@@ -193,29 +286,19 @@ export default function PurchaseOrdersPage() {
                         </button>
                       )}
                     </div>
-                    <label>Ítem *
-                      <select required value={line.item_id} onChange={(event) => {
-                        const item = choices.find((entry) => entry.id === event.target.value);
-                        updateLine(line.id, {
-                          item_id: event.target.value,
-                          item: item ?? null,
-                          unit_price: item?.supplier_unit_price
-                            ?? item?.reference_unit_cost ?? '',
-                        });
-                      }}>
-                        <option value="">Seleccionar ítem</option>
-                        {choices.map((item) => (
-                          <option key={item.id} value={item.id}>
-                            {item.code} · {item.name} ({item.unit_symbol})
-                          </option>
-                        ))}
-                      </select>
-                    </label>
+                    <PurchaseItemPicker
+                      companyId={activeCompanyId}
+                      userId={user?.id}
+                      supplierId={supplierId}
+                      line={line}
+                      disabled={choosingSupplier}
+                      onChange={(values) => updateLine(line.id, values)}
+                    />
                     {line.item?.item_type === 'raw_material' && (
                       <small className={line.item.supplier_unit_price == null
                         ? 'purchase-price-hint' : 'purchase-price-hint matched'}>
                         {line.item.supplier_unit_price == null
-                          ? 'Sin precio de este proveedor: se usa el costo de referencia si existe.'
+                          ? 'Elegí un proveedor con cotización vigente para cargar su precio.'
                           : 'Precio del proveedor cargado automáticamente; podés ajustarlo para esta orden.'}
                       </small>
                     )}
@@ -235,7 +318,7 @@ export default function PurchaseOrdersPage() {
                 );
               })}
               <button type="button" className="button purchase-soft-button"
-                disabled={lines.length >= 40} onClick={() => setLines((current) => [...current, newLine()])}>
+                disabled={lines.length >= 40 || choosingSupplier} onClick={() => setLines((current) => [...current, newLine()])}>
                 <Plus size={16} /> Agregar ítem
               </button>
               <label>Nota interna
@@ -248,7 +331,7 @@ export default function PurchaseOrdersPage() {
                   style: 'currency', currency: 'ARS', maximumFractionDigits: 2,
                 })}</strong>
               </div>
-              <button className="button primary" disabled={busy || itemsQuery.isPending}>
+              <button className="button primary" disabled={busy || choosingSupplier}>
                 {busy ? 'Guardando…' : 'Crear orden de compra'}
               </button>
             </form>
@@ -261,7 +344,7 @@ export default function PurchaseOrdersPage() {
             <ShoppingCart size={19} />
           </div>
           {ordersQuery.isPending && <p className="purchase-muted">Cargando órdenes…</p>}
-          {ordersQuery.error && <p role="alert" className="error">{ordersQuery.error.message}</p>}
+          {ordersQuery.error && <p role="alert" className="error">{friendlyError(ordersQuery.error)}</p>}
           {!ordersQuery.isPending && !(ordersQuery.data ?? []).length && (
             <p className="purchase-muted">Todavía no registraste órdenes de compra.</p>
           )}

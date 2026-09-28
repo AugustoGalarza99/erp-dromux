@@ -510,3 +510,6 @@
     grid-template-columns: 1fr;
   }
 }
+.purchase-item-picker { display: grid; gap: 10px; padding: 12px; background: #fff; border: 1px solid #dbe8e7; border-radius: 9px; }
+.purchase-item-picker label { margin: 0; }
+.purchase-item-picker .purchase-muted { margin: 0; }

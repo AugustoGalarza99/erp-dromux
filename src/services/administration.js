@@ -24,9 +24,6 @@ export async function listMembers(companyId) {
   return unwrap(await supabase.rpc('company_members', { p_company: companyId }));
 }
 
-export async function listInvitations(companyId) {
-  return unwrap(await supabase.rpc('company_invitation_list', { p_company: companyId }));
-}
 
 export async function saveRole(companyId, role, name, code, permissions) {
   if (role) {
@@ -46,20 +43,7 @@ export async function saveRole(companyId, role, name, code, permissions) {
   }));
 }
 
-export async function inviteMember(companyId, email, roleId) {
-  return unwrap(await supabase.rpc('create_company_invitation', {
-    p_company: companyId,
-    p_email: email,
-    p_role: roleId,
-  }));
-}
 
-export async function revokeInvitation(companyId, invitationId) {
-  return unwrap(await supabase.rpc('revoke_company_invitation', {
-    p_company: companyId,
-    p_invitation: invitationId,
-  }));
-}
 
 export async function updateMember(companyId, userId, roleId, active) {
   return unwrap(await supabase.rpc('set_company_member', {
@@ -67,11 +51,5 @@ export async function updateMember(companyId, userId, roleId, active) {
     p_user: userId,
     p_role: roleId,
     p_active: active,
-  }));
-}
-
-export async function acceptInvitation(token) {
-  return unwrap(await supabase.rpc('accept_company_invitation', {
-    p_token: token,
   }));
 }

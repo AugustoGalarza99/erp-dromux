@@ -76,15 +76,22 @@ export async function findPurchaseItems(companyId, search, supplierId = null) {
   }));
 }
 
+export async function listPurchaseSuppliersForItems(companyId, itemIds) {
+  return unwrap(await supabase.rpc('purchase_suppliers_for_items', {
+    p_company: companyId,
+    p_items: itemIds,
+  }));
+}
+
 export async function listSupplierQuotes(companyId, supplierId = null, itemId = null) {
-  return unwrap(await supabase.rpc('purchase_supplier_quotes', {
+  return unwrap(await supabase.rpc('supplier_cost_comparison', {
     p_company: companyId,
     p_supplier: supplierId,
     p_item: itemId,
   }));
 }
 
-export async function saveSupplierQuote(companyId, supplierId, itemId, price, sku = '') {
+export async function saveSupplierQuote(companyId, supplierId, itemId, price, sku = '', currency = 'ARS', exchangeTypeId = null, adjustment = 0) {
   const existing = unwrap(await supabase
     .from('supplier_items')
     .select('item_id')
@@ -93,7 +100,8 @@ export async function saveSupplierQuote(companyId, supplierId, itemId, price, sk
     .eq('item_id', itemId)
     .maybeSingle());
 
-  const payload = { unit_price: price, supplier_sku: sku.trim() };
+  const payload = { unit_price: price, supplier_sku: sku.trim(), currency_code: currency,
+    exchange_rate_type_id: currency === 'USD' ? exchangeTypeId : null, adjustment_percent: adjustment };
   if (existing) {
     const { error } = await supabase
       .from('supplier_items')
@@ -122,11 +130,12 @@ export async function removeSupplierQuote(companyId, supplierId, itemId) {
   if (count !== 1) throw new Error('La cotización ya no existe o no tenés permiso.');
 }
 
-export async function createPurchaseOrder(companyId, supplierId, note, lines) {
-  return unwrap(await supabase.rpc('create_purchase_order', {
+export async function createPurchaseOrder(companyId, supplierId, note, lines, requestId) {
+  return unwrap(await supabase.rpc('create_purchase_order_once', {
     p_company: companyId,
     p_supplier: supplierId,
     p_note: note.trim(),
+    p_request_id: requestId,
     p_lines: lines.map((line) => ({
       item_id: line.item_id,
       quantity: line.quantity,
@@ -171,6 +180,7 @@ export async function receivePurchaseOrder(companyId, orderId, requestId, note, 
     p_order: orderId,
     p_request_id: requestId,
     p_note: note.trim(),
+    p_request_id: requestId,
     p_lines: lines.map((line) => ({
       line_no: line.line_no,
       quantity: line.quantity,

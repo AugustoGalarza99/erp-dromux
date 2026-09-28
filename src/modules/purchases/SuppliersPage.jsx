@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Building2, Plus, Search } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import ConfirmDeleteDialog from '../../components/ConfirmDeleteDialog';
-import { notifyError, notifySuccess } from '../../lib/notifications';
+import { notifyError, notifySuccess, friendlyError } from '../../lib/notifications';
 import { useDebouncedValue } from '../../hooks/useDebouncedValue';
 import {
   findPurchaseItems,
@@ -14,9 +14,16 @@ import {
   saveSupplierQuote,
   setSupplierActive,
 } from '../../services/purchases';
+import {
+  addExchangeRate, addExchangeType, adjustSupplierPrices,
+  listExchangeRates, listExchangeTypes, setPreferredSupplier,
+} from '../../services/costing';
 import './purchases.css';
 
 const empty = { name: '', tax_id: '', email: '', phone: '', notes: '' };
+const argentinaToday = () => new Intl.DateTimeFormat('sv-SE', {
+  timeZone: 'America/Argentina/Buenos_Aires',
+}).format(new Date());
 
 export default function SuppliersPage() {
   const { activeCompanyId, user, can } = useAuth();
@@ -32,6 +39,16 @@ export default function SuppliersPage() {
   const [selectedMaterial, setSelectedMaterial] = useState(null);
   const [quotePrice, setQuotePrice] = useState('');
   const [supplierSku, setSupplierSku] = useState('');
+  const [currency, setCurrency] = useState('ARS');
+  const [exchangeTypeId, setExchangeTypeId] = useState('');
+  const [adjustment, setAdjustment] = useState('0');
+  const [newType, setNewType] = useState('');
+  const [rateType, setRateType] = useState('');
+  const [rateValue, setRateValue] = useState('');
+  const [rateDate, setRateDate] = useState(() => argentinaToday());
+  const [bulkPercent, setBulkPercent] = useState('');
+  const [bulkTarget, setBulkTarget] = useState(null);
+  const [bulkRequestId, setBulkRequestId] = useState(() => crypto.randomUUID());
   const [deleteTarget, setDeleteTarget] = useState(null);
   const itemTerm = useDebouncedValue(itemSearch);
 
@@ -65,6 +82,17 @@ export default function SuppliersPage() {
     enabled: Boolean(activeCompanyId && tab === 'comparison'),
   });
 
+  const exchangeTypesQuery = useQuery({
+    queryKey: ['exchange-types', user?.id, activeCompanyId],
+    queryFn: () => listExchangeTypes(activeCompanyId),
+    enabled: Boolean(activeCompanyId && tab !== 'directory'),
+  });
+  const exchangeRatesQuery = useQuery({
+    queryKey: ['exchange-rates', user?.id, activeCompanyId],
+    queryFn: () => listExchangeRates(activeCompanyId),
+    enabled: Boolean(activeCompanyId && tab !== 'directory'),
+  });
+
   const materialsQuery = useQuery({
     queryKey: ['purchase-items', user?.id, activeCompanyId, itemTerm, null],
     queryFn: () => findPurchaseItems(activeCompanyId, itemTerm),
@@ -78,24 +106,91 @@ export default function SuppliersPage() {
   const refreshQuotes = () => Promise.all([
     queryClient.invalidateQueries({ queryKey: ['supplier-quotes', user?.id, activeCompanyId] }),
     queryClient.invalidateQueries({ queryKey: ['purchase-items', user?.id, activeCompanyId] }),
+    queryClient.invalidateQueries({ queryKey: ['items', user?.id, activeCompanyId] }),
+    queryClient.invalidateQueries({ queryKey: ['item-detail', user?.id, activeCompanyId] }),
+    queryClient.invalidateQueries({ queryKey: ['product-costs', user?.id, activeCompanyId] }),
   ]);
+
+  useEffect(() => {
+    if (!supplierFilter || !itemFilter || !quotesQuery.data) return;
+    const current = quotesQuery.data.find((quote) => quote.supplier_id === supplierFilter
+      && quote.item_id === itemFilter);
+    setQuotePrice(current ? String(current.unit_price) : '');
+    setSupplierSku(current?.supplier_sku ?? '');
+    setCurrency(current?.currency_code ?? 'ARS');
+    setExchangeTypeId(current?.exchange_rate_type_id ?? '');
+    setAdjustment(String(current?.adjustment_percent ?? 0));
+  }, [supplierFilter, itemFilter, quotesQuery.data]);
 
   const saveQuote = async (event) => {
     event.preventDefault();
     setBusy(true);
     try {
       await saveSupplierQuote(activeCompanyId, supplierFilter, itemFilter,
-        quotePrice, supplierSku);
+        quotePrice, supplierSku, currency, currency === 'USD' ? exchangeTypeId : null, adjustment);
       await refreshQuotes();
       notifySuccess('Cotización guardada');
-      setQuotePrice('');
-      setSupplierSku('');
+      // La cotización queda visible para revisarla o cambiar el proveedor principal.
     } catch (error) {
       notifyError(error);
     } finally {
       setBusy(false);
     }
   };
+
+  const withBusy = async (operation, message) => {
+    if (busy) return;
+    setBusy(true);
+    try {
+      await operation();
+      notifySuccess(message);
+    } catch (error) {
+      notifyError(error);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const saveType = (event) => {
+    event.preventDefault();
+    withBusy(async () => {
+      await addExchangeType(activeCompanyId, newType);
+      await queryClient.invalidateQueries({ queryKey: ['exchange-types', user?.id, activeCompanyId] });
+      setNewType('');
+    }, 'Tipo de dólar creado');
+  };
+
+  const saveRate = (event) => {
+    event.preventDefault();
+    withBusy(async () => {
+      await addExchangeRate(activeCompanyId, rateType, rateValue, rateDate);
+      await queryClient.invalidateQueries({ queryKey: ['exchange-rates', user?.id, activeCompanyId] });
+      await refreshQuotes();
+      setRateValue('');
+    }, 'Cotización registrada y costos actualizados');
+  };
+
+  const confirmBulk = () => {
+    if (!supplierFilter && !itemFilter) {
+      notifyError(new Error('Elegí un proveedor o una materia prima antes de aplicar el ajuste.'));
+      return;
+    }
+    if (!bulkPercent || Number(bulkPercent) === 0) {
+      notifyError(new Error('Indicá un porcentaje distinto de cero.'));
+      return;
+    }
+    setBulkTarget({ supplierId: supplierFilter || null, itemId: itemFilter || null,
+      percent: bulkPercent });
+  };
+
+  const applyBulk = () => withBusy(async () => {
+    await adjustSupplierPrices(activeCompanyId, bulkTarget.supplierId,
+      bulkTarget.itemId, bulkTarget.percent, bulkRequestId);
+    await refreshQuotes();
+    setBulkRequestId(crypto.randomUUID());
+    setBulkTarget(null);
+    setBulkPercent('');
+  }, 'Ajuste finalizado');
 
   const deleteQuote = async () => {
     if (!deleteTarget) return;
@@ -159,6 +254,9 @@ export default function SuppliersPage() {
         <button type="button" role="tab" aria-selected={tab === 'comparison'}
           className={tab === 'comparison' ? 'selected' : ''}
           onClick={() => setTab('comparison')}>Materias primas y precios</button>
+        <button type="button" role="tab" aria-selected={tab === 'currency'}
+          className={tab === 'currency' ? 'selected' : ''}
+          onClick={() => setTab('currency')}>Tipos de dólar</button>
       </div>
 
       {tab === 'directory' && (
@@ -186,7 +284,7 @@ export default function SuppliersPage() {
             />
           </label>
           {query.isPending && <p className="purchase-muted">Cargando proveedores…</p>}
-          {query.error && <p role="alert" className="error">{query.error.message}</p>}
+          {query.error && <p role="alert" className="error">{friendlyError(query.error)}</p>}
           {!query.isPending && !query.error && !query.data?.length && (
             <p className="purchase-muted">No hay proveedores para esta búsqueda.</p>
           )}
@@ -298,7 +396,7 @@ export default function SuppliersPage() {
           </div>
           {(quotesQuery.error || materialsQuery.error) && (
             <p role="alert" className="error">
-              {quotesQuery.error?.message || materialsQuery.error?.message}
+              {(quotesQuery.error && friendlyError(quotesQuery.error)) || (materialsQuery.error && friendlyError(materialsQuery.error))}
             </p>
           )}
           {quotesQuery.isPending && <p className="purchase-muted">Cargando precios…</p>}
@@ -308,9 +406,9 @@ export default function SuppliersPage() {
           {(quotesQuery.data ?? []).map((quote, index, all) => {
             const comparable = all.filter((entry) => entry.item_id === quote.item_id
               && entry.supplier_active);
-            const minimum = Math.min(...comparable.map((entry) => Number(entry.unit_price)));
+            const minimum = Math.min(...comparable.filter((entry) => entry.unit_cost_ars != null).map((entry) => Number(entry.unit_cost_ars)));
             const cheapest = comparable.length > 1 && quote.supplier_active
-              && Number(quote.unit_price) === minimum;
+              && Number(quote.unit_cost_ars) === minimum;
             return (
               <div className="purchase-quote-row" key={`${quote.supplier_id}-${quote.item_id}`}>
                 <div>
@@ -320,15 +418,26 @@ export default function SuppliersPage() {
                     {!quote.supplier_active ? ' · Inactivo' : ''}</small>
                 </div>
                 <div className="purchase-quote-price">
-                  <strong>{Number(quote.unit_price).toLocaleString('es-AR', {
-                    style: 'currency', currency: 'ARS',
-                  })} / {quote.unit_symbol}</strong>
-                  <small>Referencia interna: {quote.reference_unit_cost == null ? 'sin cargar'
-                    : Number(quote.reference_unit_cost).toLocaleString('es-AR', {
+                  <strong>{quote.unit_cost_ars == null ? 'Falta cotización del dólar'
+                    : Number(quote.unit_cost_ars).toLocaleString('es-AR', {
                       style: 'currency', currency: 'ARS',
-                    })}</small>
+                    })} / {quote.unit_symbol}</strong>
+                  <small>{Number(quote.unit_price).toLocaleString('es-AR', {
+                    style: 'currency', currency: quote.currency_code,
+                  })} · {quote.currency_code === 'USD'
+                    ? `Dólar ${quote.exchange_rate_type || 'sin tipo'} · $ ${quote.exchange_rate ?? 'sin cotización'}`
+                    : 'Pesos'} {Number(quote.adjustment_percent) !== 0
+                    ? ` · Ajuste ${quote.adjustment_percent} %` : ''}</small>
+                  {quote.preferred && <span className="purchase-best-price">Proveedor principal · costo de producción</span>}
                   {cheapest && <span className="purchase-best-price">Mejor precio registrado</span>}
                 </div>
+                {can('purchases', 'update') && quote.supplier_active && !quote.preferred && (
+                  <button type="button" className="purchase-text-button" disabled={busy || quote.unit_cost_ars == null}
+                    onClick={() => withBusy(async () => {
+                      await setPreferredSupplier(activeCompanyId, quote.item_id, quote.supplier_id);
+                      await refreshQuotes();
+                    }, 'Proveedor principal actualizado')}>Elegir principal</button>
+                )}
                 {can('purchases', 'update') && (
                   <button type="button" className="purchase-text-button"
                     onClick={() => setDeleteTarget(quote)}>Quitar relación</button>
@@ -336,8 +445,23 @@ export default function SuppliersPage() {
               </div>
             );
           })}
-          <p className="purchase-muted">Los precios son referencias comparables en la unidad
-            del ítem, no incluyen automáticamente impuestos ni flete.</p>
+          <p className="purchase-muted">Los importes en pesos se recalculan con la última cotización vigente.
+            Las órdenes anteriores conservan su precio. No incluyen impuestos ni flete.</p>
+          {can('purchases', 'update') && <div className="purchase-quote-form">
+            <strong>Ajustar precios en lote</strong>
+            <p className="purchase-muted">Aplicá un porcentaje a las cotizaciones del proveedor o
+              materia prima seleccionados arriba. El cambio se registra una sola vez.</p>
+            <label>Variación porcentual
+              <input type="number" min="-99.99" max="1000" step="0.01"
+                value={bulkPercent} onChange={(event) => {
+                  setBulkPercent(event.target.value);
+                  setBulkRequestId(crypto.randomUUID());
+                }} placeholder="Ej.: 10 para aumentar, -5 para reducir" />
+            </label>
+            <button type="button" className="button" disabled={busy} onClick={confirmBulk}>
+              Revisar ajuste
+            </button>
+          </div>}
 
           {can('purchases', 'update') && (
             <form className="purchase-quote-form" onSubmit={saveQuote}>
@@ -348,11 +472,30 @@ export default function SuppliersPage() {
                   value={quotePrice}
                   onChange={(event) => setQuotePrice(event.target.value)} />
               </label>
+              <label>Moneda
+                <select value={currency} onChange={(event) => setCurrency(event.target.value)}>
+                  <option value="ARS">Pesos argentinos</option>
+                  <option value="USD">Dólares estadounidenses</option>
+                </select>
+              </label>
+              {currency === 'USD' && <label>Tipo de dólar *
+                <select required value={exchangeTypeId}
+                  onChange={(event) => setExchangeTypeId(event.target.value)}>
+                  <option value="">Elegí un tipo</option>
+                  {(exchangeTypesQuery.data ?? []).filter((entry) => entry.active).map((entry) => (
+                    <option key={entry.id} value={entry.id}>{entry.name}</option>
+                  ))}
+                </select>
+              </label>}
+              <label>Ajuste adicional (%)
+                <input type="number" min="-99.99" max="1000" step="0.01" required
+                  value={adjustment} onChange={(event) => setAdjustment(event.target.value)} />
+              </label>
               <label>Código del proveedor (opcional)
                 <input maxLength={80} value={supplierSku}
                   onChange={(event) => setSupplierSku(event.target.value)} />
               </label>
-              <button className="button primary" disabled={busy || !supplierFilter || !itemFilter}>
+              <button className="button primary" disabled={busy || !supplierFilter || !itemFilter || (currency === 'USD' && !exchangeTypeId)}>
                 {busy ? 'Guardando…' : 'Guardar precio'}
               </button>
             </form>
@@ -360,6 +503,62 @@ export default function SuppliersPage() {
         </section>
       )}
 
+      {tab === 'currency' && <section className="purchase-card">
+        <span className="eyebrow">COTIZACIONES</span>
+        <h2>Tipos de dólar</h2>
+        <p className="purchase-muted">Creá los tipos que utilice tu empresa y cargá cuántos pesos
+          vale un dólar para cada uno. La última fecha vigente se aplica a cada insumo asociado.</p>
+        {exchangeTypesQuery.error && <p role="alert" className="error">{friendlyError(exchangeTypesQuery.error)}</p>}
+        {exchangeRatesQuery.error && <p role="alert" className="error">{friendlyError(exchangeRatesQuery.error)}</p>}
+        {(exchangeTypesQuery.data ?? []).map((entry) => {
+          const latest = (exchangeRatesQuery.data ?? []).find((rate) =>
+            rate.type_id === entry.id && rate.effective_on <= argentinaToday());
+          return <div className="purchase-quote-row" key={entry.id}>
+            <strong>Dólar {entry.name}</strong>
+            <span>{latest ? `$ ${Number(latest.ars_per_usd).toLocaleString('es-AR')} · ${latest.effective_on}`
+              : 'Sin cotización vigente'}</span>
+          </div>;
+        })}
+        {can('purchases', 'update') && <div className="purchase-grid">
+          <form className="purchase-quote-form" onSubmit={saveType}>
+            <strong>Nuevo tipo</strong>
+            <label>Nombre (ej.: Oficial, MEP)
+              <input required minLength={2} maxLength={60} value={newType}
+                onChange={(event) => setNewType(event.target.value)} />
+            </label>
+            <button className="button primary" disabled={busy}>Crear tipo</button>
+          </form>
+          <form className="purchase-quote-form" onSubmit={saveRate}>
+            <strong>Registrar cotización</strong>
+            <label>Tipo de dólar
+              <select required value={rateType} onChange={(event) => setRateType(event.target.value)}>
+                <option value="">Elegí un tipo</option>
+                {(exchangeTypesQuery.data ?? []).filter((entry) => entry.active).map((entry) =>
+                  <option key={entry.id} value={entry.id}>{entry.name}</option>)}
+              </select>
+            </label>
+            <label>Pesos por dólar
+              <input required type="number" min="0.000001" step="0.000001" value={rateValue}
+                onChange={(event) => setRateValue(event.target.value)} />
+            </label>
+            <label>Fecha de vigencia
+              <input required type="date" max={argentinaToday()}
+                value={rateDate} onChange={(event) => setRateDate(event.target.value)} />
+            </label>
+            <button className="button primary" disabled={busy}>Guardar cotización</button>
+          </form>
+        </div>}
+      </section>}
+
+      <ConfirmDeleteDialog
+        open={Boolean(bulkTarget)}
+        title="¿Confirmás el ajuste de precios?"
+        confirmLabel="Aplicar ajuste"
+        description={bulkTarget ? `Se aplicará ${bulkTarget.percent} % a todos los precios del filtro seleccionado. ¿Confirmás el cambio?` : ''}
+        busy={busy}
+        onCancel={() => setBulkTarget(null)}
+        onConfirm={applyBulk}
+      />
       <ConfirmDeleteDialog
         open={Boolean(deleteTarget)}
         description={deleteTarget

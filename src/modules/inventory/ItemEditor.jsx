@@ -11,12 +11,7 @@ import {
   searchItemOptions,
   setItemActive,
 } from '../../services/items';
-import { notifyError, notifySuccess } from '../../lib/notifications';
-import {
-  listSupplierQuotes,
-  listSuppliers,
-  saveSupplierQuote,
-} from '../../services/purchases';
+import { notifyError, notifySuccess, friendlyError } from '../../lib/notifications';
 import './items.css';
 
 const emptyForm = {
@@ -57,7 +52,7 @@ function SelectCatalog({ label, value, onChange, query, selected }) {
           </option>
         ))}
       </select>
-      {query.error && <small className="error">{query.error.message}</small>}
+      {query.error && <small className="error">{friendlyError(query.error)}</small>}
     </label>
   );
 }
@@ -74,8 +69,6 @@ export default function ItemEditor() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
-  const [supplierSearch, setSupplierSearch] = useState('');
-  const [supplierPrices, setSupplierPrices] = useState([]);
 
   const detailQuery = useQuery({
     queryKey: ['item-detail', user?.id, activeCompanyId, itemId],
@@ -94,27 +87,6 @@ export default function ItemEditor() {
     queryFn: () => searchItemOptions(activeCompanyId, 'unit', unitSearch),
     enabled: Boolean(activeCompanyId),
   });
-
-  const suppliersQuery = useQuery({
-    queryKey: ['purchase-suppliers', user?.id, activeCompanyId, supplierSearch],
-    queryFn: () => listSuppliers(activeCompanyId, supplierSearch),
-    enabled: Boolean(activeCompanyId && can('purchases', 'read')),
-  });
-
-  const quotesQuery = useQuery({
-    queryKey: ['supplier-quotes', user?.id, activeCompanyId, null, itemId],
-    queryFn: () => listSupplierQuotes(activeCompanyId, null, itemId),
-    enabled: Boolean(activeCompanyId && itemId && can('purchases', 'read')),
-  });
-
-  useEffect(() => {
-    if (!quotesQuery.data) return;
-    setSupplierPrices(quotesQuery.data.map((quote) => ({
-      supplier_id: quote.supplier_id,
-      supplier_name: quote.supplier_name,
-      unit_price: String(quote.unit_price),
-    })));
-  }, [quotesQuery.data]);
 
   useEffect(() => {
     if (!detailQuery.data) return;
@@ -138,7 +110,6 @@ export default function ItemEditor() {
   useEffect(() => {
     if (isNew) {
       setForm(emptyForm);
-      setSupplierPrices([]);
     }
     setError('');
     setMessage('');
@@ -157,6 +128,7 @@ export default function ItemEditor() {
     queryClient.invalidateQueries({ queryKey: ['stock-options', user?.id, activeCompanyId, 'items'] }),
     queryClient.invalidateQueries({ queryKey: ['stock-summary', user?.id, activeCompanyId] }),
     queryClient.invalidateQueries({ queryKey: ['supplier-quotes', user?.id, activeCompanyId] }),
+    queryClient.invalidateQueries({ queryKey: ['product-costs', user?.id, activeCompanyId] }),
     queryClient.invalidateQueries({ queryKey: ['purchase-items', user?.id, activeCompanyId] }),
   ]);
 
@@ -176,20 +148,11 @@ export default function ItemEditor() {
           convertedStock = true;
         }
       }
-      const saved = await saveItem(activeCompanyId, itemId, form);
+      const input = itemId && String(item?.reference_unit_cost ?? '') === form.reference_unit_cost
+        ? { ...form, preserveReferenceCost: true }
+        : form;
+      const saved = await saveItem(activeCompanyId, itemId, input);
       savedId = saved.id;
-      if (form.item_type === 'raw_material' && can('purchases', 'update')) {
-        for (const quote of supplierPrices) {
-          const previous = (quotesQuery.data ?? []).find(
-            (entry) => entry.supplier_id === quote.supplier_id,
-          );
-          if (previous && Number(previous.unit_price) === Number(quote.unit_price)) {
-            continue;
-          }
-          await saveSupplierQuote(activeCompanyId, quote.supplier_id,
-            saved.id, quote.unit_price);
-        }
-      }
       await invalidate();
       if (isNew) navigate(`/inventory/items/${saved.id}`, { replace: true });
       else setMessage('Ficha actualizada correctamente.');
@@ -202,9 +165,7 @@ export default function ItemEditor() {
       const detail = convertedStock
         ? new Error(`Los lotes se activaron, pero no se guardaron los otros cambios: ${err.message}. Reabrí la ficha y guardá nuevamente.`)
         : err;
-      const finalError = !itemId && savedId
-        ? new Error(`La ficha se creó, pero no se guardaron todas las cotizaciones: ${detail.message}. Abrí el ítem para completarlas.`)
-        : detail;
+      const finalError = detail;
       setError(notifyError(finalError));
       if (!itemId && savedId) navigate(`/inventory/items/${savedId}`, { replace: true });
       if (convertedStock) await invalidate().catch(() => {});
@@ -234,7 +195,7 @@ export default function ItemEditor() {
   }
 
   if (!isNew && detailQuery.error) {
-    return <div className="items-page"><p role="alert" className="error">{detailQuery.error.message}</p></div>;
+    return <div className="items-page"><p role="alert" className="error">{friendlyError(detailQuery.error)}</p></div>;
   }
 
   return (
@@ -274,7 +235,7 @@ export default function ItemEditor() {
               <input
                 required
                 maxLength={50}
-                pattern="[A-Za-z0-9][A-Za-z0-9._-]*"
+                pattern="[A-Za-z0-9][A-Za-z0-9._\-]*"
                 placeholder="Ej.: MP-001"
                 value={form.code}
                 onChange={(event) => setField('code', event.target.value)}
@@ -401,65 +362,14 @@ export default function ItemEditor() {
                   onChange={(event) => setField('reference_unit_cost', event.target.value)}
                   placeholder="Ej.: 1250.00"
                 />
-                <small>Referencia interna. Las órdenes guardan el precio pactado.</small>
+                <small>Costo inicial en pesos. Si elegís un proveedor principal, sus precios y cotizaciones actualizan este valor automáticamente.</small>
               </label>
 
-              {can('purchases', 'read') && (
-                <>
-                  <label>
-                    Buscar proveedor
-                    <input
-                      value={supplierSearch}
-                      onChange={(event) => setSupplierSearch(event.target.value)}
-                      placeholder="Filtrar por nombre"
-                    />
-                  </label>
-                  <label>
-                    Agregar proveedor de esta materia prima
-                    <select
-                      value=""
-                      disabled={!can('purchases', 'update')}
-                      onChange={(event) => {
-                        const supplier = (suppliersQuery.data ?? []).find(
-                          (entry) => entry.id === event.target.value,
-                        );
-                        if (!supplier || supplierPrices.some(
-                          (entry) => entry.supplier_id === supplier.id,
-                        )) return;
-                        setSupplierPrices((current) => [...current, {
-                          supplier_id: supplier.id,
-                          supplier_name: supplier.name,
-                          unit_price: form.reference_unit_cost,
-                        }]);
-                      }}
-                    >
-                      <option value="">Seleccionar proveedor</option>
-                      {(suppliersQuery.data ?? []).filter((entry) => entry.active).map((entry) => (
-                        <option value={entry.id} key={entry.id}>{entry.name}</option>
-                      ))}
-                    </select>
-                  </label>
-                  {supplierPrices.map((quote) => (
-                    <label className="item-supplier-price" key={quote.supplier_id}>
-                      {quote.supplier_name} · precio por unidad
-                      <input
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        required
-                        disabled={!can('purchases', 'update')}
-                        value={quote.unit_price}
-                        onChange={(event) => setSupplierPrices((current) => current.map(
-                          (entry) => entry.supplier_id === quote.supplier_id
-                            ? { ...entry, unit_price: event.target.value } : entry,
-                        ))}
-                      />
-                    </label>
-                  ))}
-                  <small>Para quitar una relación, usá Compras → Proveedores,
-                    con confirmación de eliminación.</small>
-                </>
-              )}
+              {can('purchases', 'read') && <p>
+                Los proveedores, precios y tipos de dólar se gestionan en{' '}
+                <Link to="/purchases/suppliers">Compras → Proveedores</Link>.
+                Elegí allí un proveedor principal para actualizar este costo automáticamente.
+              </p>}
             </div>
           )}
 

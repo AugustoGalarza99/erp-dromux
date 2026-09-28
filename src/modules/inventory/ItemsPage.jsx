@@ -1,3 +1,4 @@
+import { friendlyError } from '../../lib/notifications';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link, useSearchParams } from 'react-router-dom';
@@ -111,7 +112,7 @@ export default function ItemsPage() {
           </select>
         </div>
 
-        {query.error && <p role="alert" className="error">{query.error.message}</p>}
+        {query.error && <p role="alert" className="error">{friendlyError(query.error)}</p>}
         {query.isPending && <p className="items-muted">Cargando ítems…</p>}
         {!query.isPending && !query.error && rows.length === 0 && (
           <div className="items-empty">

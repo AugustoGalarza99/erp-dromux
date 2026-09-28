@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { NavLink, Outlet } from 'react-router-dom';
+import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import {
   BarChart3,
   Boxes,
@@ -12,6 +12,7 @@ import {
   Menu,
   Settings2,
   ShoppingCart,
+  ShoppingBag,
   Wallet,
   X,
 } from 'lucide-react';
@@ -54,8 +55,20 @@ const groups = [
         ],
       },
       {
+        label: 'Ventas', icon: ShoppingBag, permission: 'sales',
+        children: [
+          { label: 'Clientes', to: '/sales/customers', permission: 'sales' },
+          { label: 'Lista de precios', to: '/sales/lista-precios', permission: 'sales' },
+          { label: 'Registrar venta', to: '/sales/orders', permission: 'sales' },
+        ],
+      },
+      {
         label: 'Finanzas', icon: Wallet, permission: 'finance',
-        children: ['Tesorería', 'Costos'],
+        children: [
+          { label: 'Cuentas por cobrar', to: '/finance/receivables', permission: 'finance' },
+          { label: 'Tesorería', to: '/finance/treasury', permission: 'finance' },
+          { label: 'Costos y márgenes', to: '/finance/costs', permission: 'finance', adminOnly: true },
+        ],
       },
       {
         label: 'Reportes', icon: BarChart3, permission: 'reports',
@@ -87,9 +100,24 @@ export default function AdminLayout() {
     memberships,
     setActiveCompanyId,
     can,
+    role,
     user,
     signOut,
   } = useAuth();
+  const location = useLocation();
+  const routeName = {
+    '/': 'Inicio', '/inventory/items': 'Ítems', '/inventory/stock': 'Stock por depósito',
+    '/inventory/movements': 'Movimientos', '/purchases/suppliers': 'Proveedores',
+    '/purchases/orders': 'Órdenes de compra', '/production/formulas': 'Fórmulas',
+    '/production/orders': 'Órdenes de fabricación', '/production/planning': 'Planificación',
+    '/sales/customers': 'Clientes', '/sales/lista-precios': 'Lista de precios', '/sales/orders': 'Ventas',
+    '/finance/receivables': 'Cuentas por cobrar', '/finance/treasury': 'Tesorería',
+    '/finance/costs': 'Costos y márgenes', '/settings/users': 'Usuarios',
+    '/settings/roles': 'Roles y permisos', '/settings/units': 'Unidades',
+    '/settings/categories': 'Categorías', '/settings/warehouses': 'Depósitos',
+  };
+  const sectionName = routeName[location.pathname]
+    ?? (location.pathname.startsWith('/inventory/items/') ? 'Ficha de ítem' : 'Espacio de trabajo');
   const [open, setOpen] = useState({});
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -133,7 +161,7 @@ export default function AdminLayout() {
           {groups.map((group) => {
             const visible = group.items.filter((item) => (
               can(item.permission, 'read') || item.children?.some((child) => (
-                typeof child === 'object' && can(child.permission, 'read')
+                typeof child === 'object' && (!child.adminOnly || role === 'admin') && can(child.permission, 'read')
               ))
             ));
             if (!visible.length) return null;
@@ -168,7 +196,7 @@ export default function AdminLayout() {
                             <div className="subnav">
                               {item.children
                                 .filter((child) => (
-                                  typeof child !== 'object' || can(child.permission, 'read')
+                                  typeof child !== 'object' || ((!child.adminOnly || role === 'admin') && can(child.permission, 'read'))
                                 ))
                                 .map((child) => (
                                   typeof child === 'object' && child.to ? (
@@ -219,8 +247,8 @@ export default function AdminLayout() {
           <div className="help-box">
             <CircleHelp size={19} />
             <div>
-              <strong>Construyendo el futuro</strong>
-              <span>Versión inicial del ERP</span>
+              <strong>Centro de operaciones</strong>
+              <span>Inventario · producción · finanzas</span>
             </div>
           </div>
           <button
@@ -240,13 +268,22 @@ export default function AdminLayout() {
         </div>
       </aside>
 
-      {menuOpen && <div className="overlay" onClick={() => setMenuOpen(false)} />}
+      {menuOpen && (
+        <button
+          type="button"
+          className="overlay"
+          aria-label="Cerrar navegación"
+          onClick={() => setMenuOpen(false)}
+        />
+      )}
 
       <div className="main-area">
         <header className="topbar">
           <div className="crumb">
             <button
               className="mobile-menu icon-button"
+              type="button"
+              aria-expanded={menuOpen}
               onClick={() => setMenuOpen(true)}
               aria-label="Abrir menú"
             >
@@ -254,7 +291,7 @@ export default function AdminLayout() {
             </button>
             <span>Espacio de trabajo</span>
             <span className="crumb-divider">/</span>
-            <strong>Inicio</strong>
+            <strong>{sectionName}</strong>
           </div>
           <div className="topbar-right">
             <span className="online"><i /> Sistema activo</span>
@@ -266,7 +303,7 @@ export default function AdminLayout() {
 
         <main className="content"><Outlet /></main>
         <footer className="footer">
-          ERP Dromux <span>·</span> Una nueva forma de trabajar <span>© 2026</span>
+          ERP Dromux <span>·</span> Gestión de tu empresa
         </footer>
       </div>
     </div>

@@ -3,13 +3,12 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import { ArrowRight, Building2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { createCompany } from '../services/core';
-import { notifyError, notifySuccess } from '../lib/notifications';
+import { friendlyError, notifyError, notifySuccess } from '../lib/notifications';
 import Login from '../modules/auth/Login';
 import Dashboard from '../modules/dashboard/Dashboard';
 import AdminLayout from '../components/AdminLayout';
 import UsersPage from '../modules/settings/UsersPage';
 import RolesPage from '../modules/settings/RolesPage';
-import AcceptInvite from '../modules/auth/AcceptInvite';
 import CatalogPage from '../modules/catalogs/CatalogPage';
 import ItemsPage from '../modules/inventory/ItemsPage';
 import ItemEditor from '../modules/inventory/ItemEditor';
@@ -20,6 +19,12 @@ import PurchaseOrdersPage from '../modules/purchases/PurchaseOrdersPage';
 import FormulasPage from '../modules/production/FormulasPage';
 import ProductionOrdersPage from '../modules/production/ProductionOrdersPage';
 import ProductionPlanningPage from '../modules/production/ProductionPlanningPage';
+import CustomersPage from '../modules/sales/CustomersPage';
+import PriceListPage from '../modules/sales/PriceListPage';
+import SalesOrdersPage from '../modules/sales/SalesOrdersPage';
+import ReceivablesPage from '../modules/finance/ReceivablesPage';
+import TreasuryPage from '../modules/finance/TreasuryPage';
+import CostsPage from '../modules/finance/CostsPage';
 
 function SetupCompany() {
   const { refresh, signOut } = useAuth();
@@ -134,7 +139,7 @@ function Gate() {
     return (
       <div className="setup">
         <h1>No pudimos cargar tu acceso</h1>
-        <p>{error.message}</p>
+        <p>{friendlyError(error)}</p>
         <button className="button primary" onClick={() => window.location.reload()}>
           Reintentar
         </button>
@@ -163,7 +168,6 @@ export default function App() {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
-      <Route path="/invite/:token" element={<AcceptInvite />} />
       <Route element={<Gate />}>
         <Route index element={<Dashboard />} />
         <Route
@@ -225,6 +229,32 @@ export default function App() {
         <Route
           path="/production/planning"
           element={<PermissionGate resource="production"><ProductionPlanningPage /></PermissionGate>}
+        />
+        <Route
+          path="/sales/customers"
+          element={<PermissionGate resource="sales"><CustomersPage /></PermissionGate>}
+        />
+        <Route
+          path="/sales/prices"
+          element={<Navigate to="/sales/lista-precios" replace />}
+        />
+        <Route
+          path="/sales/lista-precios"
+          element={<PermissionGate resource="sales"><PriceListPage /></PermissionGate>}
+        />
+        <Route
+          path="/sales/orders"
+          element={<PermissionGate resource="sales"><SalesOrdersPage /></PermissionGate>}
+        />
+        <Route path="/finance/treasury"
+          element={<PermissionGate resource="finance"><TreasuryPage /></PermissionGate>}
+        />
+        <Route path="/finance/costs"
+          element={<PermissionGate resource="finance"><CostsPage /></PermissionGate>}
+        />
+        <Route
+          path="/finance/receivables"
+          element={<PermissionGate resource="finance"><ReceivablesPage /></PermissionGate>}
         />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />

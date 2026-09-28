@@ -1,0 +1,23 @@
+.erp-home { display: grid; gap: 28px; }
+.erp-home-hero { display: flex; align-items: center; justify-content: space-between; overflow: hidden; border-radius: 16px; padding: 35px; background: linear-gradient(115deg,#122a3b,#164b54); color: white; }
+.erp-home-hero h2 { margin: 13px 0 8px; font-size: clamp(24px,3vw,32px); color: #fff; }
+.erp-home-hero p { color: #cbdde1; margin-bottom: 20px; }
+.erp-home-hero a { display: inline-flex; align-items: center; gap: 8px; color: #bdf2e9; font-weight: 700; }
+.erp-home-hero-art { flex: 0 0 125px; height: 125px; border: 24px solid rgba(90,217,201,.32); transform: rotate(35deg); border-radius: 32px; margin-right: 34px; }
+.erp-home-section { display: flex; align-items: end; justify-content: space-between; }
+.erp-home-section h2 { margin: 9px 0 0; font-size: 20px; }
+.erp-home-section button { border: 1px solid #c7dcd9; border-radius: 8px; background: white; color: #136c68; padding: 9px 13px; cursor: pointer; }
+.erp-home-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(190px,1fr)); gap: 16px; }
+.erp-home-card { background: white; border: 1px solid #dce7eb; border-radius: 14px; padding: 20px; display: grid; gap: 13px; color: #183144; text-decoration: none; transition: transform .2s,box-shadow .2s; }
+.erp-home-card:hover { transform: translateY(-3px); box-shadow: 0 12px 24px rgba(23,52,66,.09); }
+.erp-home-card-icon { width: 42px; height: 42px; border-radius: 11px; display: grid; place-items: center; background: #e6f5f2; color: #138d84; }
+.erp-home-value { font-size: 27px; font-weight: 750; letter-spacing: -.03em; }
+.erp-home-label { display: flex; justify-content: space-between; align-items: center; color: #486376; font-size: 13px; font-weight: 600; }
+.erp-home-tip { background: #e9f5f2; border: 1px solid #d1e9e4; border-radius: 11px; padding: 18px; color: #245a59; font-size: 13px; }
+@media(max-width:600px) { .erp-home-hero-art { display: none; } .erp-home-hero { padding: 24px; } }
+.erp-home-shortcuts { padding: 22px; background: #fff; border: 1px solid #dce7eb; border-radius: 14px; }
+.erp-home-shortcuts h2 { font-size: 17px; color: #183144; margin: 0 0 16px; }
+.erp-home-shortcuts > div { display: flex; flex-wrap: wrap; gap: 10px; }
+.erp-home-shortcuts a { display: inline-flex; align-items: center; gap: 8px; padding: 11px 14px; border: 1px solid #cbdeda; border-radius: 9px; color: #12685e; font-weight: 700; font-size: 13px; text-decoration: none; }
+.erp-home-shortcuts a:hover { background: #edf8f5; border-color: #91c9bc; }
+@media(max-width:480px) { .erp-home-shortcuts a { width: 100%; justify-content: space-between; } }

@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowDownToLine, X } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
-import { notifyError, notifySuccess } from '../../lib/notifications';
+import { notifyError, notifySuccess, friendlyError } from '../../lib/notifications';
 import { findStockWarehouses, listStockLots } from '../../services/stock';
 import { subtractQuantity } from '../inventory/stockNumber';
 import {
@@ -56,7 +56,7 @@ function LotFields({ companyId, userId, line, value, update, disabled }) {
         />
       </label>
       {knownLot && <small>Se conserva el vencimiento registrado para este lote.</small>}
-      {query.error && <small className="error">{query.error.message}</small>}
+      {query.error && <small className="error">{friendlyError(query.error)}</small>}
     </div>
   );
 }
@@ -196,7 +196,7 @@ export default function ReceiveOrderPanel({ order, onClose }) {
         si corresponde, su lote. El precio queda tomado de la orden.
       </p>
 
-      {linesQuery.error && <p role="alert" className="error">{linesQuery.error.message}</p>}
+      {linesQuery.error && <p role="alert" className="error">{friendlyError(linesQuery.error)}</p>}
       {linesQuery.isPending && <p className="purchase-muted">Cargando pendientes…</p>}
 
       {canReceive && (
@@ -221,7 +221,7 @@ export default function ReceiveOrderPanel({ order, onClose }) {
               ))}
             </select>
           </label>
-          {warehousesQuery.error && <p className="error">{warehousesQuery.error.message}</p>}
+          {warehousesQuery.error && <p className="error">{friendlyError(warehousesQuery.error)}</p>}
           {pending.map((line) => {
             const remaining = subtractQuantity(line.quantity, line.received_quantity);
             const value = values[line.line_no] ?? {};
@@ -287,7 +287,7 @@ export default function ReceiveOrderPanel({ order, onClose }) {
 
       <div className="purchase-receipt-history">
         <h3>Historial de recepciones</h3>
-        {historyQuery.error && <p role="alert" className="error">{historyQuery.error.message}</p>}
+        {historyQuery.error && <p role="alert" className="error">{friendlyError(historyQuery.error)}</p>}
         {!historyQuery.isPending && !historyQuery.data?.length && (
           <p className="purchase-muted">Todavía no hay entregas registradas.</p>
         )}

@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowDownToLine, ArrowRightLeft, ArrowUpFromLine } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
-import { notifyError, notifySuccess } from '../../lib/notifications';
+import { notifyError, notifySuccess, friendlyError } from '../../lib/notifications';
 import { useDebouncedValue } from '../../hooks/useDebouncedValue';
 import {
   findStockItems,
@@ -219,7 +219,7 @@ export default function PostStockOperation({ initialItem = null }) {
               </option>
             ))}
           </select>
-          {itemsQuery.error && <small className="error">{itemsQuery.error.message}</small>}
+          {itemsQuery.error && <small className="error">{friendlyError(itemsQuery.error)}</small>}
         </label>
 
         <label>
@@ -274,7 +274,7 @@ export default function PostStockOperation({ initialItem = null }) {
           )}
         </div>
         {warehousesQuery.error && (
-          <small className="error">{warehousesQuery.error.message}</small>
+          <small className="error">{friendlyError(warehousesQuery.error)}</small>
         )}
         {requiresLots && (
           <div className="stock-lot-fields">
@@ -333,7 +333,7 @@ export default function PostStockOperation({ initialItem = null }) {
                 </select>
               </label>
             )}
-            {lotsQuery.error && <small className="error">{lotsQuery.error.message}</small>}
+            {lotsQuery.error && <small className="error">{friendlyError(lotsQuery.error)}</small>}
             {kind !== 'receipt' && warehouseId && !lotsQuery.isPending
               && availableLots.length === 0 && (
                 <small>Este depósito no tiene existencias por lote para el ítem.</small>

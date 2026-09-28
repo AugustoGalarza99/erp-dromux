@@ -3,6 +3,7 @@ const resources = [
   ['inventory', 'Inventario'],
   ['production', 'Producción'],
   ['purchases', 'Compras'],
+  ['sales', 'Ventas'],
   ['finance', 'Finanzas'],
   ['reports', 'Reportes'],
   ['settings', 'Configuración'],
@@ -20,7 +21,6 @@ const actions = [
   ['insert', 'Crear'],
   ['update', 'Editar'],
   ['delete', 'Eliminar'],
-  ['manage', 'Gestionar'],
 ];
 
 export default function PermissionsGrid({ permissions, onChange, disabled = false }) {

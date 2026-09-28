@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Boxes, ChevronLeft, ChevronRight, Plus, Search } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
-import { notifyError, notifySuccess } from '../../lib/notifications';
+import { notifyError, notifySuccess, friendlyError } from '../../lib/notifications';
 import {
   listCatalog,
   saveCatalog,
@@ -172,7 +172,7 @@ export default function CatalogPage({ resource }) {
 
       {error && <p role="alert" className="error catalog-feedback">{error}</p>}
       {message && <p role="status" className="success catalog-feedback">{message}</p>}
-      {query.error && <p role="alert" className="error">{query.error.message}</p>}
+      {query.error && <p role="alert" className="error">{friendlyError(query.error)}</p>}
 
       <div className="catalog-grid">
         <section className="catalog-card catalog-list">

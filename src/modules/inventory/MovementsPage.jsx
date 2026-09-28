@@ -1,3 +1,4 @@
+import { friendlyError } from '../../lib/notifications';
 import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
@@ -175,8 +176,8 @@ export default function MovementsPage() {
 
         {(query.error || itemsQuery.error || warehousesQuery.error) && (
           <p role="alert" className="error">
-            {query.error?.message || itemsQuery.error?.message
-              || warehousesQuery.error?.message}
+            {(query.error && friendlyError(query.error)) || (itemsQuery.error && friendlyError(itemsQuery.error))
+              || (warehousesQuery.error && friendlyError(warehousesQuery.error))}
           </p>
         )}
         {query.isPending && <p className="stock-muted">Cargando movimientos…</p>}

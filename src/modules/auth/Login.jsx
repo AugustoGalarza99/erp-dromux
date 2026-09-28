@@ -96,8 +96,7 @@ export default function Login() {
           </form>
 
           <p className="auth-note">
-            El alta de usuarios se habilitará desde administración. Para el primer
-            acceso, creá tu usuario en Supabase Auth.
+            Ingresá con las credenciales que te facilitó el administrador de tu empresa.
           </p>
         </div>
       </main>

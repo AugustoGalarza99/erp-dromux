@@ -8,15 +8,15 @@ import { configured } from './lib/supabase';
 import { AuthProvider } from './contexts/AuthContext';
 import App from './app/App';
 import './styles.css';
+import './erpPolish.css';
 
 function MissingConfiguration() {
   return (
     <div className="setup">
       <span className="brand-mark">D</span>
-      <h1>Configurá tu conexión</h1>
+      <h1>Configuración pendiente</h1>
       <p>
-        Copiá <code>.env.example</code> a <code>.env.local</code>, completá la URL
-        y la publishable key del nuevo proyecto Supabase y reiniciá Vite.
+        Pedile al administrador que termine de configurar el acceso al sistema.
       </p>
     </div>
   );

@@ -1,3 +1,4 @@
+import { friendlyError } from '../../lib/notifications';
 import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
@@ -101,7 +102,7 @@ export default function StockPage() {
               </button>
             </div>
             {stockQuery.error && (
-              <p role="alert" className="error">{stockQuery.error.message}</p>
+              <p role="alert" className="error">{friendlyError(stockQuery.error)}</p>
             )}
             {stockQuery.isPending && <p className="stock-muted">Cargando saldos…</p>}
             {!stockQuery.isPending && !stockQuery.error && rows.length === 0 && (
@@ -163,7 +164,7 @@ export default function StockPage() {
                 )} {selected.unit_symbol}
               </p>
               {balanceQuery.error && (
-                <p role="alert" className="error">{balanceQuery.error.message}</p>
+                <p role="alert" className="error">{friendlyError(balanceQuery.error)}</p>
               )}
               {balanceQuery.isPending && <p>Cargando depósitos…</p>}
               {!balanceQuery.isPending && balances.length === 0 && (
@@ -180,7 +181,7 @@ export default function StockPage() {
                   <h3>Existencias por lote</h3>
                   {lotBreakdownQuery.error && (
                     <p role="alert" className="error">
-                      {lotBreakdownQuery.error.message}
+                      {friendlyError(lotBreakdownQuery.error)}
                     </p>
                   )}
                   {lotBreakdownQuery.isPending && <p>Cargando lotes…</p>}

@@ -95,6 +95,7 @@ export async function saveItem(companyId, itemId, values) {
   };
 
   if (itemId) {
+    if (values.preserveReferenceCost) delete payload.reference_unit_cost;
     return unwrap(await supabase
       .from('items')
       .update(payload)

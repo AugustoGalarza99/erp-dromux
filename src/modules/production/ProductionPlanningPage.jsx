@@ -4,11 +4,11 @@ import { Link } from 'react-router-dom';
 import { CalendarDays, ClipboardList, Plus, XCircle } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import ConfirmDeleteDialog from '../../components/ConfirmDeleteDialog';
-import { notifyError, notifySuccess } from '../../lib/notifications';
+import { notifyError, notifySuccess, friendlyError } from '../../lib/notifications';
 import { formatQuantity } from '../inventory/stockNumber';
 import {
   cancelProductionPlan, createProductionPlan, listFormulas,
-  listProductionBalances, listProductionItems, listProductionPlans,
+  listProductionBalances, listProductionItems, listProductionJobs, listProductionPlans,
   listProductionWarehouses,
 } from '../../services/production';
 import './production.css';
@@ -43,6 +43,11 @@ export default function ProductionPlanningPage() {
     queryKey: ['production-plans', user?.id, activeCompanyId],
     queryFn: () => listProductionPlans(activeCompanyId), enabled: !!activeCompanyId,
   });
+  const jobsQuery = useQuery({
+    queryKey: ['production-jobs', user?.id, activeCompanyId],
+    queryFn: () => listProductionJobs(activeCompanyId), enabled: !!activeCompanyId,
+  });
+  const jobs = jobsQuery.data ?? [];
   const items = itemsQuery.data ?? [];
   const formulas = formulasQuery.data ?? [];
   const plans = plansQuery.data ?? [];
@@ -87,7 +92,7 @@ export default function ProductionPlanningPage() {
       setDueOn('');
       setNote('Orden planificada');
       await refresh();
-      notifySuccess('Fabricación planificada', 'Podés completarla cuando tengas los insumos.');
+      notifySuccess('Fabricación planificada', 'Podés abrir una orden y registrar los consumos reales.');
     } catch (error) {
       notifyError(error);
     } finally {
@@ -116,9 +121,9 @@ export default function ProductionPlanningPage() {
         <div>
           <span className="eyebrow">PRODUCCIÓN / PLANIFICACIÓN</span>
           <h1>Plan de fabricación</h1>
-          <p>Prepará cantidades y fechas. El stock se descuenta al completar la orden.</p>
+          <p>Prepará cantidades y fechas. Los insumos se descuentan al retirarlos en fabricación.</p>
         </div>
-        <Link className="button" to="/production/orders">Fabricación directa</Link>
+        <Link className="button" to="/production/orders">Ver órdenes de fabricación</Link>
       </div>
       <div className="production-grid">
         <form className="production-card" onSubmit={submit}>
@@ -174,7 +179,7 @@ export default function ProductionPlanningPage() {
                 </small>
               </div>;
             })}
-            <p className="production-muted">El stock total es orientativo. Al completar elegirás el depósito y un lote por cada insumo.</p>
+            <p className="production-muted">El stock es orientativo. En la orden registrarás el origen y el lote real de cada consumo.</p>
           </>}
           <label>Observaciones
             <input required minLength={3} maxLength={400} value={note}
@@ -189,11 +194,12 @@ export default function ProductionPlanningPage() {
         </form>
         <aside className="production-card">
           <h2><ClipboardList size={20} /> Planes recientes</h2>
-          {plansQuery.isError && <p className="production-error">{plansQuery.error.message}</p>}
+          {plansQuery.isError && <p className="production-error">{friendlyError(plansQuery.error)}</p>}
           {!plans.length && <p className="production-muted">Todavía no hay órdenes planificadas.</p>}
           {plans.map((plan) => {
             const currentFormula = formulas.find((entry) => entry.product_id === plan.product_id);
             const changed = currentFormula?.version !== plan.formula_version;
+            const job = jobs.find((entry) => entry.plan_id === plan.id);
             return <div className="production-history" key={plan.id}>
               <div className="production-plan-title">
                 <strong>{byId[plan.product_id]?.name ?? 'Producto'}</strong>
@@ -209,11 +215,13 @@ export default function ProductionPlanningPage() {
                 </p>)}
               </details>
               {plan.status === 'planned' && <div className="production-plan-actions">
-                {changed ? <small className="production-error">La fórmula cambió. Creá un plan nuevo.</small> :
+                {job ? <Link className="button primary" to={`/production/orders?job=${job.id}`}>
+                  Ver orden · {job.status === 'queued' ? 'En cola' : 'En proceso'}
+                </Link> : changed ? <small className="production-error">La fórmula cambió. Creá un plan nuevo.</small> :
                   <Link className="button primary" to={`/production/orders?plan=${plan.id}`}>
-                    Completar fabricación
+                    Crear orden de fabricación
                   </Link>}
-                {can('production', 'update') && <button type="button" className="production-link"
+                {!job && can('production', 'update') && <button type="button" className="production-link"
                   onClick={() => setCancelTarget(plan)}><XCircle size={15} /> Cancelar plan</button>}
               </div>}
             </div>;

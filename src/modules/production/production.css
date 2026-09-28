@@ -44,3 +44,38 @@
 .production-card select:disabled, .production-card input:disabled { color: #405360; background: #f2f6f6; opacity: 1; }
 @media (max-width: 920px) { .production-grid { grid-template-columns: 1fr; } }
 @media (max-width: 600px) { .production-page { padding: 22px 14px 48px; } .production-heading { align-items: flex-start; flex-direction: column; } .production-card { padding: 18px; } .production-component { grid-template-columns: minmax(0, 1fr) 95px 25px; } .production-two-columns, .production-material-fields { grid-template-columns: 1fr; gap: 0; } }
+
+.production-three-columns { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.production-card textarea, .production-job textarea { display: block; width: 100%; min-height: 84px; margin-top: 7px; padding: 12px; border: 1px solid #cfdde1; border-radius: 9px; background: #fff; color: #192f3d; font: inherit; resize: vertical; }
+.production-mode { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; padding: 5px; margin: 0 0 20px; border-radius: 12px; background: #edf4f4; }
+.production-mode button { padding: 11px; border: 1px solid transparent; border-radius: 9px; background: transparent; color: #354f5a; font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
+.production-mode button.selected { border-color: #c9e2df; background: #fff; color: #086b62; box-shadow: 0 2px 8px #143b340e; }
+.production-jobs-heading { margin: 36px 0 17px; }
+.production-jobs-heading h2 { margin: 0 0 4px; font-size: 21px; }
+.production-jobs-heading p { margin: 0; color: #506474; }
+.production-job { margin: 0 0 15px; padding: 23px; border: 1px solid #dce7e9; border-radius: 16px; background: #fff; box-shadow: 0 8px 24px #19394808; }
+.production-job-focused .production-job { border-color: #179588; box-shadow: 0 0 0 3px #1795881b; }
+.production-job-head, .production-job-buttons, .production-job-summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.production-job-head strong { display: block; color: #172c39; font-size: 17px; }
+.production-job-head small, .production-job-summary, .production-job-work p, .production-job-finish p { color: #506474; }
+.production-job-summary { justify-content: flex-start; margin: 15px 0; padding: 12px; border-radius: 9px; background: #f5f9f9; font-size: 13px; }
+.production-job-buttons { justify-content: flex-start; }
+.production-job details { margin: 18px 0; border-top: 1px solid #e7eef0; padding-top: 15px; }
+.production-job summary { cursor: pointer; color: #156e69; font-weight: 700; }
+.production-job-expected { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 8px; margin-top: 13px; }
+.production-job-expected p { margin: 0; padding: 10px; border-radius: 8px; background: #f4f9f8; font-size: 12px; }
+.production-job-event { padding: 11px 0; border-bottom: 1px solid #e9eff0; font-size: 13px; }
+.production-job-event small { display: block; color: #60727d; margin: 4px 0; }
+.production-job-work, .production-job-finish, .production-job-cancel { border-top: 1px solid #e8eef0; padding-top: 16px; margin-top: 17px; }
+.production-job h3 { margin: 0 0 7px; font-size: 15px; }
+.production-job label { display: block; margin: 12px 0; color: #3e5361; font-size: 12px; font-weight: 700; }
+.production-job input, .production-job select { display: block; width: 100%; height: 42px; margin-top: 6px; padding: 0 11px; border: 1px solid #cfdde1; border-radius: 9px; background: #fff; color: #192f3d; font: inherit; }
+.production-job .button { display: inline-flex; align-items: center; gap: 7px; }
+.production-return-form { display: grid; grid-template-columns: 1fr 1.3fr auto; gap: 12px; align-items: end; }
+.production-return-form .button { margin-bottom: 12px; }
+.production-badge.queued { color: #695219; background: #fff1ce; }
+.production-badge.in_progress { color: #17647c; background: #e5f3fa; }
+.production-archive { margin-top: 22px; }
+.production-archive summary { cursor: pointer; font-weight: 700; }
+@media (max-width: 760px) { .production-three-columns, .production-return-form { grid-template-columns: 1fr; gap: 0; } .production-return-form .button { margin: 0 0 12px; } }
+@media (max-width: 480px) { .production-job { padding: 16px; } .production-mode { grid-template-columns: 1fr; } }

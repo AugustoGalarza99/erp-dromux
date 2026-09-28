@@ -1,0 +1,138 @@
+/* Ajustes compartidos: la experiencia se mantiene consistente entre módulos. */
+:root {
+  --erp-ink: #172d3e;
+  --erp-muted: #536a7b;
+  --erp-border: #dce7e9;
+  --erp-accent: #13867c;
+  --erp-surface: #fff;
+}
+html { scrollbar-gutter: stable; }
+body { min-width: 320px; color: var(--erp-ink); }
+button, input, textarea, select { font: inherit; }
+button, a, select { -webkit-tap-highlight-color: transparent; }
+a { color: var(--erp-accent); }
+a:hover { color: #0d655e; }
+a, button { transition: background-color .17s ease, border-color .17s ease, box-shadow .17s ease, color .17s ease; }
+button:disabled { cursor: not-allowed; opacity: .58; box-shadow: none; }
+:focus-visible { outline: 3px solid #1caaa3; outline-offset: 3px; }
+input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 2px solid #218d86; outline-offset: 1px; }
+::placeholder { color: #72889a; opacity: 1; }
+::selection { background: #c5eae4; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+
+.button { min-height: 40px; text-decoration: none; line-height: 1.3; }
+.button:not(:disabled):hover { box-shadow: 0 6px 16px #1738471c; }
+.button.primary { background: #16867d; color: #fff; }
+.button.primary:not(:disabled):hover { background: #0c746b; color: #fff; }
+.button.outline, .erp-refresh { background: #fff; border: 1px solid #c9d9dd; color: #315566; }
+.button.outline:not(:disabled):hover, .erp-refresh:not(:disabled):hover { background: #eef7f5; border-color: #8dbfb9; }
+
+/* Cabecera y menú: el menú se desplaza sin perder empresa y cierre de sesión. */
+.app-shell { min-width: 0; }
+.sidebar { overflow: hidden; }
+.sidebar-top, .sidebar .workspace, .sidebar-footer { flex-shrink: 0; }
+.sidebar nav { flex: 1 1 auto; min-height: 0; overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; padding: 0 3px 16px 0; scrollbar-width: thin; scrollbar-color: #bfd5d3 transparent; }
+.sidebar nav::-webkit-scrollbar { width: 6px; }
+.sidebar nav::-webkit-scrollbar-thumb { background: #bfd5d3; border-radius: 9px; }
+.sidebar .subnav-item { text-decoration: none; border-radius: 7px; line-height: 1.35; }
+.sidebar a.subnav-item:hover { background: #eef7f5; color: #106f68; }
+.sidebar a.subnav-item.selected { background: #e6f4f1; }
+.main-area { min-width: 0; }
+.content { min-width: 0; }
+.topbar { position: relative; z-index: 2; }
+.crumb { min-width: 0; }
+.crumb strong { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.sidebar .workspace select { text-overflow: ellipsis; }
+
+:is(.production-page, .sales-page, .finance-page) { max-width: none; padding: 0; }
+:is(.sales-card, .production-card, .purchase-card, .finance-card,
+     .finance-extra-card, .settings-card, .catalog-card, .items-panel,
+     .item-form, .item-side-card) {
+  border-color: var(--erp-border);
+  box-shadow: 0 7px 24px #16384a0c;
+}
+:is(.production-card, .sales-card, .purchase-card, .finance-card, .settings-card,
+     .catalog-card, .items-panel, .item-form) { min-width: 0; }
+:is(.production-heading, .sales-heading, .finance-heading, .page-head) { gap: 15px; }
+:is(.production-heading, .sales-heading, .finance-heading, .page-head) h1 { color: #132a3a; }
+:is(.production-heading, .sales-heading, .finance-heading, .page-head) p { color: var(--erp-muted); }
+:is(.purchase-card, .sales-card, .production-card, .finance-card,
+    .settings-card, .catalog-card, .item-form, .finance-extra-card) :is(input, select, textarea) {
+  max-width: 100%;
+}
+:is(.purchase-card, .sales-card, .production-card, .finance-card,
+    .settings-card, .catalog-card, .item-form, .finance-extra-card) :is(input, select, textarea):focus-visible {
+  border-color: var(--erp-accent);
+}
+:is(.purchase-card, .sales-card, .production-card, .finance-card,
+    .settings-card, .catalog-card, .finance-extra-card) :is(input, select, textarea):disabled {
+  background: #f4f7f8; color: #425869;
+}
+:is(.purchase-card, .sales-card, .production-card, .finance-card,
+    .settings-card, .catalog-card, .finance-extra-card) :is(label, strong, h2) { overflow-wrap: anywhere; }
+
+/* Tablas con desplazamiento horizontal cuando el contenido no entra. */
+.erp-table-scroll, .finance-extra-table-wrap, .permissions-scroll { max-width: 100%; overflow-x: auto; overscroll-behavior-inline: contain; }
+.erp-data-table { width: 100%; border-collapse: collapse; min-width: 490px; text-align: left; }
+.erp-data-table th { padding: 13px 15px; background: #edf5f4; color: #405a69; font-size: 11px; font-weight: 800; letter-spacing: .045em; }
+.erp-data-table th:first-child { border-radius: 9px 0 0 9px; }
+.erp-data-table th:last-child { border-radius: 0 9px 9px 0; }
+.erp-data-table td { border-bottom: 1px solid #e7eff0; padding: 16px 15px; color: #213a4b; font-size: 13px; }
+.erp-data-table td strong, .erp-data-table td small { display: block; }
+.erp-data-table td small { color: #607789; margin-top: 4px; }
+.erp-data-table tbody tr:hover { background: #f8fbfa; }
+.erp-price-value { text-align: right; font-weight: 800; color: #125c56 !important; white-space: nowrap; }
+.erp-price-missing { display: inline-flex; align-items: center; gap: 5px; color: #946333; font-size: 12px; font-weight: 600; }
+.price-list-page .sales-card.sales-wide { max-width: none; }
+.price-list-page .sales-search { max-width: 460px; }
+.price-list-page .sales-search input { min-height: 40px; }
+
+/* Precios y roles. */
+.cost-price-editor { display: flex; gap: 7px; align-items: center; flex-wrap: wrap; min-width: 180px; }
+.cost-price-editor label { flex: 1 1 100px; }
+.cost-price-editor input { width: 100%; min-width: 90px; min-height: 38px; padding: 8px; border: 1px solid #ccdce0; border-radius: 8px; color: #172d3e; background: #fff; }
+.cost-price-editor .button { min-height: 38px; padding: 8px 10px; font-size: 11px; }
+.cost-price-editor small { flex-basis: 100%; font-size: 11px; }
+.finance-extra-search { display: flex; align-items: center; gap: 7px; flex: 1 1 230px; color: #56757d; }
+.finance-extra-search input { max-width: 390px; }
+.finance-extra-table { min-width: 790px; }
+.finance-extra-table td { vertical-align: middle; }
+.member-role-control { display: grid; gap: 5px; min-width: 155px; color: #526778; font-size: 11px; font-weight: 700; }
+.member-role-control select { min-height: 38px; width: 100%; max-width: 220px; padding: 7px 10px; background: #fff; border: 1px solid #cbdadf; border-radius: 8px; color: #233b4b; }
+
+@media (max-width: 1080px) {
+  .content { padding: 30px 25px 50px; }
+  .topbar { padding: 0 25px; }
+}
+@media (max-width: 760px) {
+  .sidebar { width: min(300px, calc(100vw - 48px)); min-width: 0; height: 100dvh; max-height: 100dvh; top: 0; bottom: 0; left: -320px; padding-bottom: max(14px, env(safe-area-inset-bottom)); box-shadow: 12px 0 30px #152f3818; }
+  .sidebar.mobile-open { left: 0; }
+  .overlay { z-index: 19; border: 0; padding: 0; cursor: pointer; }
+  .topbar { min-height: 60px; height: 60px; padding: 0 16px; }
+  .crumb { gap: 8px; }
+  .crumb > span:first-of-type { display: none; }
+  .crumb-divider { display: none; }
+  .content { padding: 20px 16px 45px; }
+  :is(.production-page, .sales-page, .finance-page) { padding: 0; }
+  .page-head { flex-wrap: wrap; }
+  .finance-extra-card, .sales-card, .production-card, .finance-card, .purchase-card { padding: 18px; }
+  .footer { padding: 14px; }
+}
+@media (max-width: 480px) {
+  .content { padding: 18px 12px 40px; }
+  .erp-home-grid { grid-template-columns: minmax(0,1fr); }
+  .finance-extra-card, .sales-card, .production-card, .finance-card, .purchase-card { padding: 16px; }
+  .finance-extra-toolbar { flex-wrap: wrap; }
+  .finance-extra-toolbar a { width: 100%; }
+  .finance-extra-account strong { font-size: 22px; }
+  .page-head > .button, .sales-heading > .button, .finance-heading > .button,
+  .production-heading > .button { width: 100%; }
+  .member-row { flex-wrap: wrap; }
+  .member-role-control { width: 100%; }
+  .member-role-control select { max-width: 100%; }
+  .purchase-card-heading { flex-wrap: wrap; }
+  .erp-confirm-actions { flex-wrap: wrap; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; }
+}

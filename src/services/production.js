@@ -116,3 +116,97 @@ export async function completeProductionPlan(companyId, planId, inputs, outputLo
     p_expires_on: expiresOn || null,
   }));
 }
+
+export async function listProductionJobs(companyId) {
+  return unwrap(await supabase.from('production_jobs')
+    .select(`id, product_id, plan_id, planned_quantity, actual_quantity,
+      warehouse_id, due_on, formula_version, formula_snapshot, status,
+      note, cancel_reason, variance_note, output_lot, output_expiry,
+      run_id, created_at, started_at, completed_at,
+      production_job_events(id, kind, issue_id, component_id, warehouse_id,
+        lot_code, quantity, unit_cost, note, created_at)`)
+    .eq('company_id', companyId)
+    .order('created_at', { ascending: false })
+    .limit(70));
+}
+
+export async function createProductionJob(companyId, values, requestId) {
+  return unwrap(await supabase.rpc('create_production_job', {
+    p_company: companyId,
+    p_product: values.productId,
+    p_quantity: values.quantity,
+    p_warehouse: values.warehouseId,
+    p_due_on: values.dueOn || null,
+    p_note: values.note.trim(),
+    p_request_id: requestId,
+    p_plan: values.planId || null,
+  }));
+}
+
+export async function startProductionJob(companyId, jobId) {
+  return unwrap(await supabase.rpc('start_production_job', {
+    p_company: companyId, p_job: jobId,
+  }));
+}
+
+export async function issueProductionMaterial(companyId, jobId, entry, requestId) {
+  return unwrap(await supabase.rpc('issue_production_material', {
+    p_company: companyId,
+    p_job: jobId,
+    p_component: entry.componentId,
+    p_warehouse: entry.warehouseId,
+    p_lot: entry.lotCode || null,
+    p_quantity: entry.quantity,
+    p_note: entry.note.trim(),
+    p_request_id: requestId,
+  }));
+}
+
+export async function returnProductionMaterial(companyId, jobId, issueId,
+  quantity, note, requestId) {
+  return unwrap(await supabase.rpc('return_production_material', {
+    p_company: companyId, p_job: jobId, p_issue: issueId,
+    p_quantity: quantity, p_note: note.trim(), p_request_id: requestId,
+  }));
+}
+
+export async function finishProductionJob(companyId, jobId, values, requestId) {
+  return unwrap(await supabase.rpc('finish_production_job', {
+    p_company: companyId,
+    p_job: jobId,
+    p_actual_quantity: values.actualQuantity,
+    p_output_lot: values.outputLot.trim() || null,
+    p_expires_on: values.expiresOn || null,
+    p_variance_note: values.varianceNote.trim() || null,
+    p_request_id: requestId,
+  }));
+}
+
+export async function cancelProductionJob(companyId, jobId, reason) {
+  return unwrap(await supabase.rpc('cancel_production_job', {
+    p_company: companyId, p_job: jobId, p_reason: reason.trim(),
+  }));
+}
+
+export async function completeProductionNow(companyId, values, requestId, finishRequestId) {
+  return unwrap(await supabase.rpc('complete_production_now', {
+    p_company: companyId,
+    p_product: values.productId,
+    p_planned_quantity: values.plannedQuantity,
+    p_actual_quantity: values.actualQuantity,
+    p_warehouse: values.warehouseId,
+    p_output_lot: values.outputLot.trim() || null,
+    p_expires_on: values.expiresOn || null,
+    p_note: values.note.trim(),
+    p_variance_note: values.varianceNote.trim() || null,
+    p_inputs: values.inputs.map((input) => ({
+      component_id: input.componentId,
+      warehouse_id: input.warehouseId,
+      lot_code: input.lotCode || null,
+      quantity: input.quantity,
+    })),
+    p_request_id: requestId,
+    p_finish_request_id: finishRequestId,
+    p_plan: values.planId || null,
+  }));
+}

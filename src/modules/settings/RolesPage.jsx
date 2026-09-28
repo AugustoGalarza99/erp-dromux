@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ShieldCheck, Plus, Save } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
-import { notifyError, notifySuccess } from '../../lib/notifications';
+import { notifyError, notifySuccess, friendlyError } from '../../lib/notifications';
 import { listRoles, listRolePermissions, saveRole } from '../../services/administration';
 import PermissionsGrid from './PermissionsGrid';
 import './settings.css';
@@ -41,7 +41,7 @@ export default function RolesPage() {
     setName(selected.name);
     setCode(selected.code);
     setPermissions((permissionsQuery.data ?? [])
-      .filter((permission) => permission.role_id === selected.id)
+      .filter((permission) => permission.role_id === selected.id && permission.action !== 'manage')
       .map(({ resource, action }) => ({ resource, action })));
     setMessage('');
     setError('');
@@ -102,7 +102,7 @@ export default function RolesPage() {
 
       {(rolesQuery.error || permissionsQuery.error) && (
         <p role="alert" className="error">
-          {rolesQuery.error?.message || permissionsQuery.error?.message}
+          {(rolesQuery.error && friendlyError(rolesQuery.error)) || (permissionsQuery.error && friendlyError(permissionsQuery.error))}
         </p>
       )}
 

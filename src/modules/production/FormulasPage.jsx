@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { FlaskConical, Plus, Save, Trash2 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
-import { notifyError, notifySuccess } from '../../lib/notifications';
+import { notifyError, notifySuccess, friendlyError } from '../../lib/notifications';
 import { getFormulaCost, listFormulas, listProductionItems, saveFormula } from '../../services/production';
 import { formatQuantity } from '../inventory/stockNumber';
 import './production.css';
@@ -154,7 +154,7 @@ export default function FormulasPage() {
         </form>
         <aside className="production-card">
           <h2>Fórmulas disponibles</h2>
-          {formulasQuery.isError && <p className="production-error">{formulasQuery.error.message}</p>}
+          {formulasQuery.isError && <p className="production-error">{friendlyError(formulasQuery.error)}</p>}
           {!formulas.length && <p className="production-muted">Todavía no hay fórmulas cargadas.</p>}
           {formulas.map((formula) => (
             <button type="button" key={formula.product_id} className="production-list-item"

@@ -3,18 +3,17 @@ import { toast } from 'sonner';
 export function friendlyError(error) {
   const message = error?.message || 'No se pudo completar la operación.';
 
-  if (message.includes('No se puede activar lotes en un ítem con historial')) {
-    return 'Aplicá la migración SQL 007 para activar lotes en un ítem con historial.';
-  }
-
-  if (message.includes('El ítem tiene stock sin lotes')) {
-    return 'Aplicá la migración 007 y activá lotes desde la ficha para crear saldos iniciales auditados.';
+  if (/Invalid login credentials|Email not confirmed/i.test(message)) {
+    return 'Revisá tu correo y contraseña, o pedí ayuda al administrador.';
   }
 
   if (error?.code === '23505') {
     return 'Ya existe un registro con esos datos. Revisá el código y volvé a intentar.';
   }
 
+  if (/permission denied|row-level security|PGRST|function public\.|relation public\.|JWT|fetch failed|Failed to fetch/i.test(message)) {
+    return 'No pudimos completar la operación. Comprobá tu acceso y volvé a intentarlo.';
+  }
   return message;
 }
 
