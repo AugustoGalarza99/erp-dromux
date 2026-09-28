@@ -1,11 +1,12 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useDebouncedValue } from '../../hooks/useDebouncedValue';
 import { friendlyError, notifyError, notifySuccess } from '../../lib/notifications';
 import { getSalesProfitSummary, listProductCosts } from '../../services/costing';
 import { saveSalePrice } from '../../services/sales';
+import SalesProfitTable from './SalesProfitTable';
 import './financeExtra.css';
 
 const ars = (value) => value == null ? 'Pendiente' : Number(value).toLocaleString('es-AR', {
@@ -59,6 +60,12 @@ function PriceEditor({ row, companyId, onSaved }) {
 export default function CostsPage() {
   const { activeCompanyId, user, can, role } = useAuth();
   const client = useQueryClient();
+  const { hash } = useLocation();
+  useEffect(() => {
+    if (hash === '#ventas') {
+      requestAnimationFrame(() => document.getElementById('ventas')?.scrollIntoView());
+    }
+  }, [hash]);
   const [search, setSearch] = useState('');
   const term = useDebouncedValue(search);
   const allowed = Boolean(activeCompanyId && role === 'admin' && can('finance', 'read'));
@@ -88,28 +95,31 @@ export default function CostsPage() {
       <div className="page-head">
         <div>
           <span className="eyebrow">FINANZAS / RENTABILIDAD</span>
-          <h1>Costos y precios</h1>
-          <p>Definí el precio final y consultá el margen estimado por producto.</p>
+          <h1>Rentabilidad y precios</h1>
+          <p>Compará precio, costo y margen de productos y ventas.</p>
         </div>
       </div>
       {profitQuery.error && <p role="alert" className="error">{friendlyError(profitQuery.error)}</p>}
       {profitQuery.data && (
-        <div className="finance-extra-accounts">
+        <>
+          <h2 className="finance-aggregate-label">Acumulado histórico de ventas</h2>
+          <div className="finance-extra-accounts">
           <article className="finance-extra-account">
             <small>VENTAS REGISTRADAS</small>
             <strong>{ars(profitQuery.data.sales_total)}</strong><span>Ingreso total</span>
           </article>
           <article className="finance-extra-account">
-            <small>CON COSTO ESTIMADO</small>
+            <small>VENTAS CON COSTO COMPLETO</small>
             <strong>{ars(profitQuery.data.covered_revenue)}</strong>
             <span>Costo {ars(profitQuery.data.covered_cost)}</span>
           </article>
           <article className="finance-extra-account">
-            <small>GANANCIA BRUTA ESTIMADA</small>
+            <small>GANANCIA BRUTA IDENTIFICADA</small>
             <strong>{ars(profitQuery.data.estimated_profit)}</strong>
-            <span>{profitQuery.data.missing_lines} líneas sin costo excluidas</span>
+            <span>{profitQuery.data.missing_lines} productos sin costo excluidos</span>
           </article>
-        </div>
+          </div>
+        </>
       )}
       <div className="finance-extra-card">
         <div className="finance-extra-toolbar">
@@ -158,6 +168,7 @@ export default function CostsPage() {
           </table>
         </div>
       </div>
+      {can('sales', 'read') && <SalesProfitTable />}
       <p className="finance-extra-note">
         Margen bruto = precio de venta menos costo estimado por unidad.
         No incluye impuestos, comisiones, flete ni gastos indirectos.

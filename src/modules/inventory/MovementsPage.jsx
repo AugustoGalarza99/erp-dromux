@@ -18,6 +18,8 @@ import {
   listStockMovements,
 } from '../../services/stock';
 import { formatQuantity } from './stockNumber';
+import { findSalesByIds } from '../../services/sales';
+import { readableMovementNote, saleIdFromNote } from './movementLabels';
 import './stock.css';
 
 const labels = {
@@ -28,7 +30,7 @@ const labels = {
 };
 
 export default function MovementsPage() {
-  const { user, activeCompanyId } = useAuth();
+  const { user, activeCompanyId, can } = useAuth();
   const [page, setPage] = useState(0);
   const [itemId, setItemId] = useState('');
   const [warehouseId, setWarehouseId] = useState('');
@@ -75,6 +77,13 @@ export default function MovementsPage() {
   });
 
   const rows = query.data?.rows ?? [];
+  const saleIds = [...new Set(rows.map((row) => saleIdFromNote(row.note)).filter(Boolean))];
+  const linkedSales = useQuery({
+    queryKey: ['movement-sale-labels', user?.id, activeCompanyId, saleIds.join(',')],
+    queryFn: () => findSalesByIds(activeCompanyId, saleIds),
+    enabled: Boolean(activeCompanyId && saleIds.length && can('sales', 'read')),
+  });
+  const saleNames = Object.fromEntries((linkedSales.data ?? []).map((sale) => [sale.id, sale]));
   const count = query.data?.count ?? 0;
   const pages = Math.max(1, Math.ceil(count / 25));
   const itemOptions = selectedItem
@@ -201,16 +210,14 @@ export default function MovementsPage() {
                 <small>
                   {row.warehouse_code} · {new Date(row.created_at).toLocaleString('es-AR')}
                 </small>
-                <p>{row.note}</p>
+                <p>{readableMovementNote(row.note, saleNames)}</p>
                 {row.lot_code && (
                   <small>
                     Lote {row.lot_code}
                     {row.lot_expires_on ? ` · vence ${row.lot_expires_on}` : ''}
                   </small>
                 )}
-                {row.kind.startsWith('transfer') && (
-                  <small>Operación: {row.operation_id.slice(0, 8)}</small>
-                )}
+
               </div>
               <div className="movement-amount">
                 <strong className={positive ? 'positive' : 'negative'}>

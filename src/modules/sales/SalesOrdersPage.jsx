@@ -207,6 +207,8 @@ export default function SalesOrdersPage() {
         client.invalidateQueries({ queryKey: ['treasury-entries'] }),
         client.invalidateQueries({ queryKey: ['erp-dashboard'] }),
         client.invalidateQueries({ queryKey: ['sales-profit'] }),
+        client.invalidateQueries({ queryKey: ['sales-profit-detail'] }),
+        client.invalidateQueries({ queryKey: ['operational-report'] }),
       ]);
       notifySuccess('Venta registrada', paymentMode === 'pending'
         ? 'El stock se descontó y la venta quedó pendiente de cobro.'
@@ -343,6 +345,12 @@ export default function SalesOrdersPage() {
           {(sale.sale_adjustments ?? []).some((entry) => entry.kind === 'cancel') && (
             <span className="sales-badge canceled">Anulada</span>
           )}
+          {can('stock', 'insert') && can('stock', 'read') &&
+            !(sale.sale_adjustments ?? []).some((entry) => entry.kind === 'cancel') && (
+              <Link className="sales-link" to={`/inventory/delivery-notes?sale=${sale.id}`}>
+                Emitir remito de entrega
+              </Link>
+            )}
           <details onToggle={(event) => {
             const isOpen = event.currentTarget.open;
             setOpenSaleIds((current) => {
@@ -370,6 +378,8 @@ export default function SalesOrdersPage() {
                 client.invalidateQueries({ queryKey: ['treasury-entries'] }),
                 client.invalidateQueries({ queryKey: ['erp-dashboard'] }),
                 client.invalidateQueries({ queryKey: ['sales-profit'] }),
+        client.invalidateQueries({ queryKey: ['sales-profit-detail'] }),
+        client.invalidateQueries({ queryKey: ['operational-report'] }),
               ])}
             />}
           </details>

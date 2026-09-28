@@ -1,0 +1,12 @@
+.erp-action-dialog { width: min(760px, calc(100vw - 28px)); max-width: none; max-height: min(92dvh, 900px); margin: auto; padding: 0; border: 1px solid #d8e6e5; border-radius: 18px; background: #fff; color: #172d3e; box-shadow: 0 22px 90px #102c3e55; }
+.erp-action-dialog::backdrop { background: #102a39a8; backdrop-filter: blur(2px); }
+.erp-action-dialog-head { position: sticky; z-index: 2; top: 0; display: flex; justify-content: space-between; align-items: start; gap: 16px; padding: 22px 24px 17px; border-bottom: 1px solid #e3eded; background: #fff; }
+.erp-action-dialog-head h2 { margin: 0 0 6px; font-size: clamp(18px,2.6vw,22px); }
+.erp-action-dialog-head p { max-width: 610px; margin: 0; color: #536a76; font-size: 12px; line-height: 1.55; }
+.erp-action-close { display: grid; flex-shrink: 0; place-items: center; width: 38px; height: 38px; border: 1px solid #d5e4e4; border-radius: 9px; background: #fff; color: #264452; }
+.erp-action-dialog-content { padding: 22px 24px 26px; }
+.erp-action-dialog-content label { display: block; margin: 12px 0; color: #3d5664; font-size: 12px; font-weight: 750; }
+.erp-action-dialog-content input, .erp-action-dialog-content select, .erp-action-dialog-content textarea { display: block; width: 100%; min-width: 0; min-height: 43px; margin-top: 6px; padding: 9px 11px; border: 1px solid #cbdcdd; border-radius: 9px; background: #fff; color: #172d3e; font: inherit; }
+.erp-action-dialog-content textarea { min-height: 75px; resize: vertical; }
+.erp-action-dialog-actions { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 9px; padding-top: 14px; border-top: 1px solid #e4eded; }
+@media (max-width: 560px) { .erp-action-dialog { width: calc(100vw - 16px); max-height: calc(100dvh - 16px); } .erp-action-dialog-head { padding: 16px; } .erp-action-dialog-content { padding: 16px; } .erp-action-dialog-actions .button { flex: 1 1 125px; } }

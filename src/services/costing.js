@@ -54,3 +54,21 @@ export async function getSalesProfitSummary(companyId) {
   }));
   return rows?.[0] ?? null;
 }
+
+export async function listSalesProfitDetail(companyId, from, to, search = '', page = 0) {
+  return unwrap(await supabase.rpc('erp_admin_sales_profit_detail', {
+    p_company: companyId,
+    p_from: from,
+    p_to: to,
+    p_search: search.trim(),
+    p_page: page,
+  }));
+}
+
+export async function getOperationalReport(companyId, from, to) {
+  return unwrap(await supabase.rpc('erp_operational_report', {
+    p_company: companyId,
+    p_from: from,
+    p_to: to,
+  }));
+}

@@ -1,0 +1,23 @@
+.erp-notifications { position: relative; }
+.erp-bell { position: relative; display: grid; place-items: center; width: 38px; height: 38px; border-radius: 11px; border: 1px solid #d8e6e8; background: #f8fbfb; color: #204252; cursor: pointer; }
+.erp-bell:hover, .erp-bell[aria-expanded='true'] { background: #eaf6f3; border-color: #a8d5cb; }
+.erp-bell-count { position: absolute; top: -6px; right: -7px; min-width: 19px; height: 19px; padding: 0 4px; display: grid; place-items: center; background: #b54a31; color: #fff; border-radius: 20px; font-size: 10px; font-weight: 800; }
+.erp-notification-panel { position: absolute; z-index: 120; top: calc(100% + 12px); right: 0; width: min(410px, calc(100vw - 28px)); max-height: min(580px, 75vh); overflow-y: auto; background: #fff; border: 1px solid #dae6e8; border-radius: 15px; box-shadow: 0 22px 65px #122d3f26; color: #183244; }
+.erp-notification-panel > header { display: flex; justify-content: space-between; align-items: center; padding: 18px; border-bottom: 1px solid #e5edef; }
+.erp-notification-panel > header div { display: grid; gap: 4px; }
+.erp-notification-panel > header strong { font-size: 15px; }
+.erp-notification-panel > header small { color: #576b76; }
+.erp-notification-panel > header button { border: 0; background: transparent; padding: 6px; color: #157c75; cursor: pointer; }
+.erp-notification-item { display: flex; gap: 10px; padding: 16px 18px; border-bottom: 1px solid #edf1f2; }
+.erp-notification-item.unread { background: #f4faf8; }
+.erp-notification-item svg { flex: 0 0 auto; margin-top: 1px; }
+.erp-notification-item .critical { color: #b74735; }
+.erp-notification-item .warning { color: #ae701c; }
+.erp-notification-item strong { font-size: 13px; }
+.erp-notification-item p { margin: 5px 0 10px; font-size: 12px; line-height: 1.55; color: #4d626d; }
+.erp-notification-actions { display: flex; align-items: center; gap: 16px; }
+.erp-notification-actions a, .erp-notification-actions button { display: inline-flex; align-items: center; gap: 4px; padding: 0; border: 0; background: none; color: #087b70; font-size: 12px; font-weight: 700; text-decoration: none; cursor: pointer; }
+.erp-notification-actions button:disabled { opacity: .5; cursor: wait; }
+.erp-notification-empty, .erp-notification-error { margin: 0; padding: 24px 18px; font-size: 13px; color: #4e626d; }
+.erp-notification-error { color: #a22d35; }
+@media(max-width: 600px) { .erp-notification-panel { right: -54px; max-height: 72vh; } }

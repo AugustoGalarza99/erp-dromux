@@ -1,0 +1,11 @@
+.erp-profile-page { display: grid; gap: 24px; }
+.erp-profile-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+.erp-profile-card { display: flex; flex-direction: column; gap: 15px; min-width: 0; padding: 24px; background: #fff; border: 1px solid #d7e3e7; border-radius: 16px; box-shadow: 0 10px 28px #1737470a; }
+.erp-profile-card label { display: grid; gap: 7px; font-size: 13px; font-weight: 700; color: #21394a; }
+.erp-profile-card input { width: 100%; min-width: 0; }
+.erp-profile-card input[readonly] { color: #495f6c; background: #f3f7f8; cursor: default; }
+.erp-profile-title { display: flex; align-items: center; gap: 10px; color: #11887e; }
+.erp-profile-title h2 { margin: 0; font-size: 18px; color: #173142; }
+.erp-profile-hint { margin: 0; color: #4d626c; font-size: 12px; line-height: 1.55; }
+.erp-profile-card .button { margin-top: auto; align-self: start; }
+@media(max-width: 740px) { .erp-profile-grid { grid-template-columns: 1fr; } .erp-profile-card { padding: 19px; } }

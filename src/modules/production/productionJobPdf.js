@@ -4,14 +4,10 @@ import { autoTable } from 'jspdf-autotable';
 const quantity = (value) => Number(value).toLocaleString('es-AR', {
   maximumFractionDigits: 6,
 });
-const money = (value) => Number(value).toLocaleString('es-AR', {
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-});
 
 export function downloadProductionJobPdf(job, items, warehouses, companyName) {
   const pdf = new jsPDF({ unit: 'mm', format: 'a4', compress: true });
-  const itemName = (id) => items.find((item) => item.id === id)?.name ?? id;
+  const itemName = (id) => items.find((item) => item.id === id)?.name ?? 'Insumo';
   const warehouseName = (id) => warehouses.find((entry) => entry.id === id)?.name ?? 'Depósito';
   const events = [...(job.production_job_events ?? [])].sort((a, b) =>
     new Date(a.created_at) - new Date(b.created_at));
@@ -26,7 +22,7 @@ export function downloadProductionJobPdf(job, items, warehouses, companyName) {
   pdf.text('ORDEN DE FABRICACIÓN', 16, 23);
   pdf.setFontSize(10);
   pdf.setTextColor(...teal);
-  pdf.text(job.id.slice(0, 8).toUpperCase(), width - 16, 23, { align: 'right' });
+  pdf.text('HOJA DE TRABAJO', width - 16, 23, { align: 'right' });
   pdf.setDrawColor(216, 229, 230);
   pdf.line(16, 29, width - 16, 29);
   pdf.setFont('helvetica', 'normal');
@@ -56,11 +52,10 @@ export function downloadProductionJobPdf(job, items, warehouses, companyName) {
   }
   autoTable(pdf, {
     startY: y + 2,
-    head: [['INSUMO TEÓRICO', 'CANTIDAD', 'COSTO PREVISTO/UNIDAD']],
+    head: [['INSUMO', 'CANTIDAD PREVISTA']],
     body: (job.formula_snapshot ?? []).map((entry) => [
       itemName(entry.component_id),
       quantity(entry.quantity),
-      `$ ${money(entry.unit_cost)}`,
     ]),
     theme: 'striped',
     headStyles: { fillColor: teal },
@@ -89,6 +84,7 @@ export function downloadProductionJobPdf(job, items, warehouses, companyName) {
   pdf.setFontSize(9);
   if (job.variance_note) {
     const lines = pdf.splitTextToSize(`Diferencias: ${job.variance_note}`, width - 32);
+    if (noteY + lines.length * 5 + 12 > 270) { pdf.addPage(); noteY = 22; }
     pdf.text(lines, 16, noteY);
     noteY += lines.length * 5 + 6;
   }
@@ -98,7 +94,7 @@ export function downloadProductionJobPdf(job, items, warehouses, companyName) {
     pdf.setPage(i);
     pdf.setFontSize(8);
     pdf.setTextColor(90, 109, 115);
-    pdf.text(`Documento interno · ${i}/${pages}`, width - 16, 289, { align: 'right' });
+    pdf.text(`Hoja de fabricación · ${i}/${pages}`, width - 16, 289, { align: 'right' });
   }
   pdf.save(`fabricacion-${job.id.slice(0, 8)}.pdf`);
 }

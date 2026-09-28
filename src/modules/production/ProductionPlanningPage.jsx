@@ -16,7 +16,7 @@ import './production.css';
 const money = (value) => Number(value).toLocaleString('es-AR', { minimumFractionDigits: 2 });
 
 export default function ProductionPlanningPage() {
-  const { activeCompanyId, user, can } = useAuth();
+  const { activeCompanyId, user, can, role } = useAuth();
   const client = useQueryClient();
   const [productId, setProductId] = useState('');
   const [quantity, setQuantity] = useState('1');
@@ -208,7 +208,10 @@ export default function ProductionPlanningPage() {
                 }</span>
               </div>
               <span>{formatQuantity(plan.quantity)} {byId[plan.product_id]?.units?.symbol} · {plan.due_on ? `Previsto: ${new Date(`${plan.due_on}T12:00:00`).toLocaleDateString('es-AR')}` : 'Sin fecha'}</span>
-              <small>Fórmula v{plan.formula_version} · Costo previsto $ {money(plan.estimated_cost)}</small>
+              <small>Fórmula v{plan.formula_version}
+        {role === 'admin' && can('finance', 'read')
+          ? ` · Costo previsto $ ${money(plan.estimated_cost)}` : ''}
+      </small>
               <details><summary>Insumos previstos</summary>
                 {plan.component_snapshot.map((line) => <p key={line.component_id}>
                   {byId[line.component_id]?.name ?? 'Insumo'} · {formatQuantity(line.quantity)}

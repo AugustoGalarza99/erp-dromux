@@ -21,3 +21,23 @@
 .erp-home-shortcuts a { display: inline-flex; align-items: center; gap: 8px; padding: 11px 14px; border: 1px solid #cbdeda; border-radius: 9px; color: #12685e; font-weight: 700; font-size: 13px; text-decoration: none; }
 .erp-home-shortcuts a:hover { background: #edf8f5; border-color: #91c9bc; }
 @media(max-width:480px) { .erp-home-shortcuts a { width: 100%; justify-content: space-between; } }
+.erp-home .page-head { display: flex; justify-content: space-between; gap: 12px; align-items: start; }
+.erp-home-refresh { display: inline-flex; align-items: center; gap: 7px; padding: 10px 13px; border: 1px solid #cbdeda; background: white; border-radius: 10px; color: #136d66; font-weight: 700; cursor: pointer; }
+.erp-home-columns { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 16px; }
+.erp-home-panel { min-width: 0; background: #fff; border: 1px solid #dce7eb; border-radius: 14px; overflow: hidden; }
+.erp-home-panel-heading { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 20px 20px 13px; }
+.erp-home-panel-heading h2 { margin: 7px 0 0; color: #173344; font-size: 17px; }
+.erp-home-count { background: #e8f5f2; color: #176d62; padding: 5px 9px; border-radius: 18px; font-weight: 700; font-size: 11px; white-space: nowrap; }
+.erp-home-alert, .erp-home-job { display: flex; align-items: start; gap: 11px; padding: 14px 20px; color: #27404c; border-top: 1px solid #e9eff0; text-decoration: none; }
+.erp-home-alert:hover, .erp-home-job:hover { background: #f5faf9; }
+.erp-home-alert > svg:first-child { color: #b66a2f; flex: 0 0 auto; }
+.erp-home-alert > svg:last-child, .erp-home-job > svg:last-child { flex: 0 0 auto; margin-left: auto; color: #2d8f83; }
+.erp-home-alert span, .erp-home-job span:not(.erp-home-job-dot) { display: grid; gap: 5px; min-width: 0; }
+.erp-home-alert strong, .erp-home-job strong { font-size: 13px; line-height: 1.4; overflow-wrap: anywhere; }
+.erp-home-alert small, .erp-home-job small { color: #526873; font-size: 12px; line-height: 1.4; }
+.erp-home-job-dot { flex: 0 0 8px; width: 8px; height: 8px; margin-top: 5px; border-radius: 50%; background: #28a28f; }
+.erp-home-empty { padding: 17px 20px; margin: 0; color: #4e6670; font-size: 13px; }
+.erp-home-explain { padding: 14px 20px; margin: 0; background: #f5f9f8; color: #4d626a; font-size: 11px; line-height: 1.5; }
+.erp-home-all { display: inline-flex; align-items: center; gap: 7px; margin: 13px 20px 18px; font-size: 12px; font-weight: 800; color: #087b70; text-decoration: none; }
+@media(max-width:850px) { .erp-home-columns { grid-template-columns: 1fr; } }
+@media(max-width:600px) { .erp-home .page-head { flex-wrap: wrap; } .erp-home-refresh { width: 100%; justify-content: center; } .erp-home { gap: 20px; } }

@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { Factory, Plus } from 'lucide-react';
+import { Factory, Plus, Truck } from 'lucide-react';
+import ActionDialog from '../../components/ActionDialog';
+import { listDeliveryNotes } from '../../services/deliveryNotes';
 import { useAuth } from '../../contexts/AuthContext';
 import { notifyError, notifySuccess, friendlyError } from '../../lib/notifications';
 import { formatQuantity } from '../inventory/stockNumber';
@@ -92,7 +94,7 @@ function MaterialRow({ companyId, row, line, item, items, warehouses, onChange, 
 }
 
 export default function ProductionOrdersPage() {
-  const { activeCompanyId, user, can } = useAuth();
+  const { activeCompanyId, activeCompany, user, can, role } = useAuth();
   const client = useQueryClient();
   const navigate = useNavigate();
   const [params] = useSearchParams();
@@ -110,6 +112,7 @@ export default function ProductionOrdersPage() {
   const [expiresOn, setExpiresOn] = useState('');
   const [inputs, setInputs] = useState([]);
   const [busy, setBusy] = useState(false);
+  const [createOpen, setCreateOpen] = useState(Boolean(planId));
   const [requestId, setRequestId] = useState(() => crypto.randomUUID());
   const [finishRequestId, setFinishRequestId] = useState(() => crypto.randomUUID());
 
@@ -132,6 +135,11 @@ export default function ProductionOrdersPage() {
   const runsQuery = useQuery({
     queryKey: ['production-runs', user?.id, activeCompanyId],
     queryFn: () => listProductionRuns(activeCompanyId), enabled: !!activeCompanyId,
+  });
+  const deliveryQuery = useQuery({
+    queryKey: ['delivery-notes', user?.id, activeCompanyId],
+    queryFn: () => listDeliveryNotes(activeCompanyId),
+    enabled: Boolean(activeCompanyId),
   });
   const plansQuery = useQuery({
     queryKey: ['production-plans', user?.id, activeCompanyId],
@@ -199,7 +207,9 @@ export default function ProductionOrdersPage() {
       client.invalidateQueries({ queryKey: ['job-material-lots'] }),
       client.invalidateQueries({ queryKey: ['stock'] }),
       client.invalidateQueries({ queryKey: ['product-costs'] }),
-      client.invalidateQueries({ queryKey: ['dashboard'] }),
+      client.invalidateQueries({ queryKey: ['delivery-notes', user?.id, activeCompanyId] }),
+      client.invalidateQueries({ queryKey: ['erp-dashboard'] }),
+      client.invalidateQueries({ queryKey: ['operational-report'] }),
     ]);
   }
 
@@ -248,6 +258,7 @@ export default function ProductionOrdersPage() {
       setOutputLot('');
       setVarianceNote('');
       await refresh();
+      setCreateOpen(false);
       if (planId) navigate('/production/orders');
     } catch (error) {
       notifyError(error);
@@ -259,7 +270,7 @@ export default function ProductionOrdersPage() {
   async function printJob(job) {
     try {
       const { downloadProductionJobPdf } = await import('./productionJobPdf');
-      downloadProductionJobPdf(job, items, warehouses);
+      downloadProductionJobPdf(job, items, warehouses, activeCompany?.name);
     } catch (error) { notifyError(error); }
   }
 
@@ -268,6 +279,8 @@ export default function ProductionOrdersPage() {
     && (mode === 'queue' || can('stock', 'insert')) && !busy && !!formula && validQuantity(quantity) && !!warehouseId
     && (!planId || (plan?.status === 'planned' && !planTaken
       && formula.version === plan.formula_version));
+  const activeJobs = jobs.filter((job) => ['queued', 'in_progress'].includes(job.status));
+  const closedJobs = jobs.filter((job) => ['completed', 'cancelled'].includes(job.status));
   const historicRuns = (runsQuery.data ?? []).filter((run) =>
     !jobs.some((job) => job.run_id === run.id));
 
@@ -281,8 +294,51 @@ export default function ProductionOrdersPage() {
         </div>
         <Link className="button" to="/production/formulas">Gestionar fórmulas</Link>
       </div>
-      <div className="production-grid">
-        <form className="production-card" onSubmit={submit}>
+      <div className="production-toolbar">
+        <button type="button" className="button primary" onClick={() => setCreateOpen(true)}>
+          <Plus size={17} /> Nueva orden
+        </button>
+        {can('stock', 'read') && <Link className="button outline" to="/inventory/delivery-notes">
+          <Truck size={17} /> Abrir remitero
+        </Link>}
+        <Link className="button outline" to="/production/planning">Ver planificación</Link>
+      </div>
+      <div className="production-overview">
+        <article><strong>{activeJobs.filter((job) => job.status === 'queued').length}</strong>
+          <span>En cola</span></article>
+        <article><strong>{activeJobs.filter((job) => job.status === 'in_progress').length}</strong>
+          <span>En proceso</span></article>
+        <article><strong>{closedJobs.filter((job) => job.status === 'completed').length}</strong>
+          <span>Completadas recientes</span></article>
+      </div>
+      <div className="production-jobs-heading">
+        <h2>Procesos activos</h2>
+        <p>Consultá insumos entregados, faltantes y movimientos de cada fabricación.</p>
+      </div>
+      {jobsQuery.isError && <p className="production-form-error">{friendlyError(jobsQuery.error)}</p>}
+      {jobsQuery.isPending && <p className="production-muted">Cargando órdenes…</p>}
+      {!jobsQuery.isPending && !activeJobs.length &&
+        <p className="production-muted">No hay procesos activos. Creá una orden para comenzar.</p>}
+      {activeJobs.map((job) => <div key={job.id} id={`job-${job.id}`}
+        className={job.id === focusJob ? 'production-job-focused' : ''}>
+        <ProductionJobCard job={job} items={items} warehouses={warehouses}
+          remitos={(deliveryQuery.data ?? []).filter((note) => note.job_id === job.id)}
+          onUpdated={refresh} onPrint={printJob} />
+      </div>)}
+      {!!closedJobs.length && <details className="production-closed"
+        open={closedJobs.some((job) => job.id === focusJob) || undefined}>
+        <summary>Órdenes finalizadas o canceladas ({closedJobs.length})</summary>
+        {closedJobs.map((job) => <div key={job.id} id={`job-${job.id}`}
+          className={job.id === focusJob ? 'production-job-focused' : ''}>
+          <ProductionJobCard job={job} items={items} warehouses={warehouses}
+            remitos={(deliveryQuery.data ?? []).filter((note) => note.job_id === job.id)}
+            onUpdated={refresh} onPrint={printJob} />
+        </div>)}
+      </details>}
+      <ActionDialog open={createOpen} busy={busy} title="Nueva orden de fabricación"
+        description="Creá una orden en cola o registrá una fabricación ya completada."
+        onClose={() => { setCreateOpen(false); if (planId) navigate('/production/orders'); }}>
+        <form className="production-card production-create-form" onSubmit={submit}>
           <h2><Factory size={20} /> Nueva orden</h2>
           {planId && <p className="production-muted">Orden basada en un plan de fabricación.</p>}
           {planId && (!plan || plan.status !== 'planned' || planTaken
@@ -384,33 +440,14 @@ export default function ProductionOrdersPage() {
             </button>
           </div>
         </form>
-        <aside className="production-card">
-          <h2>Cómo funciona</h2>
-          <p className="production-muted">En una orden pendiente podés retirar, devolver y agregar insumos en distintos días. Al finalizar, indicá cuánto producto obtuviste. El costo se calcula con el consumo neto registrado.</p>
-          {product && <p className="production-muted">
-            Producto: <strong>{product.name}</strong> · Fórmula v{formula?.version ?? '—'}
-          </p>}
-          <Link className="production-link" to="/production/planning">Ver planificación</Link>
-        </aside>
-      </div>
-      <div className="production-jobs-heading">
-        <h2>Seguimiento de órdenes</h2>
-        <p>Retirá insumos a medida que avance el trabajo y registrá devoluciones antes de cerrarlo.</p>
-      </div>
-      {jobsQuery.isError && <p className="production-form-error">{friendlyError(jobsQuery.error)}</p>}
-      {jobsQuery.isPending && <p className="production-muted">Cargando órdenes…</p>}
-      {!jobsQuery.isPending && !jobs.length && <p className="production-muted">Todavía no hay órdenes registradas.</p>}
-      {jobs.map((job) => <div key={job.id} id={`job-${job.id}`}
-        className={job.id === focusJob ? 'production-job-focused' : ''}>
-        <ProductionJobCard job={job} items={items} warehouses={warehouses}
-          onUpdated={refresh} onPrint={printJob} />
-      </div>)}
+      </ActionDialog>
       {!!historicRuns.length && <details className="production-card production-archive">
         <summary>Fabricaciones anteriores ({historicRuns.length})</summary>
         {historicRuns.map((run) => <div className="production-history" key={run.id}>
           <strong>{byId[run.product_id]?.name ?? 'Producto'}</strong>
           <span>{formatQuantity(run.quantity)} · {new Date(run.created_at).toLocaleString('es-AR')}</span>
-          <small>Costo registrado: $ {Number(run.estimated_cost).toLocaleString('es-AR')}</small>
+          {role === 'admin' && can('finance', 'read') &&
+            <small>Costo registrado: $ {Number(run.estimated_cost).toLocaleString('es-AR')}</small>}
         </div>)}
       </details>}
     </section>

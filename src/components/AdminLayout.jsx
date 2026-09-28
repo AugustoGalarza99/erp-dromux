@@ -14,10 +14,13 @@ import {
   ShoppingCart,
   ShoppingBag,
   Wallet,
+  UserRound,
   X,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { notifyError, notifySuccess } from '../lib/notifications';
+import ModuleHelp from '../modules/help/ModuleHelp';
+import NotificationCenter from '../modules/operations/NotificationCenter';
 
 const groups = [
   {
@@ -37,6 +40,7 @@ const groups = [
           { label: 'Productos', to: '/inventory/items?type=finished_product', permission: 'items' },
           { label: 'Stock por depósito', to: '/inventory/stock', permission: 'stock' },
           { label: 'Movimientos', to: '/inventory/movements', permission: 'stock' },
+          { label: 'Remitos de entrega', to: '/inventory/delivery-notes', permission: 'stock' },
         ],
       },
       {
@@ -67,12 +71,14 @@ const groups = [
         children: [
           { label: 'Cuentas por cobrar', to: '/finance/receivables', permission: 'finance' },
           { label: 'Tesorería', to: '/finance/treasury', permission: 'finance' },
-          { label: 'Costos y márgenes', to: '/finance/costs', permission: 'finance', adminOnly: true },
+          { label: 'Rentabilidad y precios', to: '/finance/costs', permission: 'finance', adminOnly: true },
         ],
       },
       {
         label: 'Reportes', icon: BarChart3, permission: 'reports',
-        children: ['Resumen', 'Indicadores'],
+        children: [
+          { label: 'Resumen por período', to: '/reports', permission: 'reports' },
+        ],
       },
     ],
   },
@@ -87,7 +93,6 @@ const groups = [
           { label: 'Unidades', to: '/settings/units', permission: 'units' },
           { label: 'Categorías', to: '/settings/categories', permission: 'categories' },
           { label: 'Depósitos', to: '/settings/warehouses', permission: 'warehouses' },
-          { label: 'Empresa', to: null, permission: 'settings' },
         ],
       },
     ],
@@ -107,12 +112,14 @@ export default function AdminLayout() {
   const location = useLocation();
   const routeName = {
     '/': 'Inicio', '/inventory/items': 'Ítems', '/inventory/stock': 'Stock por depósito',
-    '/inventory/movements': 'Movimientos', '/purchases/suppliers': 'Proveedores',
+    '/inventory/movements': 'Movimientos', '/inventory/delivery-notes': 'Remitos',
+    '/purchases/suppliers': 'Proveedores',
     '/purchases/orders': 'Órdenes de compra', '/production/formulas': 'Fórmulas',
     '/production/orders': 'Órdenes de fabricación', '/production/planning': 'Planificación',
     '/sales/customers': 'Clientes', '/sales/lista-precios': 'Lista de precios', '/sales/orders': 'Ventas',
     '/finance/receivables': 'Cuentas por cobrar', '/finance/treasury': 'Tesorería',
-    '/finance/costs': 'Costos y márgenes', '/settings/users': 'Usuarios',
+    '/finance/costs': 'Rentabilidad y precios', '/reports': 'Reportes',
+    '/ayuda': 'Guía de uso', '/mi-perfil': 'Mi perfil', '/settings/users': 'Usuarios',
     '/settings/roles': 'Roles y permisos', '/settings/units': 'Unidades',
     '/settings/categories': 'Categorías', '/settings/warehouses': 'Depósitos',
   };
@@ -177,22 +184,27 @@ export default function AdminLayout() {
                       {item.children ? (
                         <>
                           <button
-                            className="nav-item"
+                            className={`nav-item ${item.children.some((child) =>
+                              child.to?.split('?')[0] === location.pathname) ? 'active' : ''}`}
                             onClick={() => setOpen((previous) => ({
                               ...previous,
-                              [item.label]: !previous[item.label],
+                              [item.label]: !(previous[item.label] ?? item.children.some((child) =>
+                                child.to?.split('?')[0] === location.pathname)),
                             }))}
-                            aria-expanded={Boolean(open[item.label])}
+                            aria-expanded={Boolean(open[item.label] ?? item.children.some((child) =>
+                              child.to?.split('?')[0] === location.pathname))}
                           >
                             <Icon size={19} />
                             <span>{item.label}</span>
                             <ChevronDown
-                              className={open[item.label] ? 'rotated' : ''}
+                              className={(open[item.label] ?? item.children.some((child) =>
+                                child.to?.split('?')[0] === location.pathname)) ? 'rotated' : ''}
                               size={16}
                             />
                           </button>
 
-                          {open[item.label] && (
+                          {(open[item.label] ?? item.children.some((child) =>
+                            child.to?.split('?')[0] === location.pathname)) && (
                             <div className="subnav">
                               {item.children
                                 .filter((child) => (
@@ -204,7 +216,7 @@ export default function AdminLayout() {
                                       key={child.label}
                                       to={child.to}
                                       className={({ isActive }) => (
-                                        `subnav-item ${isActive ? 'selected' : ''}`
+                                        `subnav-item ${isActive && location.search === (child.to.split('?')[1] ? `?${child.to.split('?')[1]}` : '') ? 'selected' : ''}`
                                       )}
                                       onClick={() => setMenuOpen(false)}
                                     >
@@ -244,13 +256,13 @@ export default function AdminLayout() {
         </nav>
 
         <div className="sidebar-footer">
-          <div className="help-box">
+          <NavLink className="nav-item" to="/mi-perfil" onClick={() => setMenuOpen(false)}>
+            <UserRound size={18} /> <span>Mi perfil</span>
+          </NavLink>
+          <NavLink className="help-box" to="/ayuda" onClick={() => setMenuOpen(false)}>
             <CircleHelp size={19} />
-            <div>
-              <strong>Centro de operaciones</strong>
-              <span>Inventario · producción · finanzas</span>
-            </div>
-          </div>
+            <div><strong>Guía de uso</strong><span>Pasos para cada tarea</span></div>
+          </NavLink>
           <button
             className="nav-item signout"
             onClick={async () => {
@@ -295,12 +307,15 @@ export default function AdminLayout() {
           </div>
           <div className="topbar-right">
             <span className="online"><i /> Sistema activo</span>
-            <span className="avatar" title={user.email}>
-              {user.email?.[0]?.toUpperCase()}
-            </span>
+            <NotificationCenter />
+            <NavLink className="avatar" to="/mi-perfil"
+              aria-label="Abrir mi perfil" title={user.email}>
+              {(user.user_metadata?.full_name || user.email)?.[0]?.toUpperCase()}
+            </NavLink>
           </div>
         </header>
 
+        <ModuleHelp />
         <main className="content"><Outlet /></main>
         <footer className="footer">
           ERP Dromux <span>·</span> Gestión de tu empresa

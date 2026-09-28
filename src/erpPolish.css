@@ -136,3 +136,15 @@ input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 2px
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; }
 }
+
+.sidebar .help-box { text-decoration: none; }
+.sidebar .help-box:hover { background: #e7f4f1; }
+.sidebar .help-box:focus-visible { border-radius: 9px; }
+@media (max-width: 480px) { .erp-table-scroll, .finance-extra-table-wrap { scrollbar-width: thin; } }
+
+@media (max-width: 760px) {
+  .sidebar .nav-item { min-height: 44px; }
+  .sidebar .subnav-item { min-height: 40px; align-items: center; }
+  .main-area, .content, .sales-history, .movement-description, .finance-extra-card { min-width: 0; }
+  .sales-history, .movement-description, .finance-extra-card { overflow-wrap: anywhere; }
+}

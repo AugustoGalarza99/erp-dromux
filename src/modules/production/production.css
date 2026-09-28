@@ -79,3 +79,29 @@
 .production-archive summary { cursor: pointer; font-weight: 700; }
 @media (max-width: 760px) { .production-three-columns, .production-return-form { grid-template-columns: 1fr; gap: 0; } .production-return-form .button { margin: 0 0 12px; } }
 @media (max-width: 480px) { .production-job { padding: 16px; } .production-mode { grid-template-columns: 1fr; } }
+
+.production-toolbar { display: flex; flex-wrap: wrap; gap: 10px; margin: 0 0 20px; }
+.production-overview { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 12px; }
+.production-overview article { display: grid; gap: 5px; padding: 17px 20px; border: 1px solid #dce8e8; border-radius: 13px; background: #fff; }
+.production-overview article strong { font-size: 23px; color: #163f45; }
+.production-overview article span { color: #516973; font-size: 12px; font-weight: 700; }
+.production-create-form { padding: 0; border: 0; box-shadow: none; }
+.production-create-form > h2 { display: none; }
+.production-create-form .production-actions { justify-content: flex-end; }
+.production-job-summary { display: grid; grid-template-columns: repeat(auto-fit,minmax(145px,1fr)); }
+.production-job-summary span { display: grid; gap: 4px; }
+.production-job-summary strong { color: #193b44; font-size: 15px; }
+.production-job-expected { margin: 18px 0; }
+.production-job-progress { display: grid; align-content: start; gap: 5px; min-width: 0; padding: 13px; border: 1px solid #dfeae8; border-radius: 10px; background: #f7fbfa; color: #45616b; font-size: 12px; }
+.production-job-progress strong { font-size: 13px; color: #163841; }
+.production-awaiting { color: #955d21; font-weight: 800; }
+.production-linked-notes { margin: 11px 0; color: #3a5963; font-size: 12px; }
+.production-job-buttons { margin-top: 14px; }
+.production-job-buttons .button { padding: 10px 13px; font-size: 12px; }
+.production-movements { margin-top: 19px; }
+.production-movements > summary { padding: 9px 0; }
+.production-closed { margin-top: 28px; }
+.production-closed > summary { padding: 15px 18px; border: 1px solid #dbe8e8; border-radius: 11px; background: #fff; color: #375966; font-weight: 800; cursor: pointer; }
+.production-closed .production-job { margin-top: 13px; }
+@media (max-width: 650px) { .production-overview { grid-template-columns: 1fr 1fr; } .production-toolbar .button { flex: 1 1 145px; } }
+@media (max-width: 440px) { .production-overview { grid-template-columns: 1fr; } .production-job-buttons .button { flex: 1 1 100%; } }

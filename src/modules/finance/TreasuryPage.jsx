@@ -8,6 +8,7 @@ import {
   assignSalePayment, createTreasuryAccount, getTreasuryBalances,
   listTreasuryEntries, listUnassignedPayments, postTreasuryEntry,
 } from '../../services/treasury';
+import { readableMovementNote } from '../inventory/movementLabels';
 import './financeExtra.css';
 
 const ars = (value) => Number(value).toLocaleString('es-AR', {
@@ -206,7 +207,7 @@ export default function TreasuryPage() {
       {(movements.data ?? []).map((row) => <div className="finance-extra-movement" key={row.id}>
         <span><strong>{kinds[row.kind]} · {balances.data?.find((account) =>
           account.account_id === row.account_id)?.name ?? 'Cuenta'}</strong>
-          <small>{row.note} · {row.occurred_on}</small></span>
+          <small>{readableMovementNote(row.note)} · {row.occurred_on}</small></span>
         <strong className={['expense', 'supplier_payment', 'transfer_out'].includes(row.kind)
           ? 'finance-negative' : ''}>{ars(row.amount)}</strong>
       </div>)}

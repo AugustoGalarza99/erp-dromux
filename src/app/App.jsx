@@ -14,6 +14,7 @@ import ItemsPage from '../modules/inventory/ItemsPage';
 import ItemEditor from '../modules/inventory/ItemEditor';
 import StockPage from '../modules/inventory/StockPage';
 import MovementsPage from '../modules/inventory/MovementsPage';
+import DeliveryNotesPage from '../modules/inventory/DeliveryNotesPage';
 import SuppliersPage from '../modules/purchases/SuppliersPage';
 import PurchaseOrdersPage from '../modules/purchases/PurchaseOrdersPage';
 import FormulasPage from '../modules/production/FormulasPage';
@@ -25,6 +26,9 @@ import SalesOrdersPage from '../modules/sales/SalesOrdersPage';
 import ReceivablesPage from '../modules/finance/ReceivablesPage';
 import TreasuryPage from '../modules/finance/TreasuryPage';
 import CostsPage from '../modules/finance/CostsPage';
+import ReportsPage from '../modules/reports/ReportsPage';
+import GuidePage from '../modules/help/GuidePage';
+import ProfilePage from '../modules/settings/ProfilePage';
 
 function SetupCompany() {
   const { refresh, signOut } = useAuth();
@@ -170,6 +174,7 @@ export default function App() {
       <Route path="/login" element={<Login />} />
       <Route element={<Gate />}>
         <Route index element={<Dashboard />} />
+        <Route path="/mi-perfil" element={<ProfilePage />} />
         <Route
           path="/settings/users"
           element={<PermissionGate resource="users"><UsersPage /></PermissionGate>}
@@ -209,6 +214,10 @@ export default function App() {
         <Route
           path="/inventory/movements"
           element={<PermissionGate resource="stock"><MovementsPage /></PermissionGate>}
+        />
+        <Route
+          path="/inventory/delivery-notes"
+          element={<PermissionGate resource="stock"><DeliveryNotesPage /></PermissionGate>}
         />
         <Route
           path="/purchases/suppliers"
@@ -252,6 +261,10 @@ export default function App() {
         <Route path="/finance/costs"
           element={<PermissionGate resource="finance"><CostsPage /></PermissionGate>}
         />
+        <Route path="/reports"
+          element={<PermissionGate resource="reports"><ReportsPage /></PermissionGate>}
+        />
+        <Route path="/ayuda" element={<GuidePage />} />
         <Route
           path="/finance/receivables"
           element={<PermissionGate resource="finance"><ReceivablesPage /></PermissionGate>}

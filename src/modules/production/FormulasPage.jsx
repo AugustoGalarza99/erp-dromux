@@ -11,7 +11,7 @@ import './production.css';
 const newLine = () => ({ key: crypto.randomUUID(), componentId: '', quantity: '' });
 
 export default function FormulasPage() {
-  const { activeCompanyId, user, can } = useAuth();
+  const { activeCompanyId, user, can, role } = useAuth();
   const client = useQueryClient();
   const [productId, setProductId] = useState('');
   const [batch, setBatch] = useState('1');
@@ -54,7 +54,9 @@ export default function FormulasPage() {
         key: crypto.randomUUID(), componentId: line.component_id,
         quantity: String(line.quantity),
       })) : [newLine()]);
-    if (formula) getFormulaCost(activeCompanyId, id).then(setCost).catch(notifyError);
+    if (formula && role === 'admin' && can('finance', 'read')) {
+      getFormulaCost(activeCompanyId, id).then(setCost).catch(notifyError);
+    }
   }
 
   function changeLine(key, value) {
@@ -83,7 +85,9 @@ export default function FormulasPage() {
     setBusy(true);
     try {
       await saveFormula(activeCompanyId, productId, batch, lines);
-      setCost(await getFormulaCost(activeCompanyId, productId));
+      if (role === 'admin' && can('finance', 'read')) {
+        setCost(await getFormulaCost(activeCompanyId, productId));
+      }
       await client.invalidateQueries({ queryKey: ['production-formulas', user?.id, activeCompanyId] });
       notifySuccess('Fórmula guardada', 'El costo estimado se actualizó.');
     } catch (error) {
@@ -145,7 +149,10 @@ export default function FormulasPage() {
             <Plus size={16} /> Agregar componente
           </button>
           <div className="production-actions">
-            <span>{cost === null ? 'El costo se calcula al guardar.' : `Costo estimado por unidad: $ ${Number(cost).toLocaleString('es-AR', { minimumFractionDigits: 2 })}`}</span>
+            <span>{role === 'admin' && can('finance', 'read')
+              ? cost === null ? 'El costo se calcula al guardar.'
+                : `Costo estimado por unidad: $ ${Number(cost).toLocaleString('es-AR', { minimumFractionDigits: 2 })}`
+              : 'La fórmula determina los insumos previstos.'}</span>
             <button className="button primary" disabled={busy || !can('production', 'update')}>
               <Save size={16} /> {busy ? 'Guardando…' : 'Guardar fórmula'}
             </button>

@@ -159,9 +159,10 @@ export default function PurchaseOrdersPage() {
     )));
   };
 
-  const refresh = () => queryClient.invalidateQueries({
-    queryKey: ['purchase-orders', user?.id, activeCompanyId],
-  });
+  const refresh = () => Promise.all([
+    queryClient.invalidateQueries({ queryKey: ['purchase-orders', user?.id, activeCompanyId] }),
+    queryClient.invalidateQueries({ queryKey: ['operational-report'] }),
+  ]);
 
   const submit = async (event) => {
     event.preventDefault();

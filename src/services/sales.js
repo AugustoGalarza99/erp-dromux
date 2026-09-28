@@ -118,3 +118,10 @@ export async function refundSaleCredit(companyId, saleId, accountId, amount, rea
     p_request_id: requestId,
   }));
 }
+
+export async function findSalesByIds(companyId, ids) {
+  if (!ids.length) return [];
+  return unwrap(await supabase.from('sales')
+    .select('id, number, customer_name')
+    .eq('company_id', companyId).in('id', ids.slice(0, 50)));
+}
