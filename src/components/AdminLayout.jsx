@@ -49,6 +49,8 @@ const groups = [
           { label: 'Órdenes de fabricación', to: '/production/orders', permission: 'production' },
           { label: 'Fórmulas', to: '/production/formulas', permission: 'production' },
           { label: 'Planificación', to: '/production/planning', permission: 'production' },
+          { label: '¿Tengo stock para fabricar?', to: '/production/availability', permission: 'production' },
+          { label: 'Pronóstico y reposición', to: '/production/replenishment', permission: 'production' },
         ],
       },
       {
@@ -116,6 +118,8 @@ export default function AdminLayout() {
     '/purchases/suppliers': 'Proveedores',
     '/purchases/orders': 'Órdenes de compra', '/production/formulas': 'Fórmulas',
     '/production/orders': 'Órdenes de fabricación', '/production/planning': 'Planificación',
+    '/production/availability': 'Disponibilidad para fabricar',
+    '/production/replenishment': 'Pronóstico y reposición',
     '/sales/customers': 'Clientes', '/sales/lista-precios': 'Lista de precios', '/sales/orders': 'Ventas',
     '/finance/receivables': 'Cuentas por cobrar', '/finance/treasury': 'Tesorería',
     '/finance/costs': 'Rentabilidad y precios', '/reports': 'Reportes',

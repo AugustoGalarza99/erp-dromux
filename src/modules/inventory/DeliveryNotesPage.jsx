@@ -7,7 +7,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { friendlyError, notifyError, notifySuccess } from '../../lib/notifications';
 import { listDeliveryNotes, listDeliveryItems, voidDeliveryNote } from '../../services/deliveryNotes';
 import {
-  listProductionJobs, listProductionWarehouses,
+  listProductionJobs, listProductionReservationLocations, listProductionWarehouses,
 } from '../../services/production';
 import { formatQuantity } from './stockNumber';
 import { listSales } from '../../services/sales';
@@ -58,6 +58,11 @@ export default function DeliveryNotesPage() {
     queryFn: () => listProductionJobs(activeCompanyId),
     enabled: Boolean(activeCompanyId && can('production', 'read')),
   });
+  const allocationsQuery = useQuery({
+    queryKey: ['production-reservation-locations', user?.id, activeCompanyId],
+    queryFn: () => listProductionReservationLocations(activeCompanyId),
+    enabled: Boolean(activeCompanyId && can('production', 'read') && can('stock', 'read')),
+  });
   const items = itemsQuery.data ?? [];
   const jobs = jobsQuery.data ?? [];
   const rows = (notesQuery.data ?? []).filter((entry) =>
@@ -88,6 +93,10 @@ export default function DeliveryNotesPage() {
       client.invalidateQueries({ queryKey: ['delivery-balance'] }),
       client.invalidateQueries({ queryKey: ['delivery-lots'] }),
       client.invalidateQueries({ queryKey: ['erp-dashboard'] }),
+      client.invalidateQueries({ queryKey: ['operational-alerts'] }),
+      client.invalidateQueries({ queryKey: ['production-reservations'] }),
+      client.invalidateQueries({ queryKey: ['production-reservation-locations'] }),
+      client.invalidateQueries({ queryKey: ['planning-availability'] }),
     ]);
   }
 
@@ -187,6 +196,7 @@ export default function DeliveryNotesPage() {
         onClose={closeCreate}>
         {createOpen && <DeliveryNoteComposer
           items={items} warehouses={warehousesQuery.data ?? []} jobs={jobs}
+          allocations={allocationsQuery.data ?? []}
           initialKind={linkedJobId ? 'production' : linkedSaleId ? 'sale' : 'materials'}
           initialJobId={linkedJobId} initialSaleId={linkedSaleId}
           sales={salesQuery.data ?? []} notes={notesQuery.data ?? []}

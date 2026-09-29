@@ -20,7 +20,7 @@ import {
 } from '../../services/costing';
 import './purchases.css';
 
-const empty = { name: '', tax_id: '', email: '', phone: '', notes: '' };
+const empty = { name: '', tax_id: '', email: '', phone: '', notes: '', lead_time_days: '7' };
 const argentinaToday = () => new Intl.DateTimeFormat('sv-SE', {
   timeZone: 'America/Argentina/Buenos_Aires',
 }).format(new Date());
@@ -296,6 +296,7 @@ export default function SuppliersPage() {
                 <small>
                   {supplier.tax_id || supplier.email || supplier.phone || 'Sin datos de contacto'}
                   {!supplier.active ? ' · Inactivo' : ''}
+                  {' · '}Entrega habitual: {supplier.lead_time_days} días
                 </small>
               </div>
               {can('purchases', 'update') && (
@@ -308,6 +309,7 @@ export default function SuppliersPage() {
                       email: supplier.email,
                       phone: supplier.phone,
                       notes: supplier.notes,
+                      lead_time_days: String(supplier.lead_time_days),
                     });
                   }}>Editar</button>
                   <button type="button" disabled={busy} onClick={() => toggle(supplier)}>
@@ -342,6 +344,12 @@ export default function SuppliersPage() {
               <label>Correo
                 <input type="email" maxLength={160} value={form.email}
                   onChange={(event) => setForm({ ...form, email: event.target.value })} />
+              </label>
+              <label>Plazo habitual de entrega (días)
+                <input type="number" required min="0" max="365" step="1"
+                  value={form.lead_time_days}
+                  onChange={(event) => setForm({ ...form,
+                    lead_time_days: event.target.value })} />
               </label>
               <label>Notas
                 <textarea maxLength={500} rows={3} value={form.notes}

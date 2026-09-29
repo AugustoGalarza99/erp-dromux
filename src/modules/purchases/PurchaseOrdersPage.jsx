@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { Download, Plus, ShoppingCart, X } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import ConfirmDeleteDialog from '../../components/ConfirmDeleteDialog';
@@ -12,6 +12,7 @@ import {
   cancelPurchaseOrder,
   createPurchaseOrder,
   findPurchaseItems,
+  getPurchaseSuggestion,
   listPurchaseOrders,
   listSuppliers,
   listSupplierQuotes,
@@ -70,6 +71,12 @@ function PurchaseItemPicker({ companyId, userId, supplierId, line, onChange, dis
 export default function PurchaseOrdersPage() {
   const { activeCompanyId, activeCompany, user, can } = useAuth();
   const queryClient = useQueryClient();
+  const [params, setParams] = useSearchParams();
+  const suggestedItem = params.get('item');
+  const suggestedSupplier = params.get('supplier');
+  const suggestedQuantity = params.get('quantity');
+  const loadedSuggestion = useRef('');
+  const mayBuy = can('purchases', 'insert');
   const [supplierId, setSupplierId] = useState('');
   const [selectedSupplier, setSelectedSupplier] = useState(null);
   const [supplierSearch, setSupplierSearch] = useState('');
@@ -93,6 +100,28 @@ export default function PurchaseOrdersPage() {
     setCancelTarget(null);
     setReceivingOrderId(null);
   }, [activeCompanyId]);
+
+  useEffect(() => {
+    if (!activeCompanyId || !suggestedItem || !mayBuy) return;
+    const key = `${activeCompanyId}:${suggestedItem}:${suggestedSupplier ?? ''}:${suggestedQuantity ?? ''}`;
+    if (loadedSuggestion.current === key) return;
+    loadedSuggestion.current = key;
+    let mounted = true;
+    getPurchaseSuggestion(activeCompanyId, suggestedItem, suggestedSupplier)
+      .then(({ item, supplier, price }) => {
+        if (!mounted) return;
+        setLines([{ ...newLine(), item_id: item.id,
+          item: { ...item, supplier_unit_price: price },
+          quantity: Number(suggestedQuantity) > 0 ? suggestedQuantity : '',
+          unit_price: price == null ? '' : String(price) }]);
+        setSupplierId(supplier?.active ? supplier.id : '');
+        setSelectedSupplier(supplier?.active ? supplier : null);
+        setSupplierSearch('');
+        setNote('Reposición sugerida por pronóstico');
+      })
+      .catch((error) => { if (mounted) notifyError(error); });
+    return () => { mounted = false; };
+  }, [activeCompanyId, suggestedItem, suggestedSupplier, suggestedQuantity, mayBuy]);
 
   useEffect(() => {
     if (receivingOrderId) receiptPanelRef.current?.scrollIntoView({
@@ -161,6 +190,7 @@ export default function PurchaseOrdersPage() {
 
   const refresh = () => Promise.all([
     queryClient.invalidateQueries({ queryKey: ['purchase-orders', user?.id, activeCompanyId] }),
+    queryClient.invalidateQueries({ queryKey: ['replenishment-forecast', user?.id, activeCompanyId] }),
     queryClient.invalidateQueries({ queryKey: ['operational-report'] }),
   ]);
 
@@ -191,6 +221,7 @@ export default function PurchaseOrdersPage() {
       setLines([newLine()]);
       setNote('');
       notifySuccess('Orden de compra creada');
+      if (suggestedItem) setParams({}, { replace: true });
     } catch (error) {
       notifyError(error);
     } finally {

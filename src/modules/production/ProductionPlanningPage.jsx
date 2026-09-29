@@ -7,8 +7,8 @@ import ConfirmDeleteDialog from '../../components/ConfirmDeleteDialog';
 import { notifyError, notifySuccess, friendlyError } from '../../lib/notifications';
 import { formatQuantity } from '../inventory/stockNumber';
 import {
-  cancelProductionPlan, createProductionPlan, listFormulas,
-  listProductionBalances, listProductionItems, listProductionJobs, listProductionPlans,
+  cancelProductionPlan, checkManufacturingAvailability, createProductionPlan, listFormulas,
+  listProductionItems, listProductionJobs, listProductionPlans,
   listProductionWarehouses,
 } from '../../services/production';
 import './production.css';
@@ -59,11 +59,12 @@ export default function ProductionPlanningPage() {
     quantity: Number(line.quantity) * Number(quantity) / Number(formula.batch_quantity),
   })) ?? [];
   const balancesQuery = useQuery({
-    queryKey: ['planning-balances', activeCompanyId, productId],
-    queryFn: () => listProductionBalances(activeCompanyId, required.map((line) => line.componentId)),
-    enabled: !!(activeCompanyId && formula),
+    queryKey: ['planning-availability', activeCompanyId, productId, quantity],
+    queryFn: () => checkManufacturingAvailability(activeCompanyId, productId, quantity),
+    enabled: Boolean(activeCompanyId && formula && can('stock', 'read')
+      && Number(quantity) > 0 && Number(quantity) < 1000000000000),
   });
-  const balances = balancesQuery.data ?? [];
+  const balances = balancesQuery.data?.lines ?? [];
 
   useEffect(() => {
     setProductId('');
@@ -167,19 +168,22 @@ export default function ProductionPlanningPage() {
           </label>
           {formula && <>
             <div className="production-subtitle">Necesidades previstas</div>
+            {balancesQuery.error && <p role="alert" className="production-error">
+              {friendlyError(balancesQuery.error)}
+            </p>}
             {required.map((line) => {
-              const available = balances.filter((balance) => balance.item_id === line.componentId)
-                .reduce((sum, balance) => sum + Number(balance.quantity), 0);
+              const balance = balances.find((entry) => entry.item_id === line.componentId);
+              const available = Number(balance?.free ?? 0);
               return <div className="production-planning-line" key={line.componentId}>
                 <strong>{byId[line.componentId]?.name}</strong>
                 <span>Necesitás {Number.isFinite(line.quantity) ? formatQuantity(line.quantity.toFixed(6)) : '—'} {byId[line.componentId]?.units?.symbol}</span>
-                <small className={available >= line.quantity ? 'production-ok' : 'production-error'}>
-                  {formatQuantity(available.toFixed(6))} en todos los depósitos ·
-                  {available >= line.quantity ? ' disponible' : ' falta stock'}
-                </small>
+                {can('stock', 'read') && <small className={available >= line.quantity ? 'production-ok' : 'production-error'}>
+                  {balancesQuery.isPending ? 'Calculando disponibilidad…' :
+                    `${formatQuantity(available.toFixed(6))} libre · ${formatQuantity(Number(balance?.reserved ?? 0).toFixed(6))} reservado · ${available >= line.quantity ? 'alcanza' : 'falta stock'}`}
+                </small>}
               </div>;
             })}
-            <p className="production-muted">El stock es orientativo. En la orden registrarás el origen y el lote real de cada consumo.</p>
+            <p className="production-muted">El plan todavía no reserva stock. La reserva se asigna al crear la orden de fabricación; el depósito y el lote reales se eligen al entregar insumos.</p>
           </>}
           <label>Observaciones
             <input required minLength={3} maxLength={400} value={note}

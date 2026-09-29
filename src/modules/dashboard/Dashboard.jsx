@@ -58,6 +58,7 @@ export default function Dashboard() {
   const shortcuts = [
     { label: 'Nueva orden de fabricación', to: '/production/orders', resource: 'production', action: 'insert' },
     { label: 'Planificar fabricación', to: '/production/planning', resource: 'production', action: 'read' },
+    { label: '¿Tengo stock para fabricar?', to: '/production/availability', resource: 'production', action: 'read' },
     { label: 'Ver fórmulas', to: '/production/formulas', resource: 'production', action: 'read' },
     { label: 'Consultar stock', to: '/inventory/stock', resource: 'stock', action: 'read' },
     { label: 'Emitir remito', to: '/inventory/delivery-notes', resource: 'stock', action: 'insert' },

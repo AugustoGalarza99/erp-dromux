@@ -94,6 +94,7 @@
 .production-job-expected { margin: 18px 0; }
 .production-job-progress { display: grid; align-content: start; gap: 5px; min-width: 0; padding: 13px; border: 1px solid #dfeae8; border-radius: 10px; background: #f7fbfa; color: #45616b; font-size: 12px; }
 .production-job-progress strong { font-size: 13px; color: #163841; }
+.production-job-slot { display: block; color: #176d67; font-weight: 650; line-height: 1.4; }
 .production-awaiting { color: #955d21; font-weight: 800; }
 .production-linked-notes { margin: 11px 0; color: #3a5963; font-size: 12px; }
 .production-job-buttons { margin-top: 14px; }

@@ -1,0 +1,23 @@
+.replenishment-page { display: grid; gap: 20px; }
+.replenishment-summary { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.replenishment-summary article { display: grid; gap: 3px; padding: 19px; background: #fff; border: 1px solid #dbe8e8; border-radius: 14px; }
+.replenishment-summary strong { font-size: 27px; color: #123840; }
+.replenishment-summary span { font-size: 12px; color: #49636e; }
+.replenishment-toolbar { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; }
+.replenishment-toolbar label { display: grid; gap: 5px; min-width: 170px; flex: 1; color: #304d59; font-size: 12px; font-weight: 700; }
+.replenishment-toolbar input, .replenishment-toolbar select { width: 100%; }
+.replenishment-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 380px), 1fr)); gap: 14px; }
+.replenishment-card { display: grid; align-content: start; gap: 15px; min-width: 0; padding: 19px; background: #fff; border: 1px solid #dbe8e8; border-radius: 15px; box-shadow: 0 10px 22px #15363b08; }
+.replenishment-card-head { display: flex; justify-content: space-between; align-items: start; gap: 12px; }
+.replenishment-card-head small { color: #607680; }
+.replenishment-card-head h2 { margin: 4px 0 0; font-size: 17px; color: #15353f; }
+.replenishment-level { display: inline-flex; align-items: center; gap: 4px; padding: 6px 9px; border-radius: 20px; background: #e8f5ef; color: #176c52; font-size: 11px; font-weight: 800; white-space: nowrap; }
+.replenishment-level.warning { background: #fff4dd; color: #8d5a11; }
+.replenishment-level.critical { background: #fff0ec; color: #a6432a; }
+.replenishment-values { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.replenishment-values span { display: grid; gap: 4px; font-size: 11px; color: #536c76; }
+.replenishment-values strong { font-size: 15px; color: #183843; }
+.replenishment-detail, .replenishment-method, .replenishment-empty { margin: 0; color: #435d68; line-height: 1.6; font-size: 12px; }
+.replenishment-method { padding: 14px; background: #eef6f4; border-radius: 11px; }
+.replenishment-action { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; padding-top: 12px; border-top: 1px solid #e6eeee; font-size: 12px; color: #2b4b57; }
+@media (max-width: 620px) { .replenishment-summary { grid-template-columns: 1fr 1fr; } .replenishment-values { grid-template-columns: 1fr 1fr; } .replenishment-card { padding: 15px; } }

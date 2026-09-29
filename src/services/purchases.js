@@ -8,13 +8,34 @@ function unwrap({ data, error }) {
 export async function listSuppliers(companyId, search = '') {
   let query = supabase
     .from('suppliers')
-    .select('id, name, tax_id, email, phone, notes, active')
+    .select('id, name, tax_id, email, phone, notes, active, lead_time_days')
     .eq('company_id', companyId)
     .order('name')
     .limit(100);
 
   if (search.trim()) query = query.ilike('name', `%${search.trim()}%`);
   return unwrap(await query);
+}
+
+export async function getPurchaseSuggestion(companyId, itemId, supplierId) {
+  const item = unwrap(await supabase.from('items')
+    .select('id, code')
+    .eq('company_id', companyId).eq('id', itemId).single());
+  const options = await findPurchaseItems(companyId, item.code, supplierId || null);
+  const choice = options.find((entry) => entry.id === itemId);
+  if (!choice) throw new Error('El material ya no está disponible para ese proveedor.');
+
+  let supplier = null;
+  let price = choice.reference_unit_cost ?? null;
+  if (supplierId) {
+    supplier = unwrap(await supabase.from('suppliers')
+      .select('id, name, active')
+      .eq('company_id', companyId).eq('id', supplierId).single());
+    const quote = (await listSupplierQuotes(companyId, supplierId, itemId))
+      .find((entry) => entry.supplier_active && entry.unit_cost_ars != null);
+    price = quote?.unit_cost_ars ?? null;
+  }
+  return { item: choice, supplier, price };
 }
 
 export async function saveSupplier(companyId, id, values) {
@@ -24,6 +45,7 @@ export async function saveSupplier(companyId, id, values) {
     email: values.email.trim(),
     phone: values.phone.trim(),
     notes: values.notes.trim(),
+    lead_time_days: Number(values.lead_time_days),
   };
 
   if (id) {

@@ -210,3 +210,31 @@ export async function completeProductionNow(companyId, values, requestId, finish
     p_plan: values.planId || null,
   }));
 }
+
+export async function checkManufacturingAvailability(companyId, productId, quantity) {
+  return unwrap(await supabase.rpc('erp_can_manufacture', {
+    p_company: companyId,
+    p_product: productId,
+    p_quantity: quantity,
+  }));
+}
+
+export async function listProductionReservations(companyId) {
+  return unwrap(await supabase.from('production_job_reservations')
+    .select('job_id, component_id, required_quantity, reserved_quantity')
+    .eq('company_id', companyId)
+    .limit(2000));
+}
+
+export async function listProductionReservationLocations(companyId) {
+  return unwrap(await supabase.from('production_reservation_locations')
+    .select('job_id, component_id, warehouse_id, lot_code, quantity')
+    .eq('company_id', companyId)
+    .limit(3000));
+}
+
+export async function recalculateProductionReservations(companyId) {
+  return unwrap(await supabase.rpc('recalculate_production_reservations', {
+    p_company: companyId,
+  }));
+}

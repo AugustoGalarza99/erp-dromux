@@ -11,7 +11,8 @@ import { listStockLots } from '../../services/stock';
 import {
   completeProductionNow, createProductionJob, listFormulas,
   listProductionBalances, listProductionItems, listProductionJobs,
-  listProductionPlans, listProductionRuns, listProductionWarehouses,
+  listProductionPlans, listProductionRuns, listProductionReservationLocations,
+  listProductionWarehouses,
 } from '../../services/production';
 import ProductionJobCard from './ProductionJobCard';
 import './production.css';
@@ -141,6 +142,11 @@ export default function ProductionOrdersPage() {
     queryFn: () => listDeliveryNotes(activeCompanyId),
     enabled: Boolean(activeCompanyId),
   });
+  const locationsQuery = useQuery({
+    queryKey: ['production-reservation-locations', user?.id, activeCompanyId],
+    queryFn: () => listProductionReservationLocations(activeCompanyId),
+    enabled: Boolean(activeCompanyId && can('stock', 'read')),
+  });
   const plansQuery = useQuery({
     queryKey: ['production-plans', user?.id, activeCompanyId],
     queryFn: () => listProductionPlans(activeCompanyId), enabled: !!(activeCompanyId && planId),
@@ -198,6 +204,10 @@ export default function ProductionOrdersPage() {
   function refresh() {
     return Promise.all([
       client.invalidateQueries({ queryKey: ['production-jobs', user?.id, activeCompanyId] }),
+      client.invalidateQueries({ queryKey: ['production-reservations', user?.id, activeCompanyId] }),
+      client.invalidateQueries({ queryKey: ['production-reservation-locations', user?.id, activeCompanyId] }),
+      client.invalidateQueries({ queryKey: ['production-dashboard', user?.id, activeCompanyId] }),
+      client.invalidateQueries({ queryKey: ['planning-availability'] }),
       client.invalidateQueries({ queryKey: ['production-runs', user?.id, activeCompanyId] }),
       client.invalidateQueries({ queryKey: ['production-plans', user?.id, activeCompanyId] }),
       client.invalidateQueries({ queryKey: ['production-balances'] }),
@@ -209,6 +219,7 @@ export default function ProductionOrdersPage() {
       client.invalidateQueries({ queryKey: ['product-costs'] }),
       client.invalidateQueries({ queryKey: ['delivery-notes', user?.id, activeCompanyId] }),
       client.invalidateQueries({ queryKey: ['erp-dashboard'] }),
+      client.invalidateQueries({ queryKey: ['operational-alerts'] }),
       client.invalidateQueries({ queryKey: ['operational-report'] }),
     ]);
   }
@@ -240,7 +251,7 @@ export default function ProductionOrdersPage() {
         await createProductionJob(activeCompanyId, {
           productId, quantity, warehouseId, dueOn, note, planId,
         }, requestId);
-        notifySuccess('Orden creada', 'Quedó en la cola. Podés iniciar y retirar insumos cuando corresponda.');
+        notifySuccess('Orden creada', 'Se asignó el stock libre a la orden; verificá los faltantes en Disponibilidad.');
       } else {
         await completeProductionNow(activeCompanyId, {
           productId, plannedQuantity: quantity, actualQuantity: actual,
@@ -322,6 +333,7 @@ export default function ProductionOrdersPage() {
       {activeJobs.map((job) => <div key={job.id} id={`job-${job.id}`}
         className={job.id === focusJob ? 'production-job-focused' : ''}>
         <ProductionJobCard job={job} items={items} warehouses={warehouses}
+          allocations={(locationsQuery.data ?? []).filter((row) => row.job_id === job.id)}
           remitos={(deliveryQuery.data ?? []).filter((note) => note.job_id === job.id)}
           onUpdated={refresh} onPrint={printJob} />
       </div>)}
@@ -395,7 +407,7 @@ export default function ProductionOrdersPage() {
               <input type="date" value={dueOn}
                 onChange={(event) => setDueOn(event.target.value)} />
             </label>
-            <p className="production-muted">Al crearla no se modifica el stock. Iniciá la orden cuando retires el primer insumo.</p>
+            <p className="production-muted">Crear la orden reserva el stock libre sin descontarlo físicamente. Podés crearla aunque falte material; consultá el detalle en «¿Tengo stock para fabricar?». El descuento se produce al entregar insumos.</p>
           </> : <>
             <div className="production-subtitle">Consumo real de insumos</div>
             {inputs.map((row, index) => {

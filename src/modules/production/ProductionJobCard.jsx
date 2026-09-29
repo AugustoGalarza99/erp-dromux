@@ -22,7 +22,7 @@ const validQuantity = (value) => /^\d+(?:\.\d{1,6})?$/.test(String(value))
   && Number(value) > 0 && Number(value) < 1000000000000;
 
 export default function ProductionJobCard({
-  job, items, warehouses, remitos = [], onUpdated, onPrint,
+  job, items, warehouses, allocations = [], remitos = [], onUpdated, onPrint,
 }) {
   const { activeCompanyId, can, role } = useAuth();
   const [action, setAction] = useState(null);
@@ -91,9 +91,12 @@ export default function ProductionJobCard({
     const line = expected.find((entry) => entry.component_id === id);
     const remainingAmount = Math.max(0, Number(line?.quantity ?? 0)
       - Number(net.get(id) ?? 0));
+    const suggested = allocations.find((entry) => entry.component_id === id);
     setIssue((current) => ({ ...current, componentId: id,
-      warehouseId: '', lotCode: '',
-      quantity: remainingAmount ? String(Number(remainingAmount.toFixed(6))) : '' }));
+      warehouseId: suggested?.warehouse_id ?? '', lotCode: suggested?.lot_code ?? '',
+      quantity: remainingAmount
+        ? String(Number(Math.min(remainingAmount,
+          Number(suggested?.quantity ?? remainingAmount)).toFixed(6))) : '' }));
   }
 
   async function saveIssue(event) {
@@ -216,10 +219,19 @@ export default function ProductionJobCard({
         {expected.map((entry) => {
           const issued = net.get(entry.component_id) ?? 0;
           const pending = Math.max(0, Number(entry.quantity) - issued);
+          const slots = allocations.filter((row) => row.component_id === entry.component_id);
+          const assigned = slots.reduce((sum, row) => sum + Number(row.quantity), 0);
           return <div className="production-job-progress" key={entry.component_id}>
             <strong>{itemName(entry.component_id)}</strong>
             <span>Previsto: {formatQuantity(entry.quantity)}</span>
             <span>Entregado: {formatQuantity(issued.toFixed(6))}</span>
+            {active && <span>Asignado: {formatQuantity(assigned.toFixed(6))}</span>}
+            {slots.map((slot) => <small key={`${slot.warehouse_id}:${slot.lot_code ?? ''}`}
+              className="production-job-slot">
+              {warehouses.find((warehouse) => warehouse.id === slot.warehouse_id)?.name
+                ?? 'Depósito'}{slot.lot_code && ` · Lote ${slot.lot_code}`}
+              {' · '}{formatQuantity(slot.quantity)}
+            </small>)}
             <span className={pending > 0.000001 ? 'production-awaiting' : 'production-ok'}>
               {pending > 0.000001 ? `Falta: ${formatQuantity(pending.toFixed(6))}`
                 : 'Entrega cubierta'}
@@ -293,7 +305,7 @@ export default function ProductionJobCard({
         description="Un remito vinculado registra los consumos y descuenta stock una sola vez."
         busy={issuing} onClose={() => { if (!issuing) setAction(null); }}>
         {action === 'remito' && <DeliveryNoteComposer
-          items={items} warehouses={warehouses} jobs={[job]}
+          items={items} warehouses={warehouses} jobs={[job]} allocations={allocations}
           initialKind="production" initialJobId={job.id}
           onCancel={() => { if (!issuing) setAction(null); }}
           onBusyChange={setIssuing}

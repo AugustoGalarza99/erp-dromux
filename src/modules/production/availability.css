@@ -1,0 +1,33 @@
+.manufacturing-availability { display: grid; gap: 22px; }
+.manufacturing-availability .page-head p { color: #4e6570; }
+.manufacturing-check { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(155px, .6fr) auto; gap: 15px; align-items: end; padding: 23px; background: #fff; border: 1px solid #d9e6e7; border-radius: 16px; box-shadow: 0 10px 24px #12354009; }
+.manufacturing-check label { min-width: 0; display: grid; gap: 7px; font-size: 13px; font-weight: 700; color: #2a424f; }
+.manufacturing-check input, .manufacturing-check select { min-width: 0; width: 100%; }
+.manufacturing-result, .manufacturing-commitments { padding: 22px; border: 1px solid #d9e6e7; background: #fff; border-radius: 16px; }
+.manufacturing-result-head { display: flex; gap: 12px; align-items: flex-start; padding: 17px; border-radius: 12px; background: #edf8f2; color: #177454; }
+.manufacturing-result-head.shortage { background: #fff4ed; color: #a44a2d; }
+.manufacturing-result-head h2 { margin: 0 0 5px; font-size: 18px; color: #183445; }
+.manufacturing-result-head p { margin: 0; color: #4b6069; font-size: 12px; }
+.manufacturing-table-wrap { overflow-x: auto; margin: 18px 0; }
+.manufacturing-table-wrap table { width: 100%; min-width: 700px; border-collapse: collapse; font-size: 12px; }
+.manufacturing-table-wrap th, .manufacturing-table-wrap td { padding: 12px 10px; border-bottom: 1px solid #e8eef0; text-align: right; }
+.manufacturing-table-wrap th:first-child, .manufacturing-table-wrap td:first-child { text-align: left; }
+.manufacturing-table-wrap th { color: #3d5864; background: #f5f9f9; font-weight: 800; }
+.manufacturing-table-wrap td { color: #263f4d; }
+.manufacturing-table-wrap td small { display: block; margin-top: 3px; color: #586e79; }
+.manufacturing-shortage { color: #ae482c !important; font-weight: 800; }
+.manufacturing-slots { margin-top: 7px; color: #126b68; }
+.manufacturing-slots summary { cursor: pointer; font-weight: 700; }
+.manufacturing-slots small { line-height: 1.5; }
+.manufacturing-note { color: #4c6570; font-size: 12px; line-height: 1.65; }
+.manufacturing-commitments-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+.manufacturing-commitments-head h2 { margin: 6px 0; font-size: 18px; }
+.manufacturing-commitments > p { margin: 7px 0 17px; color: #4e6570; font-size: 12px; line-height: 1.6; }
+.manufacturing-reservations { display: grid; }
+.manufacturing-reservation { display: flex; align-items: center; gap: 12px; padding: 14px 0; border-top: 1px solid #e8eef0; color: #1f3a47; text-decoration: none; }
+.manufacturing-reservation:hover { color: #087a70; }
+.manufacturing-reservation > div { display: grid; gap: 4px; min-width: 0; flex: 1; }
+.manufacturing-reservation strong { font-size: 13px; }
+.manufacturing-reservation small, .manufacturing-reservation > span { font-size: 12px; color: #506775; }
+@media(max-width: 800px) { .manufacturing-check { grid-template-columns: 1fr 1fr; } .manufacturing-check label:first-child { grid-column: 1 / -1; } .manufacturing-check .button { align-self: stretch; justify-content: center; } }
+@media(max-width: 520px) { .manufacturing-check { grid-template-columns: 1fr; padding: 16px; } .manufacturing-check label:first-child { grid-column: auto; } .manufacturing-result, .manufacturing-commitments { padding: 16px; } .manufacturing-reservation { flex-wrap: wrap; } }

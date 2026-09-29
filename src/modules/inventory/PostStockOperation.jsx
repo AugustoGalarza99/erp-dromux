@@ -158,6 +158,9 @@ export default function PostStockOperation({ initialItem = null }) {
         queryClient.invalidateQueries({ queryKey: ['stock-movements', user.id, activeCompanyId] }),
         queryClient.invalidateQueries({ queryKey: ['stock-lots', user.id, activeCompanyId] }),
         queryClient.invalidateQueries({ queryKey: ['stock-lot-breakdown', user.id, activeCompanyId] }),
+        queryClient.invalidateQueries({ queryKey: ['production-reservations'] }),
+        queryClient.invalidateQueries({ queryKey: ['planning-availability'] }),
+        queryClient.invalidateQueries({ queryKey: ['operational-alerts'] }),
       ]);
     } catch (err) {
       setError(notifyError(err));

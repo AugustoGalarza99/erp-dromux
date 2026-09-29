@@ -20,6 +20,8 @@ import PurchaseOrdersPage from '../modules/purchases/PurchaseOrdersPage';
 import FormulasPage from '../modules/production/FormulasPage';
 import ProductionOrdersPage from '../modules/production/ProductionOrdersPage';
 import ProductionPlanningPage from '../modules/production/ProductionPlanningPage';
+import ManufacturingAvailabilityPage from '../modules/production/ManufacturingAvailabilityPage';
+import ReplenishmentPage from '../modules/production/ReplenishmentPage';
 import CustomersPage from '../modules/sales/CustomersPage';
 import PriceListPage from '../modules/sales/PriceListPage';
 import SalesOrdersPage from '../modules/sales/SalesOrdersPage';
@@ -238,6 +240,14 @@ export default function App() {
         <Route
           path="/production/planning"
           element={<PermissionGate resource="production"><ProductionPlanningPage /></PermissionGate>}
+        />
+        <Route
+          path="/production/availability"
+          element={<PermissionGate resource="production"><ManufacturingAvailabilityPage /></PermissionGate>}
+        />
+        <Route
+          path="/production/replenishment"
+          element={<PermissionGate resource="production"><ReplenishmentPage /></PermissionGate>}
         />
         <Route
           path="/sales/customers"

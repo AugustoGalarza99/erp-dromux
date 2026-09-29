@@ -9,8 +9,8 @@ import { issueDeliveryNote, issueSaleDeliveryNote } from '../../services/deliver
 import { formatQuantity } from './stockNumber';
 import './deliveryNotes.css';
 
-const newLine = (itemId = '', quantity = '') => ({
-  key: crypto.randomUUID(), itemId, warehouseId: '', lotCode: '', quantity, search: '',
+const newLine = (itemId = '', quantity = '', warehouseId = '', lotCode = '') => ({
+  key: crypto.randomUUID(), itemId, warehouseId, lotCode, quantity, search: '',
 });
 const validAmount = (value) => /^\d+(?:\.\d{1,6})?$/.test(String(value))
   && Number(value) > 0 && Number(value) < 1000000000000;
@@ -93,7 +93,7 @@ function LineEditor({ companyId, line, index, items, warehouses, onUpdate, onRem
 }
 
 export default function DeliveryNoteComposer({
-  items, warehouses, jobs, sales = [], notes = [], initialKind = 'materials',
+  items, warehouses, jobs, allocations = [], sales = [], notes = [], initialKind = 'materials',
   initialJobId = '', initialSaleId = '', onIssued, onCancel, onBusyChange,
 }) {
   const { activeCompanyId, can } = useAuth();
@@ -131,7 +131,7 @@ export default function DeliveryNoteComposer({
       initializedJob.current = initialJobId;
       selectJob(initialJobId);
     }
-  }, [initialJobId, jobs]);
+  }, [initialJobId, jobs, allocations]);
 
   useEffect(() => {
     if (initialSaleId && initializedSale.current !== initialSaleId
@@ -176,8 +176,21 @@ export default function DeliveryNoteComposer({
       itemId: entry.component_id,
       quantity: Math.max(0, Number(entry.quantity) - (consumed.get(entry.component_id) ?? 0)),
     })).filter((entry) => entry.quantity > 0.000001);
-    setLines(pending.length ? pending.map((entry) => newLine(entry.itemId,
-      String(Number(entry.quantity.toFixed(6))))) : [newLine()]);
+    const suggestions = pending.flatMap((entry) => {
+      let left = entry.quantity;
+      const proposed = [];
+      for (const slot of allocations.filter((row) => row.job_id === id
+        && row.component_id === entry.itemId)) {
+        const amount = Math.min(left, Number(slot.quantity));
+        if (amount > 0.000001) proposed.push(newLine(entry.itemId,
+          String(Number(amount.toFixed(6))), slot.warehouse_id, slot.lot_code ?? ''));
+        left -= amount;
+      }
+      if (!proposed.length) proposed.push(newLine(entry.itemId,
+        String(Number(entry.quantity.toFixed(6)))));
+      return proposed;
+    });
+    setLines(suggestions.length ? suggestions : [newLine()]);
   }
 
   async function submit(event) {
@@ -267,8 +280,9 @@ export default function DeliveryNoteComposer({
         </label>
       </div>
       {kind === 'production' && selectedJob &&
-        <p className="delivery-composer-tip">Se sugieren los insumos que faltan según la fórmula.
+        <p className="delivery-composer-tip">Se sugieren depósitos y lotes con stock asignado a esta orden.
           Podés entregar solo una parte, cambiar cantidades o agregar otros insumos.
+          Si hay faltantes sin asignación, esperá un ingreso de stock o elegí stock libre.
           Cada renglón quedará registrado como consumo de esta orden.</p>}
       {kind === 'products' && <p className="delivery-composer-tip">
         La entrega descuenta el stock del semielaborado o producto elegido.
