@@ -168,9 +168,9 @@ export default function ManufacturingAvailabilityPage() {
                       </small>)}
                     </details>}
                   </td>
-                  <td>{part(line.required)}</td><td>{part(line.physical)}</td>
-                  <td>{part(line.usable ?? line.physical)}</td>
-                  <td>{part(line.reserved)}</td><td>{part(line.free)}</td>
+                  <td>{part(line.required)}</td><td>{line.infinite_stock ? '∞' : part(line.physical)}</td>
+                  <td>{line.infinite_stock ? '∞' : part(line.usable ?? line.physical)}</td>
+                  <td>{part(line.reserved)}</td><td>{line.infinite_stock ? '∞' : part(line.free)}</td>
                   <td className={shortage > 0.000001 ? 'manufacturing-shortage' : ''}>
                     {shortage > 0.000001 ? part(shortage) : '—'}
                   </td>

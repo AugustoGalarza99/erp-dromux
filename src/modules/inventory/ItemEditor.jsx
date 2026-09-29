@@ -24,6 +24,7 @@ const emptyForm = {
   description: '',
   minimum_stock: '0',
   track_lots: false,
+  infinite_stock: false,
   reference_unit_cost: '',
 };
 
@@ -102,6 +103,7 @@ export default function ItemEditor() {
       description: item.description ?? '',
       minimum_stock: String(item.minimum_stock ?? 0),
       track_lots: item.track_lots,
+      infinite_stock: item.infinite_stock ?? false,
       reference_unit_cost: item.reference_unit_cost == null
         ? '' : String(item.reference_unit_cost),
     });
@@ -324,6 +326,7 @@ export default function ItemEditor() {
                 min="0"
                 step="0.000001"
                 required
+                disabled={form.infinite_stock}
                 value={form.minimum_stock}
                 onChange={(event) => setField('minimum_stock', event.target.value)}
               />
@@ -376,7 +379,29 @@ export default function ItemEditor() {
           <label className="item-checkbox">
             <input
               type="checkbox"
+              checked={form.infinite_stock}
+              onChange={(event) => setForm((current) => ({
+                ...current,
+                infinite_stock: event.target.checked,
+                minimum_stock: event.target.checked ? '0' : current.minimum_stock,
+                track_lots: event.target.checked ? false : current.track_lots,
+              }))}
+            />
+            <span>
+              <strong>Stock infinito</strong>
+              <small>
+                Para recursos como agua: permite consumos y entregas sin cargar existencias.
+                Las operaciones quedan registradas. No admite lotes ni stock mínimo.
+                Para activarlo en un ítem existente, primero debe quedar sin saldo físico.
+              </small>
+            </span>
+          </label>
+
+          <label className="item-checkbox">
+            <input
+              type="checkbox"
               checked={form.track_lots}
+              disabled={form.infinite_stock}
               onChange={(event) => setField('track_lots', event.target.checked)}
             />
             <span>

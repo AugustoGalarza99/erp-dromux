@@ -7,11 +7,13 @@ import {
   Boxes,
   ChevronLeft,
   ChevronRight,
+  FileUp,
   Plus,
   Search,
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { listItems } from '../../services/items';
+import ItemImport from './ItemImport';
 import './items.css';
 
 const typeLabels = {
@@ -25,6 +27,7 @@ export default function ItemsPage() {
   const { user, activeCompanyId, can } = useAuth();
   const [params, setParams] = useSearchParams();
   const [inputSearch, setInputSearch] = useState(params.get('q') ?? '');
+  const [showImport, setShowImport] = useState(false);
   const page = Math.max(0, Number.parseInt(params.get('page') || '0', 10) || 0);
   const search = params.get('q') ?? '';
   const type = typeLabels[params.get('type')] ? params.get('type') : '';
@@ -57,18 +60,21 @@ export default function ItemsPage() {
           <h1>Ítems</h1>
           <p>Un catálogo para materiales, semielaborados, productos e insumos.</p>
         </div>
-        {can('items', 'insert') && (
+        {can('items', 'insert') && <div className="items-header-actions">
+          <button type="button" className="button" onClick={() => setShowImport(true)}>
+            <FileUp size={18} /> Importar productos
+          </button>
           <Link to="/inventory/items/new" className="button primary items-add">
             <Plus size={18} /> Nuevo ítem
           </Link>
-        )}
+        </div>}
       </div>
 
       <div className="items-note">
         <Boxes size={20} />
         <span>
-          Esta etapa define la ficha de cada ítem. Las cantidades disponibles se
-          calcularán a partir de movimientos de stock en la siguiente etapa.
+          Las existencias se calculan a partir de movimientos por depósito.
+          Los ítems con stock infinito se pueden usar sin cargar un saldo inicial.
         </span>
       </div>
 
@@ -131,7 +137,7 @@ export default function ItemsPage() {
             <span className="item-list-icon"><Boxes size={20} /></span>
             <span className="item-list-copy">
               <strong>{item.name}</strong>
-              <small>{item.code}</small>
+              <small>{item.code}{item.infinite_stock ? ' · Stock infinito' : ''}</small>
             </span>
             <span className="item-type-tag">{typeLabels[item.item_type]}</span>
             <span className={`item-status ${item.active ? '' : 'inactive'}`}>
@@ -161,6 +167,7 @@ export default function ItemsPage() {
           </div>
         </div>
       </section>
+      {showImport && <ItemImport onClose={() => setShowImport(false)} />}
     </div>
   );
 }

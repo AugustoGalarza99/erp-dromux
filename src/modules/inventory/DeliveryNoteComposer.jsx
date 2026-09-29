@@ -27,7 +27,7 @@ function LineEditor({ companyId, line, index, items, warehouses, onUpdate, onRem
     queryFn: () => listStockLots(companyId, line.itemId, line.warehouseId),
     enabled: Boolean(companyId && item?.track_lots && line.warehouseId),
   });
-  const available = item?.track_lots
+  const available = item?.infinite_stock ? Infinity : item?.track_lots
     ? Number((lotsQuery.data ?? []).find((lot) => lot.code === line.lotCode)?.available ?? 0)
     : Number((balanceQuery.data ?? []).find((row) => row.warehouse_id === line.warehouseId)?.quantity ?? 0);
   const choices = items.filter((entry) => `${entry.code} ${entry.name}`
@@ -83,7 +83,7 @@ function LineEditor({ companyId, line, index, items, warehouses, onUpdate, onRem
       </label>}
       {line.warehouseId && item && <small className={
         Number(line.quantity) > available ? 'delivery-insufficient' : 'delivery-available'
-      }>Disponible: {formatQuantity(available.toFixed(6))} {item.units?.symbol}</small>}
+      }>{item.infinite_stock ? 'Stock infinito' : `Disponible: ${formatQuantity(available.toFixed(6))} ${item.units?.symbol}`}</small>}
       {(balanceQuery.error || lotsQuery.error) &&
         <p className="delivery-insufficient" role="alert">
           {friendlyError(balanceQuery.error || lotsQuery.error)}

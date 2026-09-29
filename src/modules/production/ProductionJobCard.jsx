@@ -73,7 +73,7 @@ export default function ProductionJobCard({
     enabled: Boolean(activeCompanyId && action === 'issue'
       && chosen?.track_lots && issue.warehouseId),
   });
-  const available = chosen?.track_lots
+  const available = chosen?.infinite_stock ? Infinity : chosen?.track_lots
     ? Number((lotsQuery.data ?? []).find((lot) => lot.code === issue.lotCode)?.available ?? 0)
     : Number((balanceQuery.data ?? []).find((balance) =>
       balance.warehouse_id === issue.warehouseId)?.quantity ?? 0);
@@ -102,7 +102,7 @@ export default function ProductionJobCard({
   async function saveIssue(event) {
     event.preventDefault();
     if (busy || !validQuantity(issue.quantity) || !issue.warehouseId
-      || issue.note.trim().length < 3 || Number(issue.quantity) > available
+      || issue.note.trim().length < 3 || (!chosen?.infinite_stock && Number(issue.quantity) > available)
       || (chosen?.track_lots && !issue.lotCode)) {
       notifyError(new Error('Revisá stock, cantidad, depósito y lote.'));
       return;
@@ -371,7 +371,7 @@ export default function ProductionJobCard({
               onClick={() => setAction(null)}>Volver</button>
             <button className="button primary" disabled={busy || !canDeliver
               || !issue.componentId || !issue.warehouseId || !validQuantity(issue.quantity)
-              || Number(issue.quantity) > available || (chosen?.track_lots && !issue.lotCode)}>
+              || (!chosen?.infinite_stock && Number(issue.quantity) > available) || (chosen?.track_lots && !issue.lotCode)}>
               Registrar entrega
             </button>
           </div>

@@ -1,0 +1,196 @@
+/* Controles compartidos. Se aplican después de los estilos de cada módulo. */
+:root {
+  --ui-ink: #183543;
+  --ui-muted: #4b6571;
+  --ui-line: #cadcde;
+  --ui-focus: #147c74;
+  --ui-surface: #fff;
+}
+
+.content :is(input:not([type='checkbox']):not([type='radio']), select, textarea),
+.erp-action-dialog-content :is(input:not([type='checkbox']):not([type='radio']), select, textarea) {
+  min-height: 42px;
+  max-width: 100%;
+  border: 1px solid var(--ui-line);
+  border-radius: 9px;
+  background: var(--ui-surface);
+  color: var(--ui-ink);
+  font-size: 13px;
+}
+
+.content :is(input, select, textarea):focus-visible,
+.erp-action-dialog-content :is(input, select, textarea):focus-visible {
+  border-color: var(--ui-focus);
+  outline: 3px solid #77cbc352;
+  outline-offset: 1px;
+}
+
+.content :is(input, select, textarea):disabled,
+.erp-action-dialog-content :is(input, select, textarea):disabled {
+  background: #f1f5f5;
+  color: #435b66;
+  cursor: not-allowed;
+}
+
+.content :is(input, textarea)::placeholder,
+.erp-action-dialog-content :is(input, textarea)::placeholder {
+  color: #657c87;
+}
+
+.content label,
+.erp-action-dialog-content label {
+  color: #2e4a58;
+}
+
+.content :is(button, a),
+.erp-action-dialog-content :is(button, a) {
+  touch-action: manipulation;
+}
+
+.content .button,
+.erp-action-dialog-content .button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 40px;
+  border-radius: 9px;
+  white-space: normal;
+  text-align: center;
+  text-decoration: none;
+  line-height: 1.3;
+}
+
+.content :is(button, input, select, textarea):focus-visible,
+.erp-action-dialog-content :is(button, input, select, textarea):focus-visible {
+  scroll-margin: 90px;
+}
+
+.content :is(details, fieldset),
+.erp-action-dialog-content :is(details, fieldset) {
+  min-width: 0;
+}
+
+.content details > summary,
+.erp-action-dialog-content details > summary {
+  cursor: pointer;
+  color: #245769;
+  font-weight: 700;
+}
+
+.content :is(.purchase-page, .production-page, .finance-page, .sales-page,
+  .delivery-page, .settings-page, .items-page) {
+  min-width: 0;
+}
+
+/* El buscador del remitero estaba fuera de las tarjetas y no tomaba sus estilos. */
+.delivery-search {
+  display: grid;
+  gap: 8px;
+  width: min(100%, 460px);
+  font-size: 12px;
+  font-weight: 750;
+  color: #31515e;
+}
+
+.delivery-search input {
+  width: 100%;
+  padding: 10px 13px;
+  box-shadow: 0 3px 12px #193c4309;
+}
+
+.delivery-card > details {
+  margin-top: 12px;
+  padding: 11px 13px;
+  border: 1px solid #e2ebeb;
+  border-radius: 10px;
+  background: #f8fbfb;
+}
+
+.delivery-card > details > summary {
+  color: #22556a;
+  font-size: 12px;
+}
+
+.delivery-card > details[open] > summary {
+  margin-bottom: 9px;
+}
+
+.delivery-card a:not(.button) {
+  display: inline-flex;
+  margin-top: 7px;
+  color: #116e68;
+  font-size: 12px;
+  font-weight: 700;
+  text-underline-offset: 3px;
+}
+
+.delivery-card a:not(.button):hover { color: #075a54; }
+
+.delivery-composer {
+  gap: 11px;
+}
+
+.delivery-composer > label,
+.delivery-line > label,
+.delivery-void-form label {
+  display: grid;
+  gap: 7px;
+  min-width: 0;
+  margin: 0;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.delivery-composer :is(input, select, textarea) {
+  width: 100%;
+  margin-top: 0;
+  padding: 9px 11px;
+}
+
+.delivery-line legend { color: #284b59; }
+.delivery-line-remove { min-height: 32px; border-radius: 7px; }
+.delivery-line-remove:hover { background: #fff0ef; color: #87323d; }
+.delivery-line-fields > label { min-width: 0; }
+.delivery-card-actions .button { min-height: 40px; }
+.support-readonly { padding: 7px 10px; border: 1px solid #bcdcd6; border-radius: 20px; background: #eaf6f2; color: #136f65; font-size: 11px; font-weight: 800; white-space: nowrap; }
+
+/* Legibilidad y tamaños táctiles en todos los módulos. */
+.content :is(.purchase-tabs, .sales-tabs, .finance-tabs) button {
+  min-height: 39px;
+}
+
+.content :is(.purchase-search, .sales-search, .finance-extra-search) input {
+  min-width: 0;
+}
+
+.content :is(.production-muted, .purchase-muted, .sales-muted,
+  .manufacturing-note, .replenishment-method) {
+  color: var(--ui-muted);
+}
+
+.content :is(.erp-data-table, .finance-extra-table, .manufacturing-table-wrap table) {
+  font-variant-numeric: tabular-nums;
+}
+
+.content :is(.erp-table-scroll, .manufacturing-table-wrap, .finance-extra-table-wrap) {
+  max-width: 100%;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+}
+
+@media (max-width: 760px) {
+  .content :is(.button, button) { min-height: 42px; }
+  .delivery-page-head { align-items: stretch; }
+  .delivery-page-head .button { width: 100%; }
+  .delivery-search { width: 100%; }
+  .delivery-card-head { align-items: flex-start; }
+}
+
+@media (max-width: 480px) {
+  .delivery-card { padding: 15px; }
+  .delivery-card-head h2 { font-size: 15px; line-height: 1.4; overflow-wrap: anywhere; }
+  .delivery-line { padding: 12px; }
+  .erp-action-dialog-actions { align-items: stretch; }
+  .erp-action-dialog-actions .button { flex: 1 1 100%; }
+}

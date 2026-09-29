@@ -7,7 +7,7 @@ function unwrap({ data, error }) {
 
 export async function listProductionItems(companyId) {
   return unwrap(await supabase.from('items')
-    .select('id, code, name, item_type, track_lots, reference_unit_cost, units!items_unit_company_fk(symbol)')
+    .select('id, code, name, item_type, track_lots, infinite_stock, reference_unit_cost, units!items_unit_company_fk(symbol)')
     .eq('company_id', companyId).eq('active', true)
     .in('item_type', ['raw_material', 'semi_finished', 'finished_product'])
     .order('name').limit(500));

@@ -113,7 +113,7 @@ export default function StockPage() {
               </div>
             )}
             {rows.map((row) => {
-              const low = !isAtOrBelow(row.minimum_stock, '0')
+              const low = !row.infinite_stock && !isAtOrBelow(row.minimum_stock, '0')
                 && isAtOrBelow(row.total_quantity, row.minimum_stock);
 
               return (
@@ -125,12 +125,12 @@ export default function StockPage() {
                   <span className="stock-row-icon"><Boxes size={19} /></span>
                   <span className="stock-row-name">
                     <strong>{row.item_name}</strong>
-                    <small>{row.item_code} · mínimo {formatQuantity(row.minimum_stock)} {row.unit_symbol}</small>
+                    <small>{row.item_code} · {row.infinite_stock ? 'stock infinito' : `mínimo ${formatQuantity(row.minimum_stock)} ${row.unit_symbol}`}</small>
                   </span>
                   <span className="stock-row-total">
-                    <strong>{formatQuantity(row.total_quantity)} {row.unit_symbol}</strong>
+                    <strong>{row.infinite_stock ? '∞' : `${formatQuantity(row.total_quantity)} ${row.unit_symbol}`}</strong>
                     <small className={low ? 'low' : ''}>
-                      {low ? 'En mínimo' : `${row.warehouse_count} depósitos`}
+                      {row.infinite_stock ? 'Sin control de existencias' : low ? 'En mínimo' : `${row.warehouse_count} depósitos`}
                     </small>
                   </span>
                 </button>
@@ -158,16 +158,13 @@ export default function StockPage() {
               <span className="eyebrow">DESGLOSE POR DEPÓSITO</span>
               <h2>{selected.item_name}</h2>
               <p>
-                Total actual: {formatQuantity(
-                  rows.find((row) => row.item_id === selected.item_id)?.total_quantity
-                    ?? selected.total_quantity,
-                )} {selected.unit_symbol}
+                Total actual: {selected.infinite_stock ? '∞ · stock infinito' : `${formatQuantity(rows.find((row) => row.item_id === selected.item_id)?.total_quantity ?? selected.total_quantity)} ${selected.unit_symbol}`}
               </p>
               {balanceQuery.error && (
                 <p role="alert" className="error">{friendlyError(balanceQuery.error)}</p>
               )}
-              {balanceQuery.isPending && <p>Cargando depósitos…</p>}
-              {!balanceQuery.isPending && balances.length === 0 && (
+              {!selected.infinite_stock && balanceQuery.isPending && <p>Cargando depósitos…</p>}
+              {!selected.infinite_stock && !balanceQuery.isPending && balances.length === 0 && (
                 <p>Todavía no hay unidades disponibles en ningún depósito.</p>
               )}
               {balances.map((balance) => (

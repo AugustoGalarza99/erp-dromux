@@ -7,8 +7,10 @@ import { queryClient } from './lib/queryClient';
 import { configured } from './lib/supabase';
 import { AuthProvider } from './contexts/AuthContext';
 import App from './app/App';
+import VersionMonitor from './components/VersionMonitor';
 import './styles.css';
 import './erpPolish.css';
+import './uiFoundation.css';
 
 function MissingConfiguration() {
   return (
@@ -33,6 +35,7 @@ createRoot(document.getElementById('root')).render(
         ) : (
           <MissingConfiguration />
         )}
+        <VersionMonitor />
       </BrowserRouter>
       <Toaster
         position="top-right"

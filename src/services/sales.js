@@ -39,7 +39,7 @@ export async function setCustomerActive(companyId, customerId, active) {
 
 export async function listSaleProducts(companyId) {
   return unwrap(await supabase.from('items')
-    .select('id, code, name, active, track_lots, sale_unit_price, units!items_unit_company_fk(symbol)')
+    .select('id, code, name, active, track_lots, infinite_stock, sale_unit_price, units!items_unit_company_fk(symbol)')
     .eq('company_id', companyId).eq('item_type', 'finished_product')
     .order('name').limit(500));
 }

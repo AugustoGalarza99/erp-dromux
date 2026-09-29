@@ -34,7 +34,7 @@ function MaterialRow({ companyId, row, line, item, items, warehouses, onChange, 
     queryFn: () => listStockLots(companyId, row.componentId, row.warehouseId),
     enabled: Boolean(companyId && item?.track_lots && row.warehouseId),
   });
-  const available = item?.track_lots
+  const available = item?.infinite_stock ? Infinity : item?.track_lots
     ? Number((lotsQuery.data ?? []).find((lot) => lot.code === row.lotCode)?.available ?? 0)
     : Number((balancesQuery.data ?? []).find((balance) =>
       balance.warehouse_id === row.warehouseId)?.quantity ?? 0);
@@ -84,11 +84,11 @@ function MaterialRow({ companyId, row, line, item, items, warehouses, onChange, 
         </label>}
       </div>
       {row.warehouseId && row.componentId && <small className={
-        validQuantity(row.quantity) && Number(row.quantity) <= available
+        validQuantity(row.quantity) && (item?.infinite_stock || Number(row.quantity) <= available)
           ? 'production-ok' : 'production-error'
       }>
-        {formatQuantity(available.toFixed(6))} disponible
-        {validQuantity(row.quantity) && Number(row.quantity) > available && ' · falta stock'}
+        {item?.infinite_stock ? 'Stock infinito' : `${formatQuantity(available.toFixed(6))} disponible`}
+        {validQuantity(row.quantity) && !item?.infinite_stock && Number(row.quantity) > available && ' · falta stock'}
       </small>}
     </div>
   );

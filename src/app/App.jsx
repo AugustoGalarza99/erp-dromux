@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
-import { ArrowRight, Building2 } from 'lucide-react';
+import { ArrowRight, Building2, ShieldCheck } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { createCompany } from '../services/core';
 import { friendlyError, notifyError, notifySuccess } from '../lib/notifications';
@@ -31,6 +31,7 @@ import CostsPage from '../modules/finance/CostsPage';
 import ReportsPage from '../modules/reports/ReportsPage';
 import GuidePage from '../modules/help/GuidePage';
 import ProfilePage from '../modules/settings/ProfilePage';
+import UpdatesPage from '../modules/help/UpdatesPage';
 
 function SetupCompany() {
   const { refresh, signOut } = useAuth();
@@ -120,6 +121,45 @@ function SuspendedCompany({ companies }) {
   );
 }
 
+function SupportAccess() {
+  const { activeCompany, activeCompanyId, openSupportCompany, signOut } = useAuth();
+  const [reason, setReason] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+
+  async function enter(event) {
+    event.preventDefault();
+    if (busy || reason.trim().length < 8) return;
+    setBusy(true);
+    setError('');
+    try {
+      await openSupportCompany(activeCompanyId, reason);
+    } catch (cause) {
+      setError(friendlyError(cause));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return <div className="setup support-entry">
+    <ShieldCheck size={32} />
+    <h1>Acceso de soporte</h1>
+    <p>Para consultar {activeCompany?.name}, indicá el motivo.
+      El acceso será de solo lectura y quedará registrado.</p>
+    <form onSubmit={enter}>
+      <label className="sr-only" htmlFor="support-reason">Motivo de acceso</label>
+      <input id="support-reason" required minLength={8} maxLength={300}
+        value={reason} onChange={(event) => setReason(event.target.value)}
+        placeholder="Ej.: asistencia solicitada por el cliente" />
+      <button className="button primary" disabled={busy || reason.trim().length < 8}>
+        {busy ? 'Ingresando…' : 'Ingresar'}
+      </button>
+    </form>
+    {error && <p role="alert" className="error">{error}</p>}
+    <button type="button" className="text-button" onClick={signOut}>Cerrar sesión</button>
+  </div>;
+}
+
 function Gate() {
   const {
     user,
@@ -127,6 +167,7 @@ function Gate() {
     error,
     memberships,
     suspendedCompanies,
+    supportNeedsAccess,
     can,
   } = useAuth();
 
@@ -157,6 +198,8 @@ function Gate() {
     return <SuspendedCompany companies={suspendedCompanies} />;
   }
   if (!memberships.length) return <SetupCompany />;
+
+  if (supportNeedsAccess) return <SupportAccess />;
 
   if (!can('dashboard', 'read')) {
     return (
@@ -275,6 +318,7 @@ export default function App() {
           element={<PermissionGate resource="reports"><ReportsPage /></PermissionGate>}
         />
         <Route path="/ayuda" element={<GuidePage />} />
+        <Route path="/actualizaciones" element={<UpdatesPage />} />
         <Route
           path="/finance/receivables"
           element={<PermissionGate resource="finance"><ReceivablesPage /></PermissionGate>}

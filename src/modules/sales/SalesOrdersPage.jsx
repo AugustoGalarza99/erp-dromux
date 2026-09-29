@@ -27,7 +27,7 @@ function SaleLine({ line, item, warehouses, companyId, balance, onChange, onRemo
     enabled: !!(companyId && item?.track_lots && line.warehouseId),
   });
   const lots = (lotsQuery.data ?? []).filter((lot) => Number(lot.available) > 0);
-  const available = item?.track_lots
+  const available = item?.infinite_stock ? Infinity : item?.track_lots
     ? Number(lots.find((lot) => lot.code === line.lotCode)?.available ?? 0)
     : Number(balance ?? 0);
   const required = Number(line.quantity);
@@ -67,7 +67,7 @@ function SaleLine({ line, item, warehouses, companyId, balance, onChange, onRemo
     </div>
     <div className="sales-line-footer">
       <small className={line.warehouseId ? enough ? 'sales-ok' : 'sales-error' : 'sales-muted'}>
-        {line.warehouseId ? `${formatQuantity(available.toFixed(6))} disponibles ${enough ? '✓' : '· Stock insuficiente'}` : 'Elegí un depósito'}
+        {line.warehouseId ? item?.infinite_stock ? 'Stock infinito ✓' : `${formatQuantity(available.toFixed(6))} disponibles ${enough ? '✓' : '· Stock insuficiente'}` : 'Elegí un depósito'}
       </small>
       {item?.sale_unit_price != null && <strong>
         $ {money(Number(line.quantity) * Number(item.sale_unit_price))}
@@ -144,7 +144,7 @@ export default function SalesOrdersPage() {
         entry.item_id === line.itemId && entry.warehouse_id === line.warehouseId)?.quantity ?? 0);
       return item?.sale_unit_price != null && line.warehouseId &&
         /^\d{1,12}(\.\d{1,6})?$/.test(line.quantity) && Number(line.quantity) > 0 &&
-        available >= Number(line.quantity) &&
+        (item.infinite_stock || available >= Number(line.quantity)) &&
         (!item.track_lots || (!!line.lotCode && Number(line.lotAvailable) >= Number(line.quantity)));
     });
 

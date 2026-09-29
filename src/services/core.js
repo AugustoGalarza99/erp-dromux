@@ -26,11 +26,25 @@ export async function getMemberships() {
   }));
 }
 
-export async function getPermissions(roleId) {
+const supportResources = [
+  'dashboard', 'inventory', 'items', 'stock', 'warehouses', 'units',
+  'categories', 'production', 'purchases', 'sales', 'finance',
+  'reports', 'settings', 'users', 'roles',
+];
+
+export async function getPermissions(roleId, support = false) {
+  if (support) return supportResources.map((resource) => ({ resource, action: 'read' }));
   return unwrap(await supabase
     .from('role_permissions')
     .select('resource, action')
     .eq('role_id', roleId));
+}
+
+export async function beginSupportSession(companyId, reason) {
+  return unwrap(await supabase.rpc('begin_support_session', {
+    p_company: companyId,
+    p_reason: reason.trim(),
+  }));
 }
 
 export async function createCompany(name) {

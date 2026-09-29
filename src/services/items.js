@@ -7,7 +7,7 @@ function unwrap({ data, error }) {
 
 const detailColumns = `
   id, company_id, code, name, item_type, category_id, unit_id,
-  barcode, description, minimum_stock, track_lots, active, reference_unit_cost,
+  barcode, description, minimum_stock, track_lots, infinite_stock, active, reference_unit_cost,
   created_at, updated_at,
   category:item_categories!items_category_company_fk(id, name, active),
   unit:units!items_unit_company_fk(id, name, symbol, active)
@@ -16,7 +16,7 @@ const detailColumns = `
 export async function listItems(companyId, { page, search, type, status }) {
   let query = supabase
     .from('items')
-    .select('id, code, name, item_type, category_id, unit_id, minimum_stock, active', {
+    .select('id, code, name, item_type, category_id, unit_id, minimum_stock, infinite_stock, active', {
       count: 'exact',
     })
     .eq('company_id', companyId)
@@ -90,6 +90,7 @@ export async function saveItem(companyId, itemId, values) {
     description: values.description.trim(),
     minimum_stock: values.minimum_stock === '' ? '0' : values.minimum_stock,
     track_lots: values.track_lots,
+    infinite_stock: values.infinite_stock,
     reference_unit_cost: values.reference_unit_cost === ''
       ? null : values.reference_unit_cost,
   };

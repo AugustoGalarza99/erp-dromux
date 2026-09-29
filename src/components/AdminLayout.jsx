@@ -16,11 +16,13 @@ import {
   Wallet,
   UserRound,
   X,
+  Sparkles,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { notifyError, notifySuccess } from '../lib/notifications';
 import ModuleHelp from '../modules/help/ModuleHelp';
 import NotificationCenter from '../modules/operations/NotificationCenter';
+import ActionDialog from './ActionDialog';
 
 const groups = [
   {
@@ -110,6 +112,7 @@ export default function AdminLayout() {
     role,
     user,
     signOut,
+    openSupportCompany,
   } = useAuth();
   const location = useLocation();
   const routeName = {
@@ -126,11 +129,32 @@ export default function AdminLayout() {
     '/ayuda': 'Guía de uso', '/mi-perfil': 'Mi perfil', '/settings/users': 'Usuarios',
     '/settings/roles': 'Roles y permisos', '/settings/units': 'Unidades',
     '/settings/categories': 'Categorías', '/settings/warehouses': 'Depósitos',
+    '/actualizaciones': 'Actualizaciones',
   };
   const sectionName = routeName[location.pathname]
     ?? (location.pathname.startsWith('/inventory/items/') ? 'Ficha de ítem' : 'Espacio de trabajo');
   const [open, setOpen] = useState({});
   const [menuOpen, setMenuOpen] = useState(false);
+  const [supportTarget, setSupportTarget] = useState(null);
+  const [supportReason, setSupportReason] = useState('');
+  const [supportBusy, setSupportBusy] = useState(false);
+
+  async function switchSupportCompany(event) {
+    event.preventDefault();
+    if (!supportTarget || supportReason.trim().length < 8 || supportBusy) return;
+    setSupportBusy(true);
+    try {
+      await openSupportCompany(supportTarget.company_id, supportReason);
+      notifySuccess('Empresa seleccionada', supportTarget.companies.name);
+      setSupportTarget(null);
+      setSupportReason('');
+      setMenuOpen(false);
+    } catch (error) {
+      notifyError(error);
+    } finally {
+      setSupportBusy(false);
+    }
+  }
 
   return (
     <div className="app-shell">
@@ -156,7 +180,15 @@ export default function AdminLayout() {
             <select
               aria-label="Empresa activa"
               value={activeCompany?.id ?? ''}
-              onChange={(event) => setActiveCompanyId(event.target.value)}
+              onChange={(event) => {
+                const target = memberships.find((item) =>
+                  item.company_id === event.target.value);
+                if (target?.roles?.code === 'support') {
+                  setSupportTarget(target);
+                } else {
+                  setActiveCompanyId(event.target.value);
+                }
+              }}
             >
               {memberships.map((membership) => (
                 <option key={membership.company_id} value={membership.company_id}>
@@ -260,6 +292,10 @@ export default function AdminLayout() {
         </nav>
 
         <div className="sidebar-footer">
+          <NavLink className="nav-item" to="/actualizaciones"
+            onClick={() => setMenuOpen(false)}>
+            <Sparkles size={18} /> <span>Actualizaciones</span>
+          </NavLink>
           <NavLink className="nav-item" to="/mi-perfil" onClick={() => setMenuOpen(false)}>
             <UserRound size={18} /> <span>Mi perfil</span>
           </NavLink>
@@ -283,6 +319,25 @@ export default function AdminLayout() {
           </button>
         </div>
       </aside>
+      <ActionDialog open={!!supportTarget} busy={supportBusy}
+        title="Consultar otra empresa"
+        description={`El acceso a ${supportTarget?.companies.name ?? 'esta empresa'} será de solo lectura y quedará registrado.`}
+        onClose={() => setSupportTarget(null)}>
+        <form onSubmit={switchSupportCompany}>
+          <label>Motivo de la consulta
+            <textarea required minLength={8} maxLength={300}
+              value={supportReason} onChange={(event) => setSupportReason(event.target.value)}
+              placeholder="Ej.: revisión solicitada por el responsable de la empresa" />
+          </label>
+          <div className="erp-action-dialog-actions">
+            <button type="button" className="button outline" disabled={supportBusy}
+              onClick={() => setSupportTarget(null)}>Cancelar</button>
+            <button className="button primary" disabled={supportBusy || supportReason.trim().length < 8}>
+              {supportBusy ? 'Ingresando…' : 'Ingresar en modo lectura'}
+            </button>
+          </div>
+        </form>
+      </ActionDialog>
 
       {menuOpen && (
         <button
@@ -310,6 +365,7 @@ export default function AdminLayout() {
             <strong>{sectionName}</strong>
           </div>
           <div className="topbar-right">
+            {role === 'support' && <span className="support-readonly">Soporte · solo lectura</span>}
             <span className="online"><i /> Sistema activo</span>
             <NotificationCenter />
             <NavLink className="avatar" to="/mi-perfil"

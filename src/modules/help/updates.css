@@ -1,0 +1,9 @@
+.updates-page { max-width: 850px; }
+.updates-list { display: grid; gap: 15px; }
+.updates-card { display: flex; gap: 16px; padding: 22px; background: #fff; border: 1px solid #dce9e8; border-radius: 15px; box-shadow: 0 8px 26px #16384a0b; }
+.updates-icon { display: grid; flex: 0 0 38px; place-items: center; height: 38px; border-radius: 10px; background: #e8f5f2; color: #16877c; }
+.updates-card .eyebrow { margin: 0 0 7px; }
+.updates-card h2 { margin: 0 0 6px; font-size: 17px; color: #193640; }
+.updates-card time { color: #546d78; font-size: 12px; }
+.updates-card ul { margin: 14px 0 0; padding-left: 18px; color: #304d58; font-size: 13px; line-height: 1.65; }
+@media(max-width: 520px) { .updates-card { padding: 16px; gap: 10px; } }

@@ -43,7 +43,7 @@ export async function voidDeliveryNote(companyId, noteId, reason) {
 
 export async function listDeliveryItems(companyId) {
   return unwrap(await supabase.from('items')
-    .select('id, code, name, item_type, track_lots, units!items_unit_company_fk(symbol)')
+    .select('id, code, name, item_type, track_lots, infinite_stock, units!items_unit_company_fk(symbol)')
     .eq('company_id', companyId).eq('active', true)
     .in('item_type', ['raw_material', 'semi_finished', 'finished_product', 'consumable'])
     .order('name').limit(600));

@@ -12,8 +12,14 @@ export async function listStock(companyId, page, search) {
     p_search: search.trim(),
   }));
 
+  const { data: flags, error: flagsError } = rows.length
+    ? await supabase.from('items').select('id, infinite_stock')
+      .eq('company_id', companyId).in('id', rows.map((row) => row.item_id))
+    : { data: [], error: null };
+  if (flagsError) throw flagsError;
+  const infinite = new Set((flags ?? []).filter((item) => item.infinite_stock).map((item) => item.id));
   return {
-    rows,
+    rows: rows.map((row) => ({ ...row, infinite_stock: infinite.has(row.item_id) })),
     count: rows[0]?.total_count ? Number(rows[0].total_count) : 0,
   };
 }
@@ -33,10 +39,16 @@ export async function listStockBalances(companyId, itemId) {
 }
 
 export async function findStockItems(companyId, search) {
-  return unwrap(await supabase.rpc('stock_item_options', {
+  const options = unwrap(await supabase.rpc('stock_item_options', {
     p_company: companyId,
     p_search: search.trim(),
   }));
+  if (!options.length) return options;
+  const { data, error } = await supabase.from('items').select('id, infinite_stock')
+    .eq('company_id', companyId).in('id', options.map((item) => item.id));
+  if (error) throw error;
+  const infinite = new Set((data ?? []).filter((item) => item.infinite_stock).map((item) => item.id));
+  return options.map((item) => ({ ...item, infinite_stock: infinite.has(item.id) }));
 }
 
 export async function findStockWarehouses(companyId, search) {

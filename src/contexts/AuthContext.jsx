@@ -9,7 +9,7 @@ import {
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
 import { queryClient } from '../lib/queryClient';
-import { getMemberships, getPermissions } from '../services/core';
+import { beginSupportSession, getMemberships, getPermissions } from '../services/core';
 
 const AuthContext = createContext(null);
 
@@ -19,6 +19,8 @@ export function AuthProvider({ children }) {
   const [session, setSession] = useState(null);
   const [ready, setReady] = useState(false);
   const [activeId, setActiveId] = useState(null);
+  const [supportSession, setSupportSession] = useState(null);
+  const [clock, setClock] = useState(Date.now());
   const previousUserId = useRef(null);
 
   useEffect(() => {
@@ -43,6 +45,7 @@ export function AuthProvider({ children }) {
       if (previousUserId.current !== nextUserId) {
         previousUserId.current = nextUserId;
         setActiveId(null);
+        setSupportSession(null);
         queryClient.clear();
       }
     });
@@ -51,6 +54,11 @@ export function AuthProvider({ children }) {
       mounted = false;
       listener.subscription.unsubscribe();
     };
+  }, []);
+
+  useEffect(() => {
+    const interval = window.setInterval(() => setClock(Date.now()), 30_000);
+    return () => window.clearInterval(interval);
   }, []);
 
   const user = session?.user ?? null;
@@ -73,11 +81,14 @@ export function AuthProvider({ children }) {
     ?? memberships[0]
     ?? null;
   const roleId = membership?.role_id;
+  const support = membership?.roles?.code === 'support';
+  const supportActive = support && supportSession?.companyId === membership?.company_id
+    && supportSession.expiresAt > clock;
 
   const permissionsQuery = useQuery({
     queryKey: ['permissions', user?.id, membership?.company_id, roleId],
-    queryFn: () => getPermissions(roleId),
-    enabled: Boolean(user && roleId),
+    queryFn: () => getPermissions(roleId, support),
+    enabled: Boolean(user && (roleId || supportActive)),
     staleTime: 15_000,
     refetchOnWindowFocus: true,
   });
@@ -89,16 +100,30 @@ export function AuthProvider({ children }) {
   );
 
   const setActiveCompanyId = (id) => {
-    if (!memberships.some((item) => item.company_id === id)) return;
+    const target = memberships.find((item) => item.company_id === id);
+    if (!target || target.roles?.code === 'support') return;
 
     setActiveId(id);
     localStorage.setItem(storageKey, id);
+  };
+
+  const openSupportCompany = async (id, reason) => {
+    if (!memberships.some((item) => item.company_id === id
+      && item.roles?.code === 'support')) {
+      throw new Error('Empresa no disponible para soporte.');
+    }
+    const expires = await beginSupportSession(id, reason);
+    setSupportSession({ companyId: id, expiresAt: Date.parse(expires) });
+    setActiveId(id);
+    localStorage.setItem(storageKey, id);
+    await queryClient.invalidateQueries();
   };
 
   const signOut = async () => {
     const { error } = await supabase.auth.signOut();
     if (error) throw error;
     queryClient.clear();
+    setSupportSession(null);
     if (storageKey) localStorage.removeItem(storageKey);
   };
 
@@ -106,7 +131,7 @@ export function AuthProvider({ children }) {
     user,
     ready,
     authLoading: !ready || Boolean(
-      user && (membershipQuery.isPending || (roleId && permissionsQuery.isPending)),
+      user && (membershipQuery.isPending || ((roleId || supportActive) && permissionsQuery.isPending)),
     ),
     error: membershipQuery.error || permissionsQuery.error,
     memberships,
@@ -114,9 +139,12 @@ export function AuthProvider({ children }) {
     activeCompany: membership?.companies ?? null,
     activeCompanyId: membership?.company_id ?? null,
     role: membership?.roles?.code ?? null,
+    supportNeedsAccess: support && !supportActive,
+    supportActive,
     permissions,
     can,
     setActiveCompanyId,
+    openSupportCompany,
     signOut,
     refresh: () => queryClient.invalidateQueries({ queryKey: ['memberships', user?.id] }),
   }), [
@@ -131,6 +159,8 @@ export function AuthProvider({ children }) {
     permissions,
     membership,
     activeId,
+    supportSession,
+    clock,
   ]);
 
   return (
