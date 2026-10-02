@@ -72,3 +72,7 @@ export async function getOperationalReport(companyId, from, to) {
     p_to: to,
   }));
 }
+
+export async function listExchangeOverview(companyId) {
+  return unwrap(await supabase.rpc('exchange_rate_overview', { p_company: companyId }));
+}

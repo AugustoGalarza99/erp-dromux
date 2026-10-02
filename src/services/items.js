@@ -8,6 +8,7 @@ function unwrap({ data, error }) {
 const detailColumns = `
   id, company_id, code, name, item_type, category_id, unit_id,
   barcode, description, minimum_stock, track_lots, infinite_stock, active, reference_unit_cost,
+  reference_cost_usd, reference_exchange_rate_type_id,
   created_at, updated_at,
   category:item_categories!items_category_company_fk(id, name, active),
   unit:units!items_unit_company_fk(id, name, symbol, active)
@@ -80,37 +81,52 @@ export async function searchItemOptions(companyId, resource, term) {
 }
 
 export async function saveItem(companyId, itemId, values) {
+  const cost = values.purchaseCost;
   const payload = {
-    code: values.code.trim(),
-    name: values.name.trim(),
-    item_type: values.item_type,
+    codigo: values.code.trim(),
+    nombre: values.name.trim(),
+    tipo: values.item_type,
     category_id: values.category_id || null,
     unit_id: values.unit_id,
-    barcode: values.barcode.trim() || null,
-    description: values.description.trim(),
-    minimum_stock: values.minimum_stock === '' ? '0' : values.minimum_stock,
-    track_lots: values.track_lots,
-    infinite_stock: values.infinite_stock,
-    reference_unit_cost: values.reference_unit_cost === ''
-      ? null : values.reference_unit_cost,
+    codigo_barras: values.barcode.trim(),
+    descripcion: values.description.trim(),
+    stock_minimo: values.minimum_stock === '' ? '0' : values.minimum_stock,
+    seguir_lotes: values.track_lots,
+    stock_infinito: values.infinite_stock,
+    activo: values.active ?? true,
+    precio_venta_ars: '',
+    costo_referencia_ars: cost?.currency === 'USD' ? '' : values.reference_unit_cost,
+    costo_usd: cost?.currency === 'USD' ? cost.usd : '',
+    supplier_id: cost?.supplier?.id ?? '',
+    exchange_type_id: cost?.currency === 'USD' ? cost.exchangeType : '',
   };
+  const id = unwrap(await supabase.rpc('save_item_with_cost', {
+    p_company: companyId,
+    p_item: itemId || null,
+    p_row: payload,
+    p_expected_updated_at: values.expectedUpdatedAt ?? null,
+    p_preserve_cost: Boolean(values.preserveReferenceCost),
+  }));
+  return { id };
+}
 
-  if (itemId) {
-    if (values.preserveReferenceCost) delete payload.reference_unit_cost;
-    return unwrap(await supabase
-      .from('items')
-      .update(payload)
-      .eq('company_id', companyId)
-      .eq('id', itemId)
-      .select('id')
-      .single());
-  }
+export async function getItemCostContext(companyId, itemId) {
+  return unwrap(await supabase.rpc('item_cost_context', {
+    p_company: companyId,
+    p_item: itemId,
+  }));
+}
 
-  return unwrap(await supabase
-    .from('items')
-    .insert({ ...payload, company_id: companyId })
-    .select('id')
-    .single());
+export async function searchActiveSuppliers(companyId, term) {
+  let query = supabase.from('suppliers')
+    .select('id, name')
+    .eq('company_id', companyId)
+    .eq('active', true)
+    .order('name')
+    .order('id')
+    .limit(30);
+  if (term.trim()) query = query.ilike('name', `%${term.trim()}%`);
+  return unwrap(await query);
 }
 
 export async function setItemActive(companyId, itemId, active) {

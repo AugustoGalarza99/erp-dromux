@@ -45,6 +45,7 @@ export async function saveSupplier(companyId, id, values) {
     email: values.email.trim(),
     phone: values.phone.trim(),
     notes: values.notes.trim(),
+    supplies_description: values.supplies_description?.trim() ?? '',
     lead_time_days: Number(values.lead_time_days),
   };
 
@@ -202,7 +203,6 @@ export async function receivePurchaseOrder(companyId, orderId, requestId, note, 
     p_order: orderId,
     p_request_id: requestId,
     p_note: note.trim(),
-    p_request_id: requestId,
     p_lines: lines.map((line) => ({
       line_no: line.line_no,
       quantity: line.quantity,
@@ -211,4 +211,51 @@ export async function receivePurchaseOrder(companyId, orderId, requestId, note, 
       expires_on: line.expires_on || null,
     })),
   }));
+}
+
+export async function listSupplierDirectory(companyId, search = '', page = 0) {
+  return unwrap(await supabase.rpc('supplier_directory', {
+    p_company: companyId, p_search: search.trim(), p_page: page,
+  }));
+}
+
+export async function listSupplierCatalog(companyId, supplierId, itemId = null, search = '', page = 0) {
+  return unwrap(await supabase.rpc('supplier_quote_catalog', {
+    p_company: companyId, p_supplier: supplierId || null,
+    p_item: itemId || null, p_search: search.trim(), p_page: page,
+  }));
+}
+
+export async function saveSupplierCatalogQuote(companyId, supplierId, itemId, values, previous) {
+  return unwrap(await supabase.rpc('save_supplier_quote', {
+    p_company: companyId, p_supplier: supplierId, p_item: itemId,
+    p_price: values.price, p_sku: values.sku.trim(), p_currency: values.currency,
+    p_exchange_type: values.currency === 'USD' ? values.exchangeType : null,
+    p_adjustment: values.adjustment,
+    p_expected_updated_at: previous?.updated_at ?? null,
+    p_create_only: !previous,
+  }));
+}
+
+export async function previewSupplierAdjustment(companyId, supplierId, itemId, percent) {
+  return unwrap(await supabase.rpc('supplier_adjustment_preview', {
+    p_company: companyId, p_supplier: supplierId, p_item: itemId || null, p_percent: percent,
+  }));
+}
+
+export async function listPurchaseOrdersPage(companyId, page = 0, search = '', status = '') {
+  let query = supabase.from('purchase_orders')
+    .select(`id, number, status, note, created_at, supplier_name,
+      lines:purchase_order_lines(line_no, item_code, item_name, unit_symbol,
+        quantity, received_quantity, unit_price)`, { count: 'exact' })
+    .eq('company_id', companyId)
+    .order('created_at', { ascending: false }).order('id', { ascending: false })
+    .range(page * 25, page * 25 + 24);
+  const value = search.trim().replace(/^#/, '');
+  if (value) query = /^\d+$/.test(value)
+    ? query.eq('number', value) : query.ilike('supplier_name', `%${value}%`);
+  if (status) query = query.eq('status', status);
+  const { data, count, error } = await query;
+  if (error) throw error;
+  return { rows: data ?? [], count: count ?? 0 };
 }

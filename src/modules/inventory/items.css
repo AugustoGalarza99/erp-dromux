@@ -409,3 +409,33 @@
   border-radius: 9px;
   background: white;
 }
+
+.item-cost-notice {
+  padding: 14px;
+  border: 1px solid #c5e3db;
+  border-radius: 10px;
+  background: #eef8f4;
+  color: #243f46;
+}
+
+.item-cost-notice p {
+  margin: 8px 0;
+  line-height: 1.6;
+}
+
+.item-cost-notice a {
+  color: #087569;
+  font-weight: 700;
+}
+
+.item-supplier-price strong {
+  color: #143d39;
+  font-size: 22px;
+}
+
+.item-supplier-section input,
+.item-supplier-section select,
+.item-supplier-section label {
+  min-width: 0;
+  width: 100%;
+}

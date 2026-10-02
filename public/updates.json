@@ -1,5 +1,27 @@
 [
   {
+    "version": "1.0.2",
+    "publishedAt": "2026-10-02",
+    "title": "Importación con proveedores y costos en dólares",
+    "changes": [
+      "Importación Excel con costo en dólares, proveedor existente y tipo de dólar opcionales.",
+      "Vista previa de costos en pesos y validación de proveedores y cotizaciones antes de confirmar.",
+      "Alta manual con buscadores, moneda, proveedor y conversión del costo por unidad.",
+      "Costos en dólares sin proveedor que se actualizan con la cotización vigente."
+    ]
+  },
+  {
+    "version": "1.0.1",
+    "publishedAt": "2026-10-01",
+    "title": "Proveedores y compras más simples",
+    "changes": [
+      "Directorio de proveedores con descripción y catálogo desplegable.",
+      "Modales para agregar ítems, editar precios y revisar ajustes individuales o por proveedor.",
+      "Comparador por costo en pesos y corrección al volver a una cotización anterior del dólar.",
+      "Órdenes de compra con búsqueda, estados, paginación y preparación en modal."
+    ]
+  },
+  {
     "version": "1.0.0",
     "publishedAt": "2026-09-25",
     "title": "Lanzamiento del sistema",

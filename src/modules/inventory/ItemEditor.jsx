@@ -6,12 +6,15 @@ import { useAuth } from '../../contexts/AuthContext';
 import {
   activateItemLots,
   getItem,
+  getItemCostContext,
   getUntrackedStock,
   saveItem,
   searchItemOptions,
   setItemActive,
 } from '../../services/items';
 import { notifyError, notifySuccess, friendlyError } from '../../lib/notifications';
+import ItemCostFields, { emptyPurchaseCost } from './ItemCostFields';
+import { refreshSupplierData } from '../purchases/supplierUi';
 import './items.css';
 
 const emptyForm = {
@@ -65,6 +68,7 @@ export default function ItemEditor() {
   const queryClient = useQueryClient();
   const { user, activeCompanyId, can } = useAuth();
   const [form, setForm] = useState(emptyForm);
+  const [purchaseCost, setPurchaseCost] = useState(emptyPurchaseCost);
   const [categorySearch, setCategorySearch] = useState('');
   const [unitSearch, setUnitSearch] = useState('');
   const [busy, setBusy] = useState(false);
@@ -75,6 +79,12 @@ export default function ItemEditor() {
     queryKey: ['item-detail', user?.id, activeCompanyId, itemId],
     queryFn: () => getItem(activeCompanyId, itemId),
     enabled: Boolean(activeCompanyId && itemId),
+  });
+
+  const costContext = useQuery({
+    queryKey: ['item-cost-context', user?.id, activeCompanyId, itemId],
+    queryFn: () => getItemCostContext(activeCompanyId, itemId),
+    enabled: Boolean(activeCompanyId && itemId && can('purchases', 'read')),
   });
 
   const categoryQuery = useQuery({
@@ -93,6 +103,12 @@ export default function ItemEditor() {
     if (!detailQuery.data) return;
     const item = detailQuery.data;
 
+    setPurchaseCost({
+      ...emptyPurchaseCost,
+      currency: item.reference_cost_usd == null ? 'ARS' : 'USD',
+      usd: item.reference_cost_usd == null ? '' : String(item.reference_cost_usd),
+      exchangeType: item.reference_exchange_rate_type_id ?? '',
+    });
     setForm({
       code: item.code,
       name: item.name,
@@ -112,6 +128,7 @@ export default function ItemEditor() {
   useEffect(() => {
     if (isNew) {
       setForm(emptyForm);
+      setPurchaseCost(emptyPurchaseCost);
     }
     setError('');
     setMessage('');
@@ -125,7 +142,8 @@ export default function ItemEditor() {
   };
 
   const invalidate = () => Promise.all([
-    queryClient.invalidateQueries({ queryKey: ['items', user?.id, activeCompanyId] }),
+    refreshSupplierData(queryClient),
+    queryClient.invalidateQueries({ queryKey: ['item-cost-context', user?.id, activeCompanyId] }),
     queryClient.invalidateQueries({ queryKey: ['item-detail', user?.id, activeCompanyId] }),
     queryClient.invalidateQueries({ queryKey: ['stock-options', user?.id, activeCompanyId, 'items'] }),
     queryClient.invalidateQueries({ queryKey: ['stock-summary', user?.id, activeCompanyId] }),
@@ -136,6 +154,7 @@ export default function ItemEditor() {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+    if (busy) return;
     setBusy(true);
     setError('');
     setMessage('');
@@ -150,9 +169,19 @@ export default function ItemEditor() {
           convertedStock = true;
         }
       }
-      const input = itemId && String(item?.reference_unit_cost ?? '') === form.reference_unit_cost
-        ? { ...form, preserveReferenceCost: true }
-        : form;
+      const latestItem = convertedStock ? await getItem(activeCompanyId, itemId) : item;
+      const unchangedCost = !purchaseCost.supplier
+        && String(item?.reference_unit_cost ?? '') === form.reference_unit_cost
+        && String(item?.reference_cost_usd ?? '') === purchaseCost.usd
+        && (item?.reference_exchange_rate_type_id ?? '') === purchaseCost.exchangeType
+        && (item?.reference_cost_usd == null ? 'ARS' : 'USD') === purchaseCost.currency;
+      const input = {
+        ...form,
+        purchaseCost,
+        active: item?.active ?? true,
+        expectedUpdatedAt: latestItem?.updated_at,
+        preserveReferenceCost: Boolean(itemId && unchangedCost),
+      };
       const saved = await saveItem(activeCompanyId, itemId, input);
       savedId = saved.id;
       await invalidate();
@@ -344,37 +373,14 @@ export default function ItemEditor() {
             />
           </label>
 
-          {form.item_type === 'raw_material' && (
-            <div className="item-supplier-section">
-              <div className="form-section-heading divided">
-                <span className="item-form-icon"><Tag size={19} /></span>
-                <div>
-                  <h2>Costos y proveedores</h2>
-                  <p>Precio por {item?.unit?.symbol ?? 'unidad seleccionada'}.
-                    Las cotizaciones se pueden comparar en Compras.</p>
-                </div>
-              </div>
-              <label>
-                Costo de referencia por unidad *
-                <input
-                  type="number"
-                  required
-                  min="0"
-                  step="0.01"
-                  value={form.reference_unit_cost}
-                  onChange={(event) => setField('reference_unit_cost', event.target.value)}
-                  placeholder="Ej.: 1250.00"
-                />
-                <small>Costo inicial en pesos. Si elegís un proveedor principal, sus precios y cotizaciones actualizan este valor automáticamente.</small>
-              </label>
-
-              {can('purchases', 'read') && <p>
-                Los proveedores, precios y tipos de dólar se gestionan en{' '}
-                <Link to="/purchases/suppliers">Compras → Proveedores</Link>.
-                Elegí allí un proveedor principal para actualizar este costo automáticamente.
-              </p>}
-            </div>
-          )}
+          <ItemCostFields
+            form={form}
+            cost={purchaseCost}
+            onCostChange={setPurchaseCost}
+            onPesosChange={(value) => setField('reference_unit_cost', value)}
+            context={costContext}
+            unitSymbol={unitQuery.data?.find((entry) => entry.id === form.unit_id)?.symbol ?? item?.unit?.symbol}
+          />
 
           <label className="item-checkbox">
             <input
@@ -417,7 +423,8 @@ export default function ItemEditor() {
           {canSave && (
             <button
               className="button primary item-save"
-              disabled={busy || unitQuery.isPending || categoryQuery.isPending}
+              disabled={busy || unitQuery.isPending || categoryQuery.isPending
+                || Boolean(itemId && can('purchases', 'read') && costContext.isPending)}
             >
               <Save size={17} /> {busy ? 'Guardando…' : 'Guardar ítem'}
             </button>

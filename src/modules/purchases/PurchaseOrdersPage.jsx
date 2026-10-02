@@ -4,6 +4,9 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { Download, Plus, ShoppingCart, X } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import ConfirmDeleteDialog from '../../components/ConfirmDeleteDialog';
+import ActionDialog from '../../components/ActionDialog';
+import { SupplierPagination } from './SupplierCatalog';
+import './suppliers.css';
 import { notifyError, notifySuccess, friendlyError } from '../../lib/notifications';
 import { useDebouncedValue } from '../../hooks/useDebouncedValue';
 import ReceiveOrderPanel from './ReceiveOrderPanel';
@@ -13,7 +16,7 @@ import {
   createPurchaseOrder,
   findPurchaseItems,
   getPurchaseSuggestion,
-  listPurchaseOrders,
+  listPurchaseOrdersPage,
   listSuppliers,
   listSupplierQuotes,
   listPurchaseSuppliersForItems,
@@ -77,6 +80,11 @@ export default function PurchaseOrdersPage() {
   const suggestedQuantity = params.get('quantity');
   const loadedSuggestion = useRef('');
   const mayBuy = can('purchases', 'insert');
+  const [createOpen, setCreateOpen] = useState(false);
+  const [orderSearch, setOrderSearch] = useState('');
+  const [orderStatus, setOrderStatus] = useState('');
+  const [orderPage, setOrderPage] = useState(0);
+  const orderTerm = useDebouncedValue(orderSearch);
   const [supplierId, setSupplierId] = useState('');
   const [selectedSupplier, setSelectedSupplier] = useState(null);
   const [supplierSearch, setSupplierSearch] = useState('');
@@ -86,12 +94,14 @@ export default function PurchaseOrdersPage() {
   const [busy, setBusy] = useState(false);
   const [cancelTarget, setCancelTarget] = useState(null);
   const [receivingOrderId, setReceivingOrderId] = useState(null);
-  const receiptPanelRef = useRef(null);
+  const [receiptBusy, setReceiptBusy] = useState(false);
   const purchaseRequestRef = useRef({ fingerprint: null, id: crypto.randomUUID() });
   const supplierTerm = useDebouncedValue(supplierSearch);
 
   useEffect(() => {
     purchaseRequestRef.current = { fingerprint: null, id: crypto.randomUUID() };
+    setCreateOpen(false);
+    setOrderSearch(''); setOrderStatus(''); setOrderPage(0);
     setSupplierId('');
     setSelectedSupplier(null);
     setSupplierSearch('');
@@ -118,21 +128,16 @@ export default function PurchaseOrdersPage() {
         setSelectedSupplier(supplier?.active ? supplier : null);
         setSupplierSearch('');
         setNote('Reposición sugerida por pronóstico');
+        setCreateOpen(true);
       })
       .catch((error) => { if (mounted) notifyError(error); });
     return () => { mounted = false; };
   }, [activeCompanyId, suggestedItem, suggestedSupplier, suggestedQuantity, mayBuy]);
 
-  useEffect(() => {
-    if (receivingOrderId) receiptPanelRef.current?.scrollIntoView({
-      behavior: 'smooth',
-      block: 'start',
-    });
-  }, [receivingOrderId]);
 
   const ordersQuery = useQuery({
-    queryKey: ['purchase-orders', user?.id, activeCompanyId],
-    queryFn: () => listPurchaseOrders(activeCompanyId),
+    queryKey: ['purchase-orders', user?.id, activeCompanyId, orderPage, orderTerm, orderStatus],
+    queryFn: () => listPurchaseOrdersPage(activeCompanyId, orderPage, orderTerm, orderStatus),
     enabled: Boolean(activeCompanyId),
   });
   const suppliersQuery = useQuery({
@@ -196,6 +201,7 @@ export default function PurchaseOrdersPage() {
 
   const submit = async (event) => {
     event.preventDefault();
+    if (busy) return;
     if (!supplierId || choosingSupplier || lines.some((line) => !line.item_id)) {
       notifyError(new Error('Seleccioná un proveedor y todos los ítems de la orden.'));
       return;
@@ -220,6 +226,7 @@ export default function PurchaseOrdersPage() {
       setSupplierSearch('');
       setLines([newLine()]);
       setNote('');
+      setCreateOpen(false);
       notifySuccess('Orden de compra creada');
       if (suggestedItem) setParams({}, { replace: true });
     } catch (error) {
@@ -255,7 +262,7 @@ export default function PurchaseOrdersPage() {
   const supplierOptions = selectedSupplier && !availableSuppliers.some(
     (entry) => entry.id === selectedSupplier.id,
   ) ? [selectedSupplier, ...availableSuppliers] : availableSuppliers;
-  const receivingOrder = (ordersQuery.data ?? []).find((entry) => (
+  const receivingOrder = (ordersQuery.data?.rows ?? []).find((entry) => (
     entry.id === receivingOrderId
   ));
   const statusLabels = {
@@ -273,23 +280,26 @@ export default function PurchaseOrdersPage() {
           <h1>Órdenes de compra</h1>
           <p>Planificá cantidades y costos antes de recibir mercadería.</p>
         </div>
-        <Link to="/purchases/suppliers" className="button purchase-soft-button">
-          Ver proveedores
-        </Link>
+        <div className="supplier-header-actions">
+          <Link to="/purchases/suppliers" className="button outline">Ver proveedores</Link>
+          {can('purchases', 'insert') && <button type="button" className="button primary"
+            onClick={() => setCreateOpen(true)}><Plus size={17} /> Nueva orden de compra</button>}
+        </div>
       </div>
 
-      <div className="purchase-grid">
-        {can('purchases', 'insert') && (
-          <section className="purchase-card">
-            <span className="eyebrow">NUEVA ORDEN</span>
-            <h2>Preparar compra</h2>
+      <div className="purchase-orders-list-layout">
+        {createOpen && can('purchases', 'insert') && (
+          <ActionDialog open title="Preparar orden de compra" busy={busy || choosingSupplier}
+            description="Elegí un proveedor para ver sus ítems, o seleccioná los ítems primero para encontrar quién los provee."
+            onClose={() => setCreateOpen(false)}>
+          <section className="purchase-order-compose">
             <form className="purchase-form" onSubmit={submit}>
               <label>Buscar proveedor
                 <input value={supplierSearch} onChange={(event) => setSupplierSearch(event.target.value)}
                   placeholder="Nombre del proveedor" />
               </label>
               <label>Proveedor *
-                <select required value={supplierId} disabled={choosingSupplier}
+                <select required value={supplierId} disabled={busy || choosingSupplier}
                   onChange={(event) => chooseSupplier(event.target.value, supplierOptions)}>
                   <option value="">{choosingSupplier ? 'Verificando cotizaciones…'
                     : 'Seleccionar proveedor'}</option>
@@ -298,6 +308,8 @@ export default function PurchaseOrdersPage() {
                   ))}
                 </select>
               </label>
+              {supplierId && <button type="button" className="button outline" disabled={busy || choosingSupplier}
+                onClick={() => chooseSupplier('', supplierOptions)}>Cambiar proveedor</button>}
               {!supplierId && selectedItemIds.length > 0 && (
                 <small className="purchase-price-hint">Se muestran los proveedores que cotizan
                   todos los ítems seleccionados.</small>
@@ -306,6 +318,10 @@ export default function PurchaseOrdersPage() {
                 <small className="error">{friendlyError(supplierQuotesQuery.error)}</small>
               )}
               {suppliersQuery.error && <small className="error">{friendlyError(suppliersQuery.error)}</small>}
+              {!supplierId && selectedItemIds.length > 0 && !supplierQuotesQuery.isPending &&
+                !supplierQuotesQuery.error && !supplierOptions.length && <p className="supplier-info">
+                  No hay un proveedor con cotización para todos estos ítems. Revisá las relaciones en Proveedores o separá la compra en distintas órdenes.
+                </p>}
               {lines.map((line, index) => {
                 return (
                   <div className="purchase-line" key={line.id}>
@@ -323,7 +339,7 @@ export default function PurchaseOrdersPage() {
                       userId={user?.id}
                       supplierId={supplierId}
                       line={line}
-                      disabled={choosingSupplier}
+                      disabled={busy || choosingSupplier}
                       onChange={(values) => updateLine(line.id, values)}
                     />
                     {line.item?.item_type === 'raw_material' && (
@@ -336,7 +352,7 @@ export default function PurchaseOrdersPage() {
                     )}
                     <div className="purchase-form-pair">
                       <label>Cantidad *
-                        <input type="number" required min="0.000001" step="0.000001"
+                        <input type="number" required min="0.000001" max="999999999999" step="0.000001"
                           value={line.quantity} placeholder="10"
                           onChange={(event) => updateLine(line.id, { quantity: event.target.value })} />
                       </label>
@@ -363,24 +379,41 @@ export default function PurchaseOrdersPage() {
                   style: 'currency', currency: 'ARS', maximumFractionDigits: 2,
                 })}</strong>
               </div>
-              <button className="button primary" disabled={busy || choosingSupplier}>
-                {busy ? 'Guardando…' : 'Crear orden de compra'}
-              </button>
+              <div className="erp-action-dialog-actions">
+                <button type="button" className="button outline" disabled={busy || choosingSupplier}
+                  onClick={() => setCreateOpen(false)}>Cerrar y conservar borrador</button>
+                <button className="button primary" disabled={busy || choosingSupplier}>
+                  {busy ? 'Guardando…' : 'Crear orden de compra'}
+                </button>
+              </div>
             </form>
           </section>
+          </ActionDialog>
         )}
 
         <section className="purchase-card">
           <div className="purchase-card-heading">
-            <h2>Órdenes recientes</h2>
+            <h2>Órdenes de compra</h2>
             <ShoppingCart size={19} />
+          </div>
+          <div className="purchase-orders-toolbar purchase-form">
+            <label className="purchase-search">
+              <input value={orderSearch} maxLength={100} aria-label="Buscar orden por número o proveedor"
+                placeholder="Número de orden o nombre del proveedor"
+                onChange={(event) => { setOrderSearch(event.target.value); setOrderPage(0); }} />
+            </label>
+            <select aria-label="Filtrar órdenes por estado" value={orderStatus}
+              onChange={(event) => { setOrderStatus(event.target.value); setOrderPage(0); }}>
+              <option value="">Todos los estados</option>
+              {Object.entries(statusLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+            </select>
           </div>
           {ordersQuery.isPending && <p className="purchase-muted">Cargando órdenes…</p>}
           {ordersQuery.error && <p role="alert" className="error">{friendlyError(ordersQuery.error)}</p>}
-          {!ordersQuery.isPending && !(ordersQuery.data ?? []).length && (
-            <p className="purchase-muted">Todavía no registraste órdenes de compra.</p>
+          {!ordersQuery.isPending && !(ordersQuery.data?.rows ?? []).length && (
+            <p className="purchase-muted">No hay órdenes de compra para esta búsqueda.</p>
           )}
-          {(ordersQuery.data ?? []).map((order) => (
+          {(ordersQuery.data?.rows ?? []).map((order) => (
             <article className="purchase-order" key={order.id}>
               <div className="purchase-card-heading">
                 <div>
@@ -392,9 +425,13 @@ export default function PurchaseOrdersPage() {
                   {statusLabels[order.status] ?? order.status}
                 </span>
               </div>
-              {(order.lines ?? []).map((line) => (
+              <p className="purchase-muted">{order.lines?.length ?? 0} ítem(s) · Total: {(order.lines ?? []).reduce((sum, line) => sum + Number(line.quantity) * Number(line.unit_price), 0).toLocaleString('es-AR', { style: 'currency', currency: 'ARS' })}</p>
+              <details className="purchase-order-details">
+              <summary>Ver ítems y cantidades pendientes</summary>
+              {[...(order.lines ?? [])].sort((a, b) => a.line_no - b.line_no).map((line) => (
                 <p className="purchase-order-line" key={line.line_no}>
-                  {line.item_code} · pedido {line.quantity} {line.unit_symbol}
+                  <strong>{line.item_name || line.item_code}</strong>
+                  <small>{line.item_code} · Pedido: {line.quantity} {line.unit_symbol}</small>
                   <small>Recibido: {line.received_quantity ?? 0}
                     · pendiente: {subtractQuantity(line.quantity,
                       line.received_quantity ?? 0)}</small>
@@ -404,6 +441,8 @@ export default function PurchaseOrdersPage() {
                 </p>
               ))}
               {order.note && <p className="purchase-muted">{order.note}</p>}
+              </details>
+              <div className="purchase-order-actions">
               {['open', 'partial'].includes(order.status)
                 && can('purchases', 'insert') && can('stock', 'insert')
                 && can('stock', 'read') && (
@@ -437,17 +476,20 @@ export default function PurchaseOrdersPage() {
               >
                 <Download size={15} /> Descargar PDF
               </button>
+              </div>
             </article>
           ))}
-          <p className="purchase-muted">Se muestran las 50 órdenes más recientes.</p>
+          <SupplierPagination page={orderPage} count={ordersQuery.data?.count ?? 0} onChange={setOrderPage} />
         </section>
       </div>
 
       {receivingOrder && (
-        <div ref={receiptPanelRef}>
-          <ReceiveOrderPanel order={receivingOrder}
+        <ActionDialog open title={`Recepciones · Orden #${receivingOrder.number}`}
+          description={receivingOrder.supplier_name} busy={receiptBusy}
+          onClose={() => setReceivingOrderId(null)}>
+          <ReceiveOrderPanel order={receivingOrder} onBusyChange={setReceiptBusy}
             onClose={() => setReceivingOrderId(null)} />
-        </div>
+        </ActionDialog>
       )}
 
       <ConfirmDeleteDialog

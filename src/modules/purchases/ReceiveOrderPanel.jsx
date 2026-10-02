@@ -61,7 +61,7 @@ function LotFields({ companyId, userId, line, value, update, disabled }) {
   );
 }
 
-export default function ReceiveOrderPanel({ order, onClose }) {
+export default function ReceiveOrderPanel({ order, onClose, onBusyChange }) {
   const { activeCompanyId, user, can } = useAuth();
   const queryClient = useQueryClient();
   const requestId = useRef(crypto.randomUUID());
@@ -71,6 +71,8 @@ export default function ReceiveOrderPanel({ order, onClose }) {
   const [warehouseSearch, setWarehouseSearch] = useState('');
   const [note, setNote] = useState('');
   const [busy, setBusy] = useState(false);
+  useEffect(() => { onBusyChange?.(busy); }, [busy, onBusyChange]);
+  useEffect(() => () => onBusyChange?.(false), [onBusyChange]);
   const [reviewRequired, setReviewRequired] = useState(false);
 
   const linesQuery = useQuery({
@@ -188,7 +190,7 @@ export default function ReceiveOrderPanel({ order, onClose }) {
           <span className="eyebrow">RECEPCIÓN · ORDEN #{order.number}</span>
           <h2>{order.supplier_name}</h2>
         </div>
-        <button className="purchase-text-button" type="button" onClick={onClose}
+        <button className="purchase-text-button" type="button" disabled={busy} onClick={onClose}
           aria-label="Cerrar recepción"><X size={18} /></button>
       </div>
       <p className="purchase-muted">
