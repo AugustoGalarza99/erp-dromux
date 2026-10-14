@@ -1,5 +1,17 @@
 [
   {
+    "version": "1.2.0",
+    "publishedAt": "2026-10-13",
+    "title": "Compras, pagos y documentos de producción",
+    "changes": [
+      "Importación Excel con formatos argentinos de miles y centavos.",
+      "Estadísticas por fechas, cuentas corrientes y órdenes de pago de proveedores.",
+      "Buscadores en fórmulas y factor de rendimiento por producto.",
+      "Tipos de envasado y controles personalizados en órdenes de trabajo.",
+      "PDF de producción con logo y formato configurable por empresa."
+    ]
+  },
+  {
     "version": "1.0.2",
     "publishedAt": "2026-10-02",
     "title": "Importación con proveedores y costos en dólares",

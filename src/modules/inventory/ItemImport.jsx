@@ -14,7 +14,8 @@ async function loadZip() {
     const script = document.createElement('script');
     script.src = '/vendor/jszip.min.js';
     script.onload = resolve;
-    script.onerror = () => reject(new Error('No se pudo abrir el lector de Excel. Recargá la página.'));
+    script.onerror = () =>
+      reject(new Error('No se pudo abrir el lector de Excel. Recargá la página.'));
     document.head.appendChild(script);
   });
   return window.JSZip;
@@ -30,29 +31,38 @@ async function readWorkbook(file) {
   if (!xml) throw new Error('No se encontró la primera hoja del archivo Excel.');
   const parse = (value) => {
     const document = new DOMParser().parseFromString(value, 'application/xml');
-    if (document.querySelector('parsererror')) throw new Error('El archivo Excel no se puede leer.');
+    if (document.querySelector('parsererror'))
+      throw new Error('El archivo Excel no se puede leer.');
     return document;
   };
   const sharedXml = await zip.file('xl/sharedStrings.xml')?.async('string');
   const strings = sharedXml
-    ? [...parse(sharedXml).getElementsByTagNameNS('*', 'si')]
-      .map((node) => [...node.getElementsByTagNameNS('*', 't')]
-        .map((text) => text.textContent).join(''))
+    ? [...parse(sharedXml).getElementsByTagNameNS('*', 'si')].map((node) =>
+        [...node.getElementsByTagNameNS('*', 't')].map((text) => text.textContent).join(''),
+      )
     : [];
   const document = parse(xml);
-  const rows = [...document.getElementsByTagNameNS('*', 'sheetData')[0]?.getElementsByTagNameNS('*', 'row') ?? []];
+  const rows = [
+    ...(document.getElementsByTagNameNS('*', 'sheetData')[0]?.getElementsByTagNameNS('*', 'row') ??
+      []),
+  ];
   const matrix = rows.map((row) => {
     const values = {};
+    const numericColumns = [];
     for (const cell of row.getElementsByTagNameNS('*', 'c')) {
       const col = cell.getAttribute('r')?.match(/^[A-Z]+/)?.[0];
       if (!col) continue;
       const type = cell.getAttribute('t');
+      if (!type || type === 'n') numericColumns.push(col);
       const raw = cell.getElementsByTagNameNS('*', 'v')[0]?.textContent ?? '';
-      values[col] = type === 's' ? strings[Number(raw)] ?? ''
-        : type === 'inlineStr' ? cell.getElementsByTagNameNS('*', 'is')[0]?.textContent ?? ''
-          : raw;
+      values[col] =
+        type === 's'
+          ? (strings[Number(raw)] ?? '')
+          : type === 'inlineStr'
+            ? (cell.getElementsByTagNameNS('*', 'is')[0]?.textContent ?? '')
+            : raw;
     }
-    return { number: Number(row.getAttribute('r')), values };
+    return { number: Number(row.getAttribute('r')), values, numericColumns };
   });
   return mapWorkbookRows(matrix);
 }
@@ -141,13 +151,27 @@ export default function ItemImport({ onClose }) {
   };
 
   return (
-    <div className="item-import-backdrop" role="presentation" onMouseDown={(event) => {
-      if (event.target === event.currentTarget && !busy) onClose();
-    }}>
-      <section className="item-import-modal" role="dialog" aria-modal="true" aria-labelledby="import-title">
+    <div
+      className="item-import-backdrop"
+      role="presentation"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget && !busy) onClose();
+      }}
+    >
+      <section
+        className="item-import-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="import-title"
+      >
         <div className="item-import-heading">
-          <div><span className="eyebrow">INVENTARIO</span><h2 id="import-title">Importar productos</h2></div>
-          <button type="button" aria-label="Cerrar" onClick={onClose} disabled={busy}><X size={19} /></button>
+          <div>
+            <span className="eyebrow">INVENTARIO</span>
+            <h2 id="import-title">Importar productos</h2>
+          </div>
+          <button type="button" aria-label="Cerrar" onClick={onClose} disabled={busy}>
+            <X size={19} />
+          </button>
         </div>
         <p>Creá materias primas, semielaborados, productos terminados e insumos en un solo paso.</p>
         <div className="item-import-steps">
@@ -156,65 +180,114 @@ export default function ItemImport({ onClose }) {
           </a>
           <label className="button item-import-picker">
             <Upload size={17} /> {busy ? 'Procesando…' : 'Seleccionar archivo .xlsx'}
-            <input ref={input} type="file" accept=".xlsx" disabled={busy}
-              onChange={(event) => pickFile(event.target.files?.[0])} />
+            <input
+              ref={input}
+              type="file"
+              accept=".xlsx"
+              disabled={busy}
+              onChange={(event) => pickFile(event.target.files?.[0])}
+            />
           </label>
         </div>
-        <p className="item-import-tip">Reemplazá las filas de ejemplo. Usá códigos de unidad y categoría existentes. Proveedor y tipo de dólar se identifican por su nombre exacto. Las tres columnas nuevas pueden quedar vacías; un costo en dólares requiere tipo de dólar con cotización vigente. Si completás ambos costos, se usa el costo en dólares para calcular los pesos. Máximo 200 filas. La importación crea fichas; el stock inicial se carga mediante ingresos.</p>
-        {error && <p role="alert" className="error">{error}</p>}
-        {rows.length > 0 && <div className="item-import-preview">
-          <h3><FileSpreadsheet size={17} /> {filename} · {rows.length} ítems</h3>
-          {issues.length ? (
-            <div role="alert" className="item-import-errors">
-              <strong>Corregí {issues.length} fila(s) en Excel y volvé a seleccionar el archivo:</strong>
-              <ul>{issues.slice(0, 30).map(({ number, message }) => (
-                <li key={number}>Fila {number}: {message}</li>
-              ))}</ul>
-              {issues.length > 30 && <p>Se muestran los primeros 30 errores.</p>}
-            </div>
-          ) : error ? (
-            <p>Corregí el problema indicado y volvé a seleccionar el archivo para validarlo.</p>
-          ) : <>
-            <p role="status">Validación lista. Al confirmar se crean los {rows.length} ítems y sus asociaciones juntos. Las filas con proveedor lo dejan como principal.</p>
-            <div className="item-import-table">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Fila</th>
-                    <th>Código</th>
-                    <th>Nombre</th>
-                    <th>Tipo</th>
-                    <th>Proveedor</th>
-                    <th>Costo USD</th>
-                    <th>Tipo de dólar</th>
-                    <th>Costo en pesos</th>
-                    <th>Stock</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {rows.slice(0, 20).map(({ number, data }, index) => (
-                    <tr key={number}>
-                      <td>{number}</td>
-                      <td>{data.codigo}</td>
-                      <td>{data.nombre}</td>
-                      <td>{typeLabels[data.tipo]}</td>
-                      <td>{data.proveedor || 'Sin proveedor'}</td>
-                      <td>{data.costo_usd === '' ? '—' : money(data.costo_usd, 'USD')}</td>
-                      <td>{data.tipo_dolar || '—'}</td>
-                      <td>{preview[index]?.cost_ars == null ? 'Sin costo' : money(preview[index].cost_ars)}</td>
-                      <td>{data.stock_infinito.toUpperCase() === 'SI' ? 'Infinito' : 'Controlado'}</td>
-                    </tr>
+        <p className="item-import-tip">
+          Reemplazá las filas de ejemplo. Usá códigos de unidad y categoría existentes. Proveedor y
+          tipo de dólar se identifican por su nombre exacto. Las tres columnas nuevas pueden quedar
+          vacías; un costo en dólares requiere tipo de dólar con cotización vigente. Se admiten
+          importes como $16.500,50 y 16500.50. Si completás ambos costos, se usa el costo en dólares
+          para calcular los pesos. Máximo 200 filas. La importación crea fichas; el stock inicial se
+          carga mediante ingresos.
+        </p>
+        {error && (
+          <p role="alert" className="error">
+            {error}
+          </p>
+        )}
+        {rows.length > 0 && (
+          <div className="item-import-preview">
+            <h3>
+              <FileSpreadsheet size={17} /> {filename} · {rows.length} ítems
+            </h3>
+            {issues.length ? (
+              <div role="alert" className="item-import-errors">
+                <strong>
+                  Corregí {issues.length} fila(s) en Excel y volvé a seleccionar el archivo:
+                </strong>
+                <ul>
+                  {issues.slice(0, 30).map(({ number, message }) => (
+                    <li key={number}>
+                      Fila {number}: {message}
+                    </li>
                   ))}
-                </tbody>
-              </table>
-            </div>
-            {rows.length > 20 && <small>Mostrando las primeras 20 filas.</small>}
-          </>}
-        </div>}
+                </ul>
+                {issues.length > 30 && <p>Se muestran los primeros 30 errores.</p>}
+              </div>
+            ) : error ? (
+              <p>Corregí el problema indicado y volvé a seleccionar el archivo para validarlo.</p>
+            ) : (
+              <>
+                <p role="status">
+                  Validación lista. Al confirmar se crean los {rows.length} ítems y sus asociaciones
+                  juntos. Las filas con proveedor lo dejan como principal.
+                </p>
+                <div className="item-import-table">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Fila</th>
+                        <th>Código</th>
+                        <th>Nombre</th>
+                        <th>Tipo</th>
+                        <th>Proveedor</th>
+                        <th>Costo USD</th>
+                        <th>Tipo de dólar</th>
+                        <th>Costo en pesos</th>
+                        <th>Stock</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {rows.slice(0, 20).map(({ number, data }, index) => (
+                        <tr key={number}>
+                          <td>{number}</td>
+                          <td>{data.codigo}</td>
+                          <td>{data.nombre}</td>
+                          <td>{typeLabels[data.tipo]}</td>
+                          <td>{data.proveedor || 'Sin proveedor'}</td>
+                          <td>{data.costo_usd === '' ? '—' : money(data.costo_usd, 'USD')}</td>
+                          <td>{data.tipo_dolar || '—'}</td>
+                          <td>
+                            {preview[index]?.cost_ars == null
+                              ? 'Sin costo'
+                              : money(preview[index].cost_ars)}
+                          </td>
+                          <td>
+                            {data.stock_infinito.toUpperCase() === 'SI' ? 'Infinito' : 'Controlado'}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                {rows.length > 20 && <small>Mostrando las primeras 20 filas.</small>}
+              </>
+            )}
+          </div>
+        )}
         <div className="item-import-footer">
-          <button type="button" className="button" onClick={onClose} disabled={busy}>Cancelar</button>
-          <button type="button" className="button primary" onClick={confirm}
-            disabled={busy || !rows.length || Boolean(issues.length) || Boolean(error) || preview.length !== rows.length}>
+          <button type="button" className="button" onClick={onClose} disabled={busy}>
+            Cancelar
+          </button>
+          <button
+            type="button"
+            className="button primary"
+            onClick={confirm}
+            disabled={
+              busy ||
+              !rows.length ||
+              Boolean(issues.length) ||
+              Boolean(error) ||
+              preview.length !== rows.length
+            }
+          >
             {busy ? 'Importando…' : `Confirmar importación (${rows.length})`}
           </button>
         </div>

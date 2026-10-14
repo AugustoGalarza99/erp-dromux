@@ -1,100 +1,177 @@
 import { jsPDF } from 'jspdf';
 import { autoTable } from 'jspdf-autotable';
 
-const quantity = (value) => Number(value).toLocaleString('es-AR', {
-  maximumFractionDigits: 6,
-});
+const quantity = (value) =>
+  Number(value ?? 0).toLocaleString('es-AR', { maximumFractionDigits: 6 });
 
-export function downloadProductionJobPdf(job, items, warehouses, companyName) {
+export function buildProductionJobPdf(job, items, warehouses, companyName, settings = {}) {
   const pdf = new jsPDF({ unit: 'mm', format: 'a4', compress: true });
-  const itemName = (id) => items.find((item) => item.id === id)?.name ?? 'Insumo';
-  const warehouseName = (id) => warehouses.find((entry) => entry.id === id)?.name ?? 'Depósito';
-  const events = [...(job.production_job_events ?? [])].sort((a, b) =>
-    new Date(a.created_at) - new Date(b.created_at));
-  const ink = [21, 43, 57];
-  const teal = [22, 133, 123];
-  const width = pdf.internal.pageSize.getWidth();
-  pdf.setFillColor(...ink);
-  pdf.rect(0, 0, width, 7, 'F');
-  pdf.setFont('helvetica', 'bold');
-  pdf.setTextColor(...ink);
-  pdf.setFontSize(19);
-  pdf.text('ORDEN DE FABRICACIÓN', 16, 23);
-  pdf.setFontSize(10);
-  pdf.setTextColor(...teal);
-  pdf.text('HOJA DE TRABAJO', width - 16, 23, { align: 'right' });
-  pdf.setDrawColor(216, 229, 230);
-  pdf.line(16, 29, width - 16, 29);
-  pdf.setFont('helvetica', 'normal');
-  pdf.setFontSize(10);
-  pdf.setTextColor(...ink);
-  const header = [
-    companyName || 'Empresa',
-    `Producto: ${itemName(job.product_id)}`,
-    `Objetivo: ${quantity(job.planned_quantity)} · Real: ${job.actual_quantity == null
-      ? 'Pendiente' : quantity(job.actual_quantity)}`,
-    `Depósito: ${warehouseName(job.warehouse_id)} · Fórmula v${job.formula_version}`,
-    `Creada: ${new Date(job.created_at).toLocaleString('es-AR')} · Estado: ${{
-      queued: 'En cola', in_progress: 'En proceso', completed: 'Completada',
-      cancelled: 'Cancelada',
-    }[job.status] ?? job.status}`,
-    `Nota: ${job.note}`,
-  ];
-  let y = 36;
-  header.forEach((line) => {
-    const lines = pdf.splitTextToSize(line, width - 32);
-    pdf.text(lines, 16, y);
-    y += lines.length * 5 + 2;
-  });
-  if (job.output_lot) {
-    pdf.text(`Lote fabricado: ${job.output_lot}`, 16, y);
-    y += 7;
+  const product = items.find((item) => item.id === job.product_id);
+  const itemById = Object.fromEntries(items.map((item) => [item.id, item]));
+  const net = new Map();
+  for (const event of job.production_job_events ?? []) {
+    net.set(
+      event.component_id,
+      (net.get(event.component_id) ?? 0) +
+        Number(event.quantity) * (event.kind === 'return' ? -1 : 1),
+    );
   }
+  const snapshot = job.document_snapshot ?? {};
+  const work = job.work_options ?? {};
+  const code = snapshot.code ?? settings?.document_code ?? 'OP';
+  const revision = snapshot.revision ?? settings?.revision ?? '01';
+  const margin = { left: 12, right: 12, bottom: 18 };
+  const style = {
+    theme: 'grid',
+    margin,
+    styles: { fontSize: 8, cellPadding: 2.5, lineColor: [100, 115, 120], lineWidth: 0.15 },
+    headStyles: { fillColor: [225, 232, 233], textColor: [20, 35, 40], fontStyle: 'bold' },
+  };
+  pdf.setDrawColor(90, 105, 110);
+  pdf.rect(12, 12, 186, 31);
+  pdf.line(82, 12, 82, 43);
+  if (settings?.logo_data) {
+    const image = pdf.getImageProperties(settings.logo_data);
+    const ratio = Math.min(58 / image.width, 20 / image.height);
+    pdf.addImage(settings.logo_data, 'PNG', 18, 16, image.width * ratio, image.height * ratio);
+  } else {
+    pdf.setFontSize(11);
+    pdf.setFont('helvetica', 'bold');
+    pdf.text(pdf.splitTextToSize(companyName || 'Empresa', 58), 17, 24);
+  }
+  pdf.setFont('helvetica', 'bold');
+  pdf.setFontSize(11);
+  pdf.text(`ORDEN DE PRODUCCION ${job.number ?? ''}`, 87, 20);
+  pdf.setFont('helvetica', 'normal');
+  pdf.setFontSize(8);
+  pdf.text(
+    pdf.splitTextToSize(`${code}  |  Revision ${revision}  |  Formula ${job.formula_version}`, 104),
+    87,
+    27,
+  );
+  pdf.setFont('helvetica', 'bold');
+  pdf.setFontSize(10);
+  pdf.text(pdf.splitTextToSize(product?.name || 'Producto', 104), 87, 34);
   autoTable(pdf, {
-    startY: y + 2,
-    head: [['INSUMO', 'CANTIDAD PREVISTA']],
-    body: (job.formula_snapshot ?? []).map((entry) => [
-      itemName(entry.component_id),
-      quantity(entry.quantity),
-    ]),
-    theme: 'striped',
-    headStyles: { fillColor: teal },
-    margin: { left: 16, right: 16, bottom: 24 },
-    styles: { fontSize: 9, cellPadding: 3 },
+    ...style,
+    startY: 46,
+    body: [
+      [
+        'Fecha',
+        new Date(job.created_at).toLocaleDateString('es-AR'),
+        'Lote',
+        job.output_lot || '________________',
+      ],
+      [
+        'Cantidad base',
+        `${quantity(job.planned_quantity)} ${product?.units?.symbol ?? ''}`,
+        'Factor de rendimiento',
+        quantity(job.yield_factor ?? 1),
+      ],
+      [
+        'Salida esperada',
+        `${quantity(job.expected_output ?? job.planned_quantity)} ${product?.units?.symbol ?? ''}`,
+        'Salida real',
+        job.actual_quantity == null
+          ? '________________'
+          : `${quantity(job.actual_quantity)} ${product?.units?.symbol ?? ''}`,
+      ],
+      [
+        'Deposito',
+        warehouses.find((entry) => entry.id === job.warehouse_id)?.name ?? 'Deposito',
+        'Estado',
+        {
+          queued: 'En cola',
+          in_progress: 'En proceso',
+          completed: 'Completada',
+          cancelled: 'Cancelada',
+        }[job.status] ?? '',
+      ],
+    ],
+    columnStyles: {
+      0: { fontStyle: 'bold', cellWidth: 32 },
+      1: { cellWidth: 61 },
+      2: { fontStyle: 'bold', cellWidth: 38 },
+      3: { cellWidth: 55 },
+    },
   });
-  if (events.length) {
-    autoTable(pdf, {
-      startY: (pdf.lastAutoTable?.finalY ?? y) + 12,
-      head: [['MOVIMIENTO REAL', 'INSUMO', 'CANTIDAD', 'DEPÓSITO / LOTE']],
-      body: events.map((event) => [
-        event.kind === 'issue' ? 'Consumo' : 'Devolución',
-        itemName(event.component_id),
-        quantity(event.quantity),
-        `${warehouseName(event.warehouse_id)}${event.lot_code ? ` · ${event.lot_code}` : ''}`,
-      ]),
-      theme: 'striped',
-      headStyles: { fillColor: ink },
-      margin: { left: 16, right: 16, bottom: 24 },
-      styles: { fontSize: 8.4, cellPadding: 3 },
+  const materials = [...(job.formula_snapshot ?? [])];
+  for (const [id] of net)
+    if (!materials.some((line) => line.component_id === id))
+      materials.push({ component_id: id, quantity: 0 });
+  autoTable(pdf, {
+    ...style,
+    startY: pdf.lastAutoTable.finalY + 4,
+    head: [['N', 'OK', 'MATERIAL / INSUMO', 'PREVISTO', 'UNIDAD', 'REAL', 'OBSERVACIONES']],
+    body: materials.map((line, index) => [
+      index + 1,
+      '',
+      itemById[line.component_id]?.name ?? 'Insumo',
+      quantity(line.quantity),
+      itemById[line.component_id]?.units?.symbol ?? '',
+      net.has(line.component_id) ? quantity(net.get(line.component_id)) : '',
+      '',
+    ]),
+    columnStyles: {
+      0: { cellWidth: 10 },
+      1: { cellWidth: 10 },
+      2: { cellWidth: 53 },
+      3: { cellWidth: 22 },
+      4: { cellWidth: 16 },
+      5: { cellWidth: 22 },
+      6: { cellWidth: 53 },
+    },
+    didDrawCell: (cell) => {
+      if (cell.section === 'body' && cell.column.index === 1)
+        pdf.rect(cell.cell.x + 3, cell.cell.y + 2.5, 3.5, 3.5);
+    },
+  });
+  autoTable(pdf, {
+    ...style,
+    startY: pdf.lastAutoTable.finalY + 5,
+    head: [['ENVASADO', 'CAPACIDAD', 'ENVASES PREVISTOS', 'ENVASES REALES']],
+    body: (work.packaging ?? []).length
+      ? work.packaging.map((entry) => [
+          entry.name,
+          `${quantity(entry.capacity)} ${entry.unit}`,
+          quantity(entry.count),
+          entry.actual_count == null ? '' : quantity(entry.actual_count),
+        ])
+      : [['Sin envasado definido', '', '', '']],
+  });
+  const labels = snapshot.labels ?? settings?.observation_labels ?? [];
+  const controls = labels.map((label) => [label, work.observations?.[label] || '']);
+  controls.push(['Observaciones del proceso', job.note || '']);
+  if (job.variance_note) controls.push(['Diferencias frente a lo previsto', job.variance_note]);
+  autoTable(pdf, {
+    ...style,
+    startY: pdf.lastAutoTable.finalY + 5,
+    head: [['CONTROL / OBSERVACION', 'RESULTADO / DETALLE']],
+    body: controls,
+    margin: { ...margin, bottom: 30 },
+    columnStyles: { 0: { cellWidth: 60 }, 1: { cellWidth: 126 } },
+    styles: { ...style.styles, minCellHeight: 12 },
+  });
+  let y = pdf.lastAutoTable.finalY + 10;
+  if (y > 280) {
+    pdf.addPage();
+    y = 24;
+  }
+  pdf.setFontSize(9);
+  pdf.text('Elaborado por: ____________________   Verificado por: ____________________', 12, y);
+  for (let page = 1; page <= pdf.getNumberOfPages(); page++) {
+    pdf.setPage(page);
+    pdf.setFont('helvetica', 'normal');
+    pdf.setFontSize(8);
+    pdf.text(`OF ${job.number ?? ''} - ${page}/${pdf.getNumberOfPages()}`, 198, 289, {
+      align: 'right',
     });
   }
-  let noteY = (pdf.lastAutoTable?.finalY ?? y) + 12;
-  if (noteY > 250) { pdf.addPage(); noteY = 22; }
-  pdf.setTextColor(...ink);
-  pdf.setFontSize(9);
-  if (job.variance_note) {
-    const lines = pdf.splitTextToSize(`Diferencias: ${job.variance_note}`, width - 32);
-    if (noteY + lines.length * 5 + 12 > 270) { pdf.addPage(); noteY = 22; }
-    pdf.text(lines, 16, noteY);
-    noteY += lines.length * 5 + 6;
-  }
-  pdf.text('Responsable: ______________________    Fecha: ______________________', 16, noteY);
-  const pages = pdf.internal.getNumberOfPages();
-  for (let i = 1; i <= pages; i += 1) {
-    pdf.setPage(i);
-    pdf.setFontSize(8);
-    pdf.setTextColor(90, 109, 115);
-    pdf.text(`Hoja de fabricación · ${i}/${pages}`, width - 16, 289, { align: 'right' });
-  }
-  pdf.save(`fabricacion-${job.id.slice(0, 8)}.pdf`);
+  return pdf;
+}
+
+export function downloadProductionJobPdf(job, items, warehouses, companyName, settings) {
+  buildProductionJobPdf(job, items, warehouses, companyName, settings).save(
+    `orden-produccion-${job.number ?? 'documento'}.pdf`,
+  );
 }

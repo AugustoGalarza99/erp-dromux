@@ -1,3 +1,13 @@
+import { normalizeImportNumber } from './importNumber';
+
+function readNumber(value, numericCell, number, header) {
+  try {
+    return normalizeImportNumber(value, numericCell);
+  } catch (error) {
+    throw new Error(`Fila ${number}, ${header}: ${error.message}`);
+  }
+}
+
 export const baseHeaders = [
   'codigo',
   'nombre',
@@ -44,14 +54,24 @@ export function mapWorkbookRows(matrix) {
   if (baseHeaders.some((header) => !columns[header])) {
     throw new Error('Faltan columnas de la plantilla. Descargá una copia nueva.');
   }
-  return matrix.slice(1)
+  return matrix
+    .slice(1)
     .filter(({ values }) => headers.some((header) => String(values[columns[header]] ?? '').trim()))
-    .map(({ number, values }) => ({
+    .map(({ number, values, numericColumns = [] }) => ({
       number,
-      data: Object.fromEntries(headers.map((header) => [
-        header,
-        String(values[columns[header]] ?? '').trim(),
-      ])),
+      data: Object.fromEntries(
+        headers.map((header) => [
+          header,
+          ['stock_minimo', 'costo_referencia_ars', 'precio_venta_ars', 'costo_usd'].includes(header)
+            ? readNumber(
+                values[columns[header]],
+                numericColumns.includes(columns[header]),
+                number,
+                header,
+              )
+            : String(values[columns[header]] ?? '').trim(),
+        ]),
+      ),
     }));
 }
 
@@ -71,7 +91,8 @@ export function validateLocalRows(rows) {
   for (const { number, data: row } of rows) {
     const issues = [];
     if (!/^[A-Za-z0-9][A-Za-z0-9._-]{0,49}$/.test(row.codigo)) issues.push('código inválido');
-    if (row.nombre.length < 2 || row.nombre.length > 160) issues.push('nombre de 2 a 160 caracteres');
+    if (row.nombre.length < 2 || row.nombre.length > 160)
+      issues.push('nombre de 2 a 160 caracteres');
     if (!typeLabels[row.tipo]) issues.push('tipo inválido');
     if (!row.unidad_codigo) issues.push('falta unidad');
     if (!/^\d+(\.\d{1,6})?$/.test(row.stock_minimo) || Number(row.stock_minimo) >= 1e12) {
@@ -93,12 +114,15 @@ export function validateLocalRows(rows) {
     if (row.proveedor && row.costo_referencia_ars === '' && row.costo_usd === '') {
       issues.push('el proveedor necesita un costo en pesos o dólares');
     }
-    if (row.stock_infinito.toUpperCase() === 'SI'
-      && (row.seguir_lotes.toUpperCase() !== 'NO' || Number(row.stock_minimo) !== 0)) {
+    if (
+      row.stock_infinito.toUpperCase() === 'SI' &&
+      (row.seguir_lotes.toUpperCase() !== 'NO' || Number(row.stock_minimo) !== 0)
+    ) {
       issues.push('stock infinito requiere sin lotes y mínimo 0');
     }
     if (codes.has(row.codigo.toLowerCase())) issues.push('código repetido en el archivo');
-    if (row.codigo_barras && barcodes.has(row.codigo_barras)) issues.push('código de barras repetido');
+    if (row.codigo_barras && barcodes.has(row.codigo_barras))
+      issues.push('código de barras repetido');
     codes.add(row.codigo.toLowerCase());
     if (row.codigo_barras) barcodes.add(row.codigo_barras);
     if (issues.length) errors.push({ number, message: issues.join(' · ') });

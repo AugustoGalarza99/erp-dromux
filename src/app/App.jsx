@@ -1,3 +1,6 @@
+import SupplierAccountsPage from '../modules/purchases/SupplierAccountsPage';
+import PackagingPage from '../modules/production/PackagingPage';
+import ProductionDocumentSettings from '../modules/settings/ProductionDocumentSettings';
 import { useState } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { ArrowRight, Building2, ShieldCheck } from 'lucide-react';
@@ -79,7 +82,9 @@ function SetupCompany() {
       </form>
 
       {error && <p className="error">{error}</p>}
-      <button className="text-button" onClick={signOut}>Cerrar sesión</button>
+      <button className="text-button" onClick={signOut}>
+        Cerrar sesión
+      </button>
     </div>
   );
 }
@@ -108,8 +113,8 @@ function SuspendedCompany({ companies }) {
       <span className="eyebrow">ACCESO SUSPENDIDO</span>
       <h1>El acceso a tu empresa está suspendido</h1>
       <p>
-        {companies.map((item) => item.companies.name).join(', ')}.
-        Contactá al administrador del servicio para regularizar la cuenta.
+        {companies.map((item) => item.companies.name).join(', ')}. Contactá al administrador del
+        servicio para regularizar la cuenta.
       </p>
       <button className="button primary" onClick={refresh}>
         Comprobar estado
@@ -141,35 +146,46 @@ function SupportAccess() {
     }
   }
 
-  return <div className="setup support-entry">
-    <ShieldCheck size={32} />
-    <h1>Acceso de soporte</h1>
-    <p>Para consultar {activeCompany?.name}, indicá el motivo.
-      El acceso será de solo lectura y quedará registrado.</p>
-    <form onSubmit={enter}>
-      <label className="sr-only" htmlFor="support-reason">Motivo de acceso</label>
-      <input id="support-reason" required minLength={8} maxLength={300}
-        value={reason} onChange={(event) => setReason(event.target.value)}
-        placeholder="Ej.: asistencia solicitada por el cliente" />
-      <button className="button primary" disabled={busy || reason.trim().length < 8}>
-        {busy ? 'Ingresando…' : 'Ingresar'}
+  return (
+    <div className="setup support-entry">
+      <ShieldCheck size={32} />
+      <h1>Acceso de soporte</h1>
+      <p>
+        Para consultar {activeCompany?.name}, indicá el motivo. El acceso será de solo lectura y
+        quedará registrado.
+      </p>
+      <form onSubmit={enter}>
+        <label className="sr-only" htmlFor="support-reason">
+          Motivo de acceso
+        </label>
+        <input
+          id="support-reason"
+          required
+          minLength={8}
+          maxLength={300}
+          value={reason}
+          onChange={(event) => setReason(event.target.value)}
+          placeholder="Ej.: asistencia solicitada por el cliente"
+        />
+        <button className="button primary" disabled={busy || reason.trim().length < 8}>
+          {busy ? 'Ingresando…' : 'Ingresar'}
+        </button>
+      </form>
+      {error && (
+        <p role="alert" className="error">
+          {error}
+        </p>
+      )}
+      <button type="button" className="text-button" onClick={signOut}>
+        Cerrar sesión
       </button>
-    </form>
-    {error && <p role="alert" className="error">{error}</p>}
-    <button type="button" className="text-button" onClick={signOut}>Cerrar sesión</button>
-  </div>;
+    </div>
+  );
 }
 
 function Gate() {
-  const {
-    user,
-    authLoading,
-    error,
-    memberships,
-    suspendedCompanies,
-    supportNeedsAccess,
-    can,
-  } = useAuth();
+  const { user, authLoading, error, memberships, suspendedCompanies, supportNeedsAccess, can } =
+    useAuth();
 
   if (authLoading) {
     return (
@@ -222,106 +238,230 @@ export default function App() {
         <Route path="/mi-perfil" element={<ProfilePage />} />
         <Route
           path="/settings/users"
-          element={<PermissionGate resource="users"><UsersPage /></PermissionGate>}
+          element={
+            <PermissionGate resource="users">
+              <UsersPage />
+            </PermissionGate>
+          }
         />
         <Route
           path="/settings/roles"
-          element={<PermissionGate resource="roles"><RolesPage /></PermissionGate>}
+          element={
+            <PermissionGate resource="roles">
+              <RolesPage />
+            </PermissionGate>
+          }
         />
         <Route
           path="/settings/units"
-          element={<PermissionGate resource="units"><CatalogPage resource="units" /></PermissionGate>}
+          element={
+            <PermissionGate resource="units">
+              <CatalogPage resource="units" />
+            </PermissionGate>
+          }
         />
         <Route
           path="/settings/categories"
-          element={<PermissionGate resource="categories"><CatalogPage resource="categories" /></PermissionGate>}
+          element={
+            <PermissionGate resource="categories">
+              <CatalogPage resource="categories" />
+            </PermissionGate>
+          }
         />
         <Route
           path="/settings/warehouses"
-          element={<PermissionGate resource="warehouses"><CatalogPage resource="warehouses" /></PermissionGate>}
+          element={
+            <PermissionGate resource="warehouses">
+              <CatalogPage resource="warehouses" />
+            </PermissionGate>
+          }
         />
         <Route
           path="/inventory/items"
-          element={<PermissionGate resource="items"><ItemsPage /></PermissionGate>}
+          element={
+            <PermissionGate resource="items">
+              <ItemsPage />
+            </PermissionGate>
+          }
         />
         <Route
           path="/inventory/items/new"
-          element={<PermissionGate resource="items"><ItemEditor /></PermissionGate>}
+          element={
+            <PermissionGate resource="items">
+              <ItemEditor />
+            </PermissionGate>
+          }
         />
         <Route
           path="/inventory/items/:itemId"
-          element={<PermissionGate resource="items"><ItemEditor /></PermissionGate>}
+          element={
+            <PermissionGate resource="items">
+              <ItemEditor />
+            </PermissionGate>
+          }
         />
         <Route
           path="/inventory/stock"
-          element={<PermissionGate resource="stock"><StockPage /></PermissionGate>}
+          element={
+            <PermissionGate resource="stock">
+              <StockPage />
+            </PermissionGate>
+          }
         />
         <Route
           path="/inventory/movements"
-          element={<PermissionGate resource="stock"><MovementsPage /></PermissionGate>}
+          element={
+            <PermissionGate resource="stock">
+              <MovementsPage />
+            </PermissionGate>
+          }
         />
         <Route
           path="/inventory/delivery-notes"
-          element={<PermissionGate resource="stock"><DeliveryNotesPage /></PermissionGate>}
+          element={
+            <PermissionGate resource="stock">
+              <DeliveryNotesPage />
+            </PermissionGate>
+          }
         />
         <Route
           path="/purchases/suppliers"
-          element={<PermissionGate resource="purchases"><SuppliersPage /></PermissionGate>}
+          element={
+            <PermissionGate resource="purchases">
+              <SuppliersPage />
+            </PermissionGate>
+          }
         />
         <Route
           path="/purchases/orders"
-          element={<PermissionGate resource="purchases"><PurchaseOrdersPage /></PermissionGate>}
+          element={
+            <PermissionGate resource="purchases">
+              <PurchaseOrdersPage />
+            </PermissionGate>
+          }
         />
         <Route
           path="/production/formulas"
-          element={<PermissionGate resource="production"><FormulasPage /></PermissionGate>}
+          element={
+            <PermissionGate resource="production">
+              <FormulasPage />
+            </PermissionGate>
+          }
         />
         <Route
           path="/production/orders"
-          element={<PermissionGate resource="production"><ProductionOrdersPage /></PermissionGate>}
+          element={
+            <PermissionGate resource="production">
+              <ProductionOrdersPage />
+            </PermissionGate>
+          }
         />
         <Route
           path="/production/planning"
-          element={<PermissionGate resource="production"><ProductionPlanningPage /></PermissionGate>}
+          element={
+            <PermissionGate resource="production">
+              <ProductionPlanningPage />
+            </PermissionGate>
+          }
         />
         <Route
           path="/production/availability"
-          element={<PermissionGate resource="production"><ManufacturingAvailabilityPage /></PermissionGate>}
+          element={
+            <PermissionGate resource="production">
+              <ManufacturingAvailabilityPage />
+            </PermissionGate>
+          }
         />
         <Route
           path="/production/replenishment"
-          element={<PermissionGate resource="production"><ReplenishmentPage /></PermissionGate>}
+          element={
+            <PermissionGate resource="production">
+              <ReplenishmentPage />
+            </PermissionGate>
+          }
         />
         <Route
           path="/sales/customers"
-          element={<PermissionGate resource="sales"><CustomersPage /></PermissionGate>}
+          element={
+            <PermissionGate resource="sales">
+              <CustomersPage />
+            </PermissionGate>
+          }
         />
-        <Route
-          path="/sales/prices"
-          element={<Navigate to="/sales/lista-precios" replace />}
-        />
+        <Route path="/sales/prices" element={<Navigate to="/sales/lista-precios" replace />} />
         <Route
           path="/sales/lista-precios"
-          element={<PermissionGate resource="sales"><PriceListPage /></PermissionGate>}
+          element={
+            <PermissionGate resource="sales">
+              <PriceListPage />
+            </PermissionGate>
+          }
         />
         <Route
           path="/sales/orders"
-          element={<PermissionGate resource="sales"><SalesOrdersPage /></PermissionGate>}
+          element={
+            <PermissionGate resource="sales">
+              <SalesOrdersPage />
+            </PermissionGate>
+          }
         />
-        <Route path="/finance/treasury"
-          element={<PermissionGate resource="finance"><TreasuryPage /></PermissionGate>}
+        <Route
+          path="/finance/treasury"
+          element={
+            <PermissionGate resource="finance">
+              <TreasuryPage />
+            </PermissionGate>
+          }
         />
-        <Route path="/finance/costs"
-          element={<PermissionGate resource="finance"><CostsPage /></PermissionGate>}
+        <Route
+          path="/finance/costs"
+          element={
+            <PermissionGate resource="finance">
+              <CostsPage />
+            </PermissionGate>
+          }
         />
-        <Route path="/reports"
-          element={<PermissionGate resource="reports"><ReportsPage /></PermissionGate>}
+        <Route
+          path="/purchases/accounts"
+          element={
+            <PermissionGate resource="purchases">
+              <SupplierAccountsPage />
+            </PermissionGate>
+          }
+        />
+        <Route
+          path="/production/packaging"
+          element={
+            <PermissionGate resource="production">
+              <PackagingPage />
+            </PermissionGate>
+          }
+        />
+        <Route
+          path="/settings/production-documents"
+          element={
+            <PermissionGate resource="production">
+              <ProductionDocumentSettings />
+            </PermissionGate>
+          }
+        />
+        <Route
+          path="/reports"
+          element={
+            <PermissionGate resource="reports">
+              <ReportsPage />
+            </PermissionGate>
+          }
         />
         <Route path="/ayuda" element={<GuidePage />} />
         <Route path="/actualizaciones" element={<UpdatesPage />} />
         <Route
           path="/finance/receivables"
-          element={<PermissionGate resource="finance"><ReceivablesPage /></PermissionGate>}
+          element={
+            <PermissionGate resource="finance">
+              <ReceivablesPage />
+            </PermissionGate>
+          }
         />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />

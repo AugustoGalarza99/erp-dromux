@@ -27,18 +27,22 @@ import ActionDialog from './ActionDialog';
 const groups = [
   {
     title: 'OPERACIÓN',
-    items: [
-      { label: 'Inicio', icon: LayoutDashboard, to: '/', permission: 'dashboard' },
-    ],
+    items: [{ label: 'Inicio', icon: LayoutDashboard, to: '/', permission: 'dashboard' }],
   },
   {
     title: 'MÓDULOS',
     items: [
       {
-        label: 'Inventario', icon: Boxes, permission: 'inventory',
+        label: 'Inventario',
+        icon: Boxes,
+        permission: 'inventory',
         children: [
           { label: 'Todos los ítems', to: '/inventory/items', permission: 'items' },
-          { label: 'Materias primas', to: '/inventory/items?type=raw_material', permission: 'items' },
+          {
+            label: 'Materias primas',
+            to: '/inventory/items?type=raw_material',
+            permission: 'items',
+          },
           { label: 'Productos', to: '/inventory/items?type=finished_product', permission: 'items' },
           { label: 'Stock por depósito', to: '/inventory/stock', permission: 'stock' },
           { label: 'Movimientos', to: '/inventory/movements', permission: 'stock' },
@@ -46,24 +50,40 @@ const groups = [
         ],
       },
       {
-        label: 'Producción', icon: Factory, permission: 'production',
+        label: 'Producción',
+        icon: Factory,
+        permission: 'production',
         children: [
           { label: 'Órdenes de fabricación', to: '/production/orders', permission: 'production' },
+          { label: 'Tipos de envasado', to: '/production/packaging', permission: 'production' },
           { label: 'Fórmulas', to: '/production/formulas', permission: 'production' },
           { label: 'Planificación', to: '/production/planning', permission: 'production' },
-          { label: '¿Tengo stock para fabricar?', to: '/production/availability', permission: 'production' },
-          { label: 'Pronóstico y reposición', to: '/production/replenishment', permission: 'production' },
+          {
+            label: '¿Tengo stock para fabricar?',
+            to: '/production/availability',
+            permission: 'production',
+          },
+          {
+            label: 'Pronóstico y reposición',
+            to: '/production/replenishment',
+            permission: 'production',
+          },
         ],
       },
       {
-        label: 'Compras', icon: ShoppingCart, permission: 'purchases',
+        label: 'Compras',
+        icon: ShoppingCart,
+        permission: 'purchases',
         children: [
+          { label: 'Compras y cuentas', to: '/purchases/accounts', permission: 'purchases' },
           { label: 'Proveedores', to: '/purchases/suppliers', permission: 'purchases' },
           { label: 'Órdenes de compra', to: '/purchases/orders', permission: 'purchases' },
         ],
       },
       {
-        label: 'Ventas', icon: ShoppingBag, permission: 'sales',
+        label: 'Ventas',
+        icon: ShoppingBag,
+        permission: 'sales',
         children: [
           { label: 'Clientes', to: '/sales/customers', permission: 'sales' },
           { label: 'Lista de precios', to: '/sales/lista-precios', permission: 'sales' },
@@ -71,18 +91,25 @@ const groups = [
         ],
       },
       {
-        label: 'Finanzas', icon: Wallet, permission: 'finance',
+        label: 'Finanzas',
+        icon: Wallet,
+        permission: 'finance',
         children: [
           { label: 'Cuentas por cobrar', to: '/finance/receivables', permission: 'finance' },
           { label: 'Tesorería', to: '/finance/treasury', permission: 'finance' },
-          { label: 'Rentabilidad y precios', to: '/finance/costs', permission: 'finance', adminOnly: true },
+          {
+            label: 'Rentabilidad y precios',
+            to: '/finance/costs',
+            permission: 'finance',
+            adminOnly: true,
+          },
         ],
       },
       {
-        label: 'Reportes', icon: BarChart3, permission: 'reports',
-        children: [
-          { label: 'Resumen por período', to: '/reports', permission: 'reports' },
-        ],
+        label: 'Reportes',
+        icon: BarChart3,
+        permission: 'reports',
+        children: [{ label: 'Resumen por período', to: '/reports', permission: 'reports' }],
       },
     ],
   },
@@ -90,8 +117,15 @@ const groups = [
     title: 'SISTEMA',
     items: [
       {
-        label: 'Configuración', icon: Settings2, permission: 'settings',
+        label: 'Configuración',
+        icon: Settings2,
+        permission: 'settings',
         children: [
+          {
+            label: 'Documentos de producción',
+            to: '/settings/production-documents',
+            permission: 'production',
+          },
           { label: 'Usuarios', to: '/settings/users', permission: 'users' },
           { label: 'Roles y permisos', to: '/settings/roles', permission: 'roles' },
           { label: 'Unidades', to: '/settings/units', permission: 'units' },
@@ -116,23 +150,37 @@ export default function AdminLayout() {
   } = useAuth();
   const location = useLocation();
   const routeName = {
-    '/': 'Inicio', '/inventory/items': 'Ítems', '/inventory/stock': 'Stock por depósito',
-    '/inventory/movements': 'Movimientos', '/inventory/delivery-notes': 'Remitos',
+    '/': 'Inicio',
+    '/inventory/items': 'Ítems',
+    '/inventory/stock': 'Stock por depósito',
+    '/inventory/movements': 'Movimientos',
+    '/inventory/delivery-notes': 'Remitos',
     '/purchases/suppliers': 'Proveedores',
-    '/purchases/orders': 'Órdenes de compra', '/production/formulas': 'Fórmulas',
-    '/production/orders': 'Órdenes de fabricación', '/production/planning': 'Planificación',
+    '/purchases/orders': 'Órdenes de compra',
+    '/production/formulas': 'Fórmulas',
+    '/production/orders': 'Órdenes de fabricación',
+    '/production/planning': 'Planificación',
     '/production/availability': 'Disponibilidad para fabricar',
     '/production/replenishment': 'Pronóstico y reposición',
-    '/sales/customers': 'Clientes', '/sales/lista-precios': 'Lista de precios', '/sales/orders': 'Ventas',
-    '/finance/receivables': 'Cuentas por cobrar', '/finance/treasury': 'Tesorería',
-    '/finance/costs': 'Rentabilidad y precios', '/reports': 'Reportes',
-    '/ayuda': 'Guía de uso', '/mi-perfil': 'Mi perfil', '/settings/users': 'Usuarios',
-    '/settings/roles': 'Roles y permisos', '/settings/units': 'Unidades',
-    '/settings/categories': 'Categorías', '/settings/warehouses': 'Depósitos',
+    '/sales/customers': 'Clientes',
+    '/sales/lista-precios': 'Lista de precios',
+    '/sales/orders': 'Ventas',
+    '/finance/receivables': 'Cuentas por cobrar',
+    '/finance/treasury': 'Tesorería',
+    '/finance/costs': 'Rentabilidad y precios',
+    '/reports': 'Reportes',
+    '/ayuda': 'Guía de uso',
+    '/mi-perfil': 'Mi perfil',
+    '/settings/users': 'Usuarios',
+    '/settings/roles': 'Roles y permisos',
+    '/settings/units': 'Unidades',
+    '/settings/categories': 'Categorías',
+    '/settings/warehouses': 'Depósitos',
     '/actualizaciones': 'Actualizaciones',
   };
-  const sectionName = routeName[location.pathname]
-    ?? (location.pathname.startsWith('/inventory/items/') ? 'Ficha de ítem' : 'Espacio de trabajo');
+  const sectionName =
+    routeName[location.pathname] ??
+    (location.pathname.startsWith('/inventory/items/') ? 'Ficha de ítem' : 'Espacio de trabajo');
   const [open, setOpen] = useState({});
   const [menuOpen, setMenuOpen] = useState(false);
   const [supportTarget, setSupportTarget] = useState(null);
@@ -162,7 +210,9 @@ export default function AdminLayout() {
         <div className="sidebar-top">
           <div className="brand">
             <span className="brand-mark">D</span>
-            <span>DROMUX <small>ERP</small></span>
+            <span>
+              DROMUX <small>ERP</small>
+            </span>
           </div>
           <button
             className="mobile-close icon-button"
@@ -174,15 +224,16 @@ export default function AdminLayout() {
         </div>
 
         <div className="workspace">
-          <span className="workspace-logo"><Building2 size={20} /></span>
+          <span className="workspace-logo">
+            <Building2 size={20} />
+          </span>
           <div>
             <small>ESPACIO ACTUAL</small>
             <select
               aria-label="Empresa activa"
               value={activeCompany?.id ?? ''}
               onChange={(event) => {
-                const target = memberships.find((item) =>
-                  item.company_id === event.target.value);
+                const target = memberships.find((item) => item.company_id === event.target.value);
                 if (target?.roles?.code === 'support') {
                   setSupportTarget(target);
                 } else {
@@ -202,11 +253,16 @@ export default function AdminLayout() {
 
         <nav aria-label="Menú principal">
           {groups.map((group) => {
-            const visible = group.items.filter((item) => (
-              can(item.permission, 'read') || item.children?.some((child) => (
-                typeof child === 'object' && (!child.adminOnly || role === 'admin') && can(child.permission, 'read')
-              ))
-            ));
+            const visible = group.items.filter(
+              (item) =>
+                can(item.permission, 'read') ||
+                item.children?.some(
+                  (child) =>
+                    typeof child === 'object' &&
+                    (!child.adminOnly || role === 'admin') &&
+                    can(child.permission, 'read'),
+                ),
+            );
             if (!visible.length) return null;
 
             return (
@@ -220,40 +276,66 @@ export default function AdminLayout() {
                       {item.children ? (
                         <>
                           <button
-                            className={`nav-item ${item.children.some((child) =>
-                              child.to?.split('?')[0] === location.pathname) ? 'active' : ''}`}
-                            onClick={() => setOpen((previous) => ({
-                              ...previous,
-                              [item.label]: !(previous[item.label] ?? item.children.some((child) =>
-                                child.to?.split('?')[0] === location.pathname)),
-                            }))}
-                            aria-expanded={Boolean(open[item.label] ?? item.children.some((child) =>
-                              child.to?.split('?')[0] === location.pathname))}
+                            className={`nav-item ${
+                              item.children.some(
+                                (child) => child.to?.split('?')[0] === location.pathname,
+                              )
+                                ? 'active'
+                                : ''
+                            }`}
+                            onClick={() =>
+                              setOpen((previous) => ({
+                                ...previous,
+                                [item.label]: !(
+                                  previous[item.label] ??
+                                  item.children.some(
+                                    (child) => child.to?.split('?')[0] === location.pathname,
+                                  )
+                                ),
+                              }))
+                            }
+                            aria-expanded={Boolean(
+                              open[item.label] ??
+                              item.children.some(
+                                (child) => child.to?.split('?')[0] === location.pathname,
+                              ),
+                            )}
                           >
                             <Icon size={19} />
                             <span>{item.label}</span>
                             <ChevronDown
-                              className={(open[item.label] ?? item.children.some((child) =>
-                                child.to?.split('?')[0] === location.pathname)) ? 'rotated' : ''}
+                              className={
+                                (open[item.label] ??
+                                item.children.some(
+                                  (child) => child.to?.split('?')[0] === location.pathname,
+                                ))
+                                  ? 'rotated'
+                                  : ''
+                              }
                               size={16}
                             />
                           </button>
 
-                          {(open[item.label] ?? item.children.some((child) =>
-                            child.to?.split('?')[0] === location.pathname)) && (
+                          {(open[item.label] ??
+                            item.children.some(
+                              (child) => child.to?.split('?')[0] === location.pathname,
+                            )) && (
                             <div className="subnav">
                               {item.children
-                                .filter((child) => (
-                                  typeof child !== 'object' || ((!child.adminOnly || role === 'admin') && can(child.permission, 'read'))
-                                ))
-                                .map((child) => (
+                                .filter(
+                                  (child) =>
+                                    typeof child !== 'object' ||
+                                    ((!child.adminOnly || role === 'admin') &&
+                                      can(child.permission, 'read')),
+                                )
+                                .map((child) =>
                                   typeof child === 'object' && child.to ? (
                                     <NavLink
                                       key={child.label}
                                       to={child.to}
-                                      className={({ isActive }) => (
+                                      className={({ isActive }) =>
                                         `subnav-item ${isActive && location.search === (child.to.split('?')[1] ? `?${child.to.split('?')[1]}` : '') ? 'selected' : ''}`
-                                      )}
+                                      }
                                       onClick={() => setMenuOpen(false)}
                                     >
                                       {child.label}
@@ -267,8 +349,8 @@ export default function AdminLayout() {
                                       {typeof child === 'object' ? child.label : child}
                                       <span className="subnav-lock">·</span>
                                     </span>
-                                  )
-                                ))}
+                                  ),
+                                )}
                             </div>
                           )}
                         </>
@@ -292,8 +374,7 @@ export default function AdminLayout() {
         </nav>
 
         <div className="sidebar-footer">
-          <NavLink className="nav-item" to="/actualizaciones"
-            onClick={() => setMenuOpen(false)}>
+          <NavLink className="nav-item" to="/actualizaciones" onClick={() => setMenuOpen(false)}>
             <Sparkles size={18} /> <span>Actualizaciones</span>
           </NavLink>
           <NavLink className="nav-item" to="/mi-perfil" onClick={() => setMenuOpen(false)}>
@@ -301,7 +382,10 @@ export default function AdminLayout() {
           </NavLink>
           <NavLink className="help-box" to="/ayuda" onClick={() => setMenuOpen(false)}>
             <CircleHelp size={19} />
-            <div><strong>Guía de uso</strong><span>Pasos para cada tarea</span></div>
+            <div>
+              <strong>Guía de uso</strong>
+              <span>Pasos para cada tarea</span>
+            </div>
           </NavLink>
           <button
             className="nav-item signout"
@@ -319,20 +403,38 @@ export default function AdminLayout() {
           </button>
         </div>
       </aside>
-      <ActionDialog open={!!supportTarget} busy={supportBusy}
+      <ActionDialog
+        open={!!supportTarget}
+        busy={supportBusy}
         title="Consultar otra empresa"
         description={`El acceso a ${supportTarget?.companies.name ?? 'esta empresa'} será de solo lectura y quedará registrado.`}
-        onClose={() => setSupportTarget(null)}>
+        onClose={() => setSupportTarget(null)}
+      >
         <form onSubmit={switchSupportCompany}>
-          <label>Motivo de la consulta
-            <textarea required minLength={8} maxLength={300}
-              value={supportReason} onChange={(event) => setSupportReason(event.target.value)}
-              placeholder="Ej.: revisión solicitada por el responsable de la empresa" />
+          <label>
+            Motivo de la consulta
+            <textarea
+              required
+              minLength={8}
+              maxLength={300}
+              value={supportReason}
+              onChange={(event) => setSupportReason(event.target.value)}
+              placeholder="Ej.: revisión solicitada por el responsable de la empresa"
+            />
           </label>
           <div className="erp-action-dialog-actions">
-            <button type="button" className="button outline" disabled={supportBusy}
-              onClick={() => setSupportTarget(null)}>Cancelar</button>
-            <button className="button primary" disabled={supportBusy || supportReason.trim().length < 8}>
+            <button
+              type="button"
+              className="button outline"
+              disabled={supportBusy}
+              onClick={() => setSupportTarget(null)}
+            >
+              Cancelar
+            </button>
+            <button
+              className="button primary"
+              disabled={supportBusy || supportReason.trim().length < 8}
+            >
               {supportBusy ? 'Ingresando…' : 'Ingresar en modo lectura'}
             </button>
           </div>
@@ -366,17 +468,25 @@ export default function AdminLayout() {
           </div>
           <div className="topbar-right">
             {role === 'support' && <span className="support-readonly">Soporte · solo lectura</span>}
-            <span className="online"><i /> Sistema activo</span>
+            <span className="online">
+              <i /> Sistema activo
+            </span>
             <NotificationCenter />
-            <NavLink className="avatar" to="/mi-perfil"
-              aria-label="Abrir mi perfil" title={user.email}>
+            <NavLink
+              className="avatar"
+              to="/mi-perfil"
+              aria-label="Abrir mi perfil"
+              title={user.email}
+            >
               {(user.user_metadata?.full_name || user.email)?.[0]?.toUpperCase()}
             </NavLink>
           </div>
         </header>
 
         <ModuleHelp />
-        <main className="content"><Outlet /></main>
+        <main className="content">
+          <Outlet />
+        </main>
         <footer className="footer">
           ERP Dromux <span>·</span> Gestión de tu empresa
         </footer>
