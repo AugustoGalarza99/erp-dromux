@@ -1,13 +1,18 @@
-import { useEffect, useState } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { Factory, Plus, Truck } from 'lucide-react';
-import ActionDialog from '../../components/ActionDialog';
-import { listDeliveryNotes } from '../../services/deliveryNotes';
-import { useAuth } from '../../contexts/AuthContext';
-import { notifyError, notifySuccess, friendlyError } from '../../lib/notifications';
-import { formatQuantity } from '../inventory/stockNumber';
-import { listStockLots } from '../../services/stock';
+import CleanupButton from "../../components/CleanupButton";
+import { useEffect, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Factory, Plus, Truck } from "lucide-react";
+import ActionDialog from "../../components/ActionDialog";
+import { listDeliveryNotes } from "../../services/deliveryNotes";
+import { useAuth } from "../../contexts/AuthContext";
+import {
+  notifyError,
+  notifySuccess,
+  friendlyError,
+} from "../../lib/notifications";
+import { formatQuantity } from "../inventory/stockNumber";
+import { listStockLots } from "../../services/stock";
 import {
   completeProductionNow,
   createProductionJob,
@@ -19,40 +24,58 @@ import {
   listProductionRuns,
   listProductionReservationLocations,
   listProductionWarehouses,
-} from '../../services/production';
-import ProductionJobCard from './ProductionJobCard';
-import WorkOrderOptions from './WorkOrderOptions';
-import { createWorkOrder, documentSettings } from '../../services/productionDocuments';
-import './production.css';
+} from "../../services/production";
+import ProductionJobCard from "./ProductionJobCard";
+import WorkOrderOptions from "./WorkOrderOptions";
+import {
+  createWorkOrder,
+  documentSettings,
+} from "../../services/productionDocuments";
+import "./production.css";
 
-const freshInput = (componentId = '') => ({
+const freshInput = (componentId = "") => ({
   rowId: crypto.randomUUID(),
   componentId,
-  warehouseId: '',
-  lotCode: '',
-  quantity: '',
+  warehouseId: "",
+  lotCode: "",
+  quantity: "",
 });
 const validQuantity = (value) =>
-  /^\d+(?:\.\d{1,6})?$/.test(String(value)) && Number(value) > 0 && Number(value) < 1000000000000;
+  /^\d+(?:\.\d{1,6})?$/.test(String(value)) &&
+  Number(value) > 0 &&
+  Number(value) < 1000000000000;
 
-function MaterialRow({ companyId, row, line, item, items, warehouses, onChange, onRemove }) {
+function MaterialRow({
+  companyId,
+  row,
+  line,
+  item,
+  items,
+  warehouses,
+  onChange,
+  onRemove,
+}) {
   const balancesQuery = useQuery({
-    queryKey: ['production-balances', companyId, row.componentId],
+    queryKey: ["production-balances", companyId, row.componentId],
     queryFn: () => listProductionBalances(companyId, [row.componentId]),
     enabled: Boolean(companyId && row.componentId),
   });
   const lotsQuery = useQuery({
-    queryKey: ['production-lots', companyId, row.componentId, row.warehouseId],
+    queryKey: ["production-lots", companyId, row.componentId, row.warehouseId],
     queryFn: () => listStockLots(companyId, row.componentId, row.warehouseId),
     enabled: Boolean(companyId && item?.track_lots && row.warehouseId),
   });
   const available = item?.infinite_stock
     ? Infinity
     : item?.track_lots
-      ? Number((lotsQuery.data ?? []).find((lot) => lot.code === row.lotCode)?.available ?? 0)
+      ? Number(
+          (lotsQuery.data ?? []).find((lot) => lot.code === row.lotCode)
+            ?.available ?? 0,
+        )
       : Number(
-          (balancesQuery.data ?? []).find((balance) => balance.warehouse_id === row.warehouseId)
-            ?.quantity ?? 0,
+          (balancesQuery.data ?? []).find(
+            (balance) => balance.warehouse_id === row.warehouseId,
+          )?.quantity ?? 0,
         );
   return (
     <div className="production-material">
@@ -68,13 +91,20 @@ function MaterialRow({ companyId, row, line, item, items, warehouses, onChange, 
               value={row.componentId}
               required
               onChange={(event) =>
-                onChange({ componentId: event.target.value, warehouseId: '', lotCode: '' })
+                onChange({
+                  componentId: event.target.value,
+                  warehouseId: "",
+                  lotCode: "",
+                })
               }
             >
               <option value="">Elegir insumo…</option>
               {items
-                .filter((entry) =>
-                  ['raw_material', 'semi_finished', 'consumable'].includes(entry.item_type),
+                .filter(
+                  (entry) =>
+                    ["raw_material", "semi_finished", "consumable"].includes(
+                      entry.item_type,
+                    ) && entry.active !== false,
                 )
                 .map((entry) => (
                   <option value={entry.id} key={entry.id}>
@@ -86,7 +116,8 @@ function MaterialRow({ companyId, row, line, item, items, warehouses, onChange, 
         )}
         {line && (
           <span>
-            Teórico: {formatQuantity(line.expected.toFixed(6))} {item?.units?.symbol}
+            Teórico: {formatQuantity(line.expected.toFixed(6))}{" "}
+            {item?.units?.symbol}
           </span>
         )}
         {onRemove && (
@@ -112,7 +143,9 @@ function MaterialRow({ companyId, row, line, item, items, warehouses, onChange, 
           <select
             required
             value={row.warehouseId}
-            onChange={(event) => onChange({ warehouseId: event.target.value, lotCode: '' })}
+            onChange={(event) =>
+              onChange({ warehouseId: event.target.value, lotCode: "" })
+            }
           >
             <option value="">Elegir depósito…</option>
             {warehouses.map((warehouse) => (
@@ -147,17 +180,17 @@ function MaterialRow({ companyId, row, line, item, items, warehouses, onChange, 
           className={
             validQuantity(row.quantity) &&
             (item?.infinite_stock || Number(row.quantity) <= available)
-              ? 'production-ok'
-              : 'production-error'
+              ? "production-ok"
+              : "production-error"
           }
         >
           {item?.infinite_stock
-            ? 'Stock infinito'
+            ? "Stock infinito"
             : `${formatQuantity(available.toFixed(6))} disponible`}
           {validQuantity(row.quantity) &&
             !item?.infinite_stock &&
             Number(row.quantity) > available &&
-            ' · falta stock'}
+            " · falta stock"}
         </small>
       )}
     </div>
@@ -169,62 +202,67 @@ export default function ProductionOrdersPage() {
   const client = useQueryClient();
   const navigate = useNavigate();
   const [params] = useSearchParams();
-  const planId = params.get('plan');
-  const focusJob = params.get('job');
-  const [productId, setProductId] = useState('');
-  const [quantity, setQuantity] = useState('1');
-  const [workOptions, setWorkOptions] = useState({ packaging: [], observations: {} });
-  const [actual, setActual] = useState('1');
-  const [warehouseId, setWarehouseId] = useState('');
-  const [mode, setMode] = useState('queue');
-  const [dueOn, setDueOn] = useState('');
-  const [note, setNote] = useState('Orden de fabricación');
-  const [varianceNote, setVarianceNote] = useState('');
-  const [outputLot, setOutputLot] = useState('');
-  const [expiresOn, setExpiresOn] = useState('');
+  const planId = params.get("plan");
+  const focusJob = params.get("job");
+  const [productId, setProductId] = useState("");
+  const [quantity, setQuantity] = useState("1");
+  const [workOptions, setWorkOptions] = useState({
+    packaging: [],
+    observations: {},
+  });
+  const [actual, setActual] = useState("1");
+  const [warehouseId, setWarehouseId] = useState("");
+  const [mode, setMode] = useState("queue");
+  const [dueOn, setDueOn] = useState("");
+  const [note, setNote] = useState("Orden de fabricación");
+  const [varianceNote, setVarianceNote] = useState("");
+  const [outputLot, setOutputLot] = useState("");
+  const [expiresOn, setExpiresOn] = useState("");
   const [inputs, setInputs] = useState([]);
   const [busy, setBusy] = useState(false);
   const [createOpen, setCreateOpen] = useState(Boolean(planId));
   const [requestId, setRequestId] = useState(() => crypto.randomUUID());
-  const [finishRequestId, setFinishRequestId] = useState(() => crypto.randomUUID());
+  const [finishRequestId, setFinishRequestId] = useState(() =>
+    crypto.randomUUID(),
+  );
 
   const itemsQuery = useQuery({
-    queryKey: ['production-items', user?.id, activeCompanyId],
-    queryFn: () => listProductionItems(activeCompanyId),
+    queryKey: ["production-items-history", user?.id, activeCompanyId],
+    queryFn: () => listProductionItems(activeCompanyId, true),
     enabled: !!activeCompanyId,
   });
   const formulasQuery = useQuery({
-    queryKey: ['production-formulas', user?.id, activeCompanyId],
+    queryKey: ["production-formulas", user?.id, activeCompanyId],
     queryFn: () => listFormulas(activeCompanyId),
     enabled: !!activeCompanyId,
   });
   const warehousesQuery = useQuery({
-    queryKey: ['production-warehouses', user?.id, activeCompanyId],
+    queryKey: ["production-warehouses", user?.id, activeCompanyId],
     queryFn: () => listProductionWarehouses(activeCompanyId),
     enabled: !!activeCompanyId,
   });
   const jobsQuery = useQuery({
-    queryKey: ['production-jobs', user?.id, activeCompanyId],
+    queryKey: ["production-jobs", user?.id, activeCompanyId],
     queryFn: () => listProductionJobs(activeCompanyId),
     enabled: !!activeCompanyId,
   });
   const runsQuery = useQuery({
-    queryKey: ['production-runs', user?.id, activeCompanyId],
+    queryKey: ["production-runs", user?.id, activeCompanyId],
     queryFn: () => listProductionRuns(activeCompanyId),
     enabled: !!activeCompanyId,
   });
   const deliveryQuery = useQuery({
-    queryKey: ['delivery-notes', user?.id, activeCompanyId],
+    queryKey: ["delivery-notes", user?.id, activeCompanyId],
     queryFn: () => listDeliveryNotes(activeCompanyId),
     enabled: Boolean(activeCompanyId),
   });
   const locationsQuery = useQuery({
-    queryKey: ['production-reservation-locations', user?.id, activeCompanyId],
+    queryKey: ["production-reservation-locations", user?.id, activeCompanyId],
     queryFn: () => listProductionReservationLocations(activeCompanyId),
-    enabled: Boolean(activeCompanyId && can('stock', 'read')),
+    enabled: Boolean(activeCompanyId && can("stock", "read")),
   });
   const plansQuery = useQuery({
-    queryKey: ['production-plans', user?.id, activeCompanyId],
+    queryKey: ["production-plans", user?.id, activeCompanyId],
     queryFn: () => listProductionPlans(activeCompanyId),
     enabled: !!(activeCompanyId && planId),
   });
@@ -241,15 +279,17 @@ export default function ProductionOrdersPage() {
   const theoretical =
     formula?.production_formula_lines.map((line) => ({
       componentId: line.component_id,
-      expected: (Number(line.quantity) * Number(quantity)) / Number(formula.batch_quantity),
+      expected:
+        (Number(line.quantity) * Number(quantity)) /
+        Number(formula.batch_quantity),
     })) ?? [];
 
   useEffect(() => {
     setWorkOptions({ packaging: [], observations: {} });
-    setProductId('');
-    setWarehouseId('');
-    setQuantity('1');
-    setActual('1');
+    setProductId("");
+    setWarehouseId("");
+    setQuantity("1");
+    setActual("1");
     setInputs([]);
     setRequestId(crypto.randomUUID());
     setFinishRequestId(crypto.randomUUID());
@@ -261,16 +301,18 @@ export default function ProductionOrdersPage() {
     setQuantity(String(plan.quantity));
     setActual(String(plan.quantity));
     setWarehouseId(plan.warehouse_id);
-    setDueOn(plan.due_on ?? '');
+    setDueOn(plan.due_on ?? "");
     setNote(plan.note);
     setInputs([]);
   }, [plan?.id, activeCompanyId]);
 
   useEffect(() => {
-    if (mode !== 'complete' || !formula) return;
+    if (mode !== "complete" || !formula) return;
     setInputs((current) => {
       const standard = formula.production_formula_lines.map((line) => {
-        const previous = current.find((row) => row.componentId === line.component_id);
+        const previous = current.find(
+          (row) => row.componentId === line.component_id,
+        );
         return (
           previous ?? {
             ...freshInput(line.component_id),
@@ -290,7 +332,9 @@ export default function ProductionOrdersPage() {
         ...current.filter(
           (row) =>
             row.rowId &&
-            !formula.production_formula_lines.some((line) => line.component_id === row.componentId),
+            !formula.production_formula_lines.some(
+              (line) => line.component_id === row.componentId,
+            ),
         ),
       ];
     });
@@ -302,28 +346,42 @@ export default function ProductionOrdersPage() {
 
   function refresh() {
     return Promise.all([
-      client.invalidateQueries({ queryKey: ['production-jobs', user?.id, activeCompanyId] }),
       client.invalidateQueries({
-        queryKey: ['production-reservations', user?.id, activeCompanyId],
+        queryKey: ["production-jobs", user?.id, activeCompanyId],
       }),
       client.invalidateQueries({
-        queryKey: ['production-reservation-locations', user?.id, activeCompanyId],
+        queryKey: ["production-reservations", user?.id, activeCompanyId],
       }),
-      client.invalidateQueries({ queryKey: ['production-dashboard', user?.id, activeCompanyId] }),
-      client.invalidateQueries({ queryKey: ['planning-availability'] }),
-      client.invalidateQueries({ queryKey: ['production-runs', user?.id, activeCompanyId] }),
-      client.invalidateQueries({ queryKey: ['production-plans', user?.id, activeCompanyId] }),
-      client.invalidateQueries({ queryKey: ['production-balances'] }),
-      client.invalidateQueries({ queryKey: ['planning-balances'] }),
-      client.invalidateQueries({ queryKey: ['production-lots'] }),
-      client.invalidateQueries({ queryKey: ['job-material-balance'] }),
-      client.invalidateQueries({ queryKey: ['job-material-lots'] }),
-      client.invalidateQueries({ queryKey: ['stock'] }),
-      client.invalidateQueries({ queryKey: ['product-costs'] }),
-      client.invalidateQueries({ queryKey: ['delivery-notes', user?.id, activeCompanyId] }),
-      client.invalidateQueries({ queryKey: ['erp-dashboard'] }),
-      client.invalidateQueries({ queryKey: ['operational-alerts'] }),
-      client.invalidateQueries({ queryKey: ['operational-report'] }),
+      client.invalidateQueries({
+        queryKey: [
+          "production-reservation-locations",
+          user?.id,
+          activeCompanyId,
+        ],
+      }),
+      client.invalidateQueries({
+        queryKey: ["production-dashboard", user?.id, activeCompanyId],
+      }),
+      client.invalidateQueries({ queryKey: ["planning-availability"] }),
+      client.invalidateQueries({
+        queryKey: ["production-runs", user?.id, activeCompanyId],
+      }),
+      client.invalidateQueries({
+        queryKey: ["production-plans", user?.id, activeCompanyId],
+      }),
+      client.invalidateQueries({ queryKey: ["production-balances"] }),
+      client.invalidateQueries({ queryKey: ["planning-balances"] }),
+      client.invalidateQueries({ queryKey: ["production-lots"] }),
+      client.invalidateQueries({ queryKey: ["job-material-balance"] }),
+      client.invalidateQueries({ queryKey: ["job-material-lots"] }),
+      client.invalidateQueries({ queryKey: ["stock"] }),
+      client.invalidateQueries({ queryKey: ["product-costs"] }),
+      client.invalidateQueries({
+        queryKey: ["delivery-notes", user?.id, activeCompanyId],
+      }),
+      client.invalidateQueries({ queryKey: ["erp-dashboard"] }),
+      client.invalidateQueries({ queryKey: ["operational-alerts"] }),
+      client.invalidateQueries({ queryKey: ["operational-report"] }),
     ]);
   }
 
@@ -334,23 +392,31 @@ export default function ProductionOrdersPage() {
       !formula ||
       !validQuantity(quantity) ||
       !warehouseId ||
-      !can('production', 'insert') ||
-      (mode === 'complete' && !can('stock', 'insert')) ||
-      (planId && (plan?.status !== 'planned' || jobs.some((job) => job.plan_id === planId)))
+      !can("production", "insert") ||
+      (mode === "complete" && !can("stock", "insert")) ||
+      (planId &&
+        (plan?.status !== "planned" ||
+          jobs.some((job) => job.plan_id === planId)))
     )
       return;
-    if (mode === 'complete') {
+    if (mode === "complete") {
       const mismatch =
         Math.abs(Number(actual) - expectedOutput) > 0.000001 ||
         inputs.some((input) => {
-          const expected = theoretical.find((line) => line.componentId === input.componentId);
-          return !expected || Math.abs(Number(input.quantity) - expected.expected) > 0.000001;
+          const expected = theoretical.find(
+            (line) => line.componentId === input.componentId,
+          );
+          return (
+            !expected ||
+            Math.abs(Number(input.quantity) - expected.expected) > 0.000001
+          );
         });
       if (
         !validQuantity(actual) ||
         (product?.track_lots && !outputLot.trim()) ||
         !inputs.length ||
-        new Set(inputs.map((input) => input.componentId)).size !== inputs.length ||
+        new Set(inputs.map((input) => input.componentId)).size !==
+          inputs.length ||
         inputs.some(
           (input) =>
             !validQuantity(input.quantity) ||
@@ -360,13 +426,17 @@ export default function ProductionOrdersPage() {
         ) ||
         (mismatch && varianceNote.trim().length < 5)
       ) {
-        notifyError(new Error('Revisá cantidades reales, lotes y motivo de las diferencias.'));
+        notifyError(
+          new Error(
+            "Revisá cantidades reales, lotes y motivo de las diferencias.",
+          ),
+        );
         return;
       }
     }
     setBusy(true);
     try {
-      if (mode === 'queue') {
+      if (mode === "queue") {
         await createWorkOrder(
           activeCompanyId,
           {
@@ -381,8 +451,8 @@ export default function ProductionOrdersPage() {
           requestId,
         );
         notifySuccess(
-          'Orden creada',
-          'Se asignó el stock libre a la orden; verificá los faltantes en Disponibilidad.',
+          "Orden creada",
+          "Se asignó el stock libre a la orden; verificá los faltantes en Disponibilidad.",
         );
       } else {
         await createWorkOrder(
@@ -412,22 +482,22 @@ export default function ProductionOrdersPage() {
           },
         );
         notifySuccess(
-          'Fabricación completada',
-          'Se descontaron los insumos reales y se ingresó la cantidad real fabricada.',
+          "Fabricación completada",
+          "Se descontaron los insumos reales y se ingresó la cantidad real fabricada.",
         );
       }
       setRequestId(crypto.randomUUID());
       setFinishRequestId(crypto.randomUUID());
-      setProductId('');
-      setQuantity('1');
-      setActual('1');
+      setProductId("");
+      setQuantity("1");
+      setActual("1");
       setInputs([]);
       setWorkOptions({ packaging: [], observations: {} });
-      setOutputLot('');
-      setVarianceNote('');
+      setOutputLot("");
+      setVarianceNote("");
       await refresh();
       setCreateOpen(false);
-      if (planId) navigate('/production/orders');
+      if (planId) navigate("/production/orders");
     } catch (error) {
       notifyError(error);
     } finally {
@@ -437,9 +507,15 @@ export default function ProductionOrdersPage() {
 
   async function printJob(job) {
     try {
-      const { downloadProductionJobPdf } = await import('./productionJobPdf');
+      const { downloadProductionJobPdf } = await import("./productionJobPdf");
       const settings = await documentSettings(activeCompanyId);
-      downloadProductionJobPdf(job, items, warehouses, activeCompany?.name, settings);
+      downloadProductionJobPdf(
+        job,
+        items,
+        warehouses,
+        activeCompany?.name,
+        settings,
+      );
     } catch (error) {
       notifyError(error);
     }
@@ -447,16 +523,22 @@ export default function ProductionOrdersPage() {
 
   const planTaken = jobs.some((job) => job.plan_id === planId);
   const canSubmit =
-    can('production', 'insert') &&
-    (mode === 'queue' || can('stock', 'insert')) &&
+    can("production", "insert") &&
+    (mode === "queue" || can("stock", "insert")) &&
     !busy &&
     !!formula &&
     validQuantity(quantity) &&
     !!warehouseId &&
     (!planId ||
-      (plan?.status === 'planned' && !planTaken && formula.version === plan.formula_version));
-  const activeJobs = jobs.filter((job) => ['queued', 'in_progress'].includes(job.status));
-  const closedJobs = jobs.filter((job) => ['completed', 'cancelled'].includes(job.status));
+      (plan?.status === "planned" &&
+        !planTaken &&
+        formula.version === plan.formula_version));
+  const activeJobs = jobs.filter((job) =>
+    ["queued", "in_progress"].includes(job.status),
+  );
+  const closedJobs = jobs.filter((job) =>
+    ["completed", "cancelled"].includes(job.status),
+  );
   const historicRuns = (runsQuery.data ?? []).filter(
     (run) => !jobs.some((job) => job.run_id === run.id),
   );
@@ -467,17 +549,27 @@ export default function ProductionOrdersPage() {
         <div>
           <span className="eyebrow">PRODUCCIÓN / ÓRDENES</span>
           <h1>Órdenes de fabricación</h1>
-          <p>Programá el trabajo o registrá la fabricación con consumo y rendimiento reales.</p>
+          <p>
+            Programá el trabajo o registrá la fabricación con consumo y
+            rendimiento reales.
+          </p>
         </div>
         <Link className="button" to="/production/formulas">
           Gestionar fórmulas
         </Link>
       </div>
       <div className="production-toolbar">
-        <button type="button" className="button primary" onClick={() => setCreateOpen(true)}>
+        <Link className="button outline" to="/archivados?type=jobs">
+          Ver archivados
+        </Link>
+        <button
+          type="button"
+          className="button primary"
+          onClick={() => setCreateOpen(true)}
+        >
           <Plus size={17} /> Nueva orden
         </button>
-        {can('stock', 'read') && (
+        {can("stock", "read") && (
           <Link className="button outline" to="/inventory/delivery-notes">
             <Truck size={17} /> Abrir remitero
           </Link>
@@ -488,41 +580,60 @@ export default function ProductionOrdersPage() {
       </div>
       <div className="production-overview">
         <article>
-          <strong>{activeJobs.filter((job) => job.status === 'queued').length}</strong>
+          <strong>
+            {activeJobs.filter((job) => job.status === "queued").length}
+          </strong>
           <span>En cola</span>
         </article>
         <article>
-          <strong>{activeJobs.filter((job) => job.status === 'in_progress').length}</strong>
+          <strong>
+            {activeJobs.filter((job) => job.status === "in_progress").length}
+          </strong>
           <span>En proceso</span>
         </article>
         <article>
-          <strong>{closedJobs.filter((job) => job.status === 'completed').length}</strong>
+          <strong>
+            {closedJobs.filter((job) => job.status === "completed").length}
+          </strong>
           <span>Completadas recientes</span>
         </article>
       </div>
       <div className="production-jobs-heading">
         <h2>Procesos activos</h2>
-        <p>Consultá insumos entregados, faltantes y movimientos de cada fabricación.</p>
+        <p>
+          Consultá insumos entregados, faltantes y movimientos de cada
+          fabricación.
+        </p>
       </div>
       {jobsQuery.isError && (
-        <p className="production-form-error">{friendlyError(jobsQuery.error)}</p>
+        <p className="production-form-error">
+          {friendlyError(jobsQuery.error)}
+        </p>
       )}
-      {jobsQuery.isPending && <p className="production-muted">Cargando órdenes…</p>}
+      {jobsQuery.isPending && (
+        <p className="production-muted">Cargando órdenes…</p>
+      )}
       {!jobsQuery.isPending && !activeJobs.length && (
-        <p className="production-muted">No hay procesos activos. Creá una orden para comenzar.</p>
+        <p className="production-muted">
+          No hay procesos activos. Creá una orden para comenzar.
+        </p>
       )}
       {activeJobs.map((job) => (
         <div
           key={job.id}
           id={`job-${job.id}`}
-          className={job.id === focusJob ? 'production-job-focused' : ''}
+          className={job.id === focusJob ? "production-job-focused" : ""}
         >
           <ProductionJobCard
             job={job}
             items={items}
             warehouses={warehouses}
-            allocations={(locationsQuery.data ?? []).filter((row) => row.job_id === job.id)}
-            remitos={(deliveryQuery.data ?? []).filter((note) => note.job_id === job.id)}
+            allocations={(locationsQuery.data ?? []).filter(
+              (row) => row.job_id === job.id,
+            )}
+            remitos={(deliveryQuery.data ?? []).filter(
+              (note) => note.job_id === job.id,
+            )}
             onUpdated={refresh}
             onPrint={printJob}
           />
@@ -533,18 +644,22 @@ export default function ProductionOrdersPage() {
           className="production-closed"
           open={closedJobs.some((job) => job.id === focusJob) || undefined}
         >
-          <summary>Órdenes finalizadas o canceladas ({closedJobs.length})</summary>
+          <summary>
+            Órdenes finalizadas o canceladas ({closedJobs.length})
+          </summary>
           {closedJobs.map((job) => (
             <div
               key={job.id}
               id={`job-${job.id}`}
-              className={job.id === focusJob ? 'production-job-focused' : ''}
+              className={job.id === focusJob ? "production-job-focused" : ""}
             >
               <ProductionJobCard
                 job={job}
                 items={items}
                 warehouses={warehouses}
-                remitos={(deliveryQuery.data ?? []).filter((note) => note.job_id === job.id)}
+                remitos={(deliveryQuery.data ?? []).filter(
+                  (note) => note.job_id === job.id,
+                )}
                 onUpdated={refresh}
                 onPrint={printJob}
               />
@@ -559,27 +674,34 @@ export default function ProductionOrdersPage() {
         description="Creá una orden en cola o registrá una fabricación ya completada."
         onClose={() => {
           setCreateOpen(false);
-          if (planId) navigate('/production/orders');
+          if (planId) navigate("/production/orders");
         }}
       >
-        <form className="production-card production-create-form" onSubmit={submit}>
+        <form
+          className="production-card production-create-form"
+          onSubmit={submit}
+        >
           <h2>
             <Factory size={20} /> Nueva orden
           </h2>
-          {planId && <p className="production-muted">Orden basada en un plan de fabricación.</p>}
+          {planId && (
+            <p className="production-muted">
+              Orden basada en un plan de fabricación.
+            </p>
+          )}
           {planId &&
             (!plan ||
-              plan.status !== 'planned' ||
+              plan.status !== "planned" ||
               planTaken ||
               (formula && formula.version !== plan.formula_version)) && (
               <p className="production-form-error" role="alert">
                 {plansQuery.isPending
-                  ? 'Cargando el plan…'
+                  ? "Cargando el plan…"
                   : plansQuery.isError
                     ? friendlyError(plansQuery.error)
                     : planTaken
-                      ? 'Este plan ya tiene una orden vinculada.'
-                      : 'El plan no está pendiente o su fórmula cambió.'}
+                      ? "Este plan ya tiene una orden vinculada."
+                      : "El plan no está pendiente o su fórmula cambió."}
               </p>
             )}
           <label>
@@ -595,11 +717,14 @@ export default function ProductionOrdersPage() {
               }}
             >
               <option value="">Elegir producto…</option>
-              {formulas.map((entry) => (
-                <option key={entry.product_id} value={entry.product_id}>
-                  {byId[entry.product_id]?.code} · {byId[entry.product_id]?.name}
-                </option>
-              ))}
+              {formulas
+                .filter((entry) => byId[entry.product_id]?.active !== false)
+                .map((entry) => (
+                  <option key={entry.product_id} value={entry.product_id}>
+                    {byId[entry.product_id]?.code} ·{" "}
+                    {byId[entry.product_id]?.name}
+                  </option>
+                ))}
             </select>
           </label>
           <div className="production-two-columns">
@@ -637,12 +762,14 @@ export default function ProductionOrdersPage() {
             </label>
           </div>
           <p>
-            Salida esperada:{' '}
+            Salida esperada:{" "}
             <strong>
-              {expectedOutput.toLocaleString('es-AR', { maximumFractionDigits: 6 })}{' '}
+              {expectedOutput.toLocaleString("es-AR", {
+                maximumFractionDigits: 6,
+              })}{" "}
               {product?.units?.symbol}
-            </strong>{' '}
-            · Factor {yieldFactor.toLocaleString('es-AR')}
+            </strong>{" "}
+            · Factor {yieldFactor.toLocaleString("es-AR")}
           </p>
           <WorkOrderOptions value={workOptions} onChange={setWorkOptions} />
           <label>
@@ -655,23 +782,27 @@ export default function ProductionOrdersPage() {
               onChange={(event) => setNote(event.target.value)}
             />
           </label>
-          <div className="production-mode" role="group" aria-label="Modo de fabricación">
+          <div
+            className="production-mode"
+            role="group"
+            aria-label="Modo de fabricación"
+          >
             <button
               type="button"
-              className={mode === 'queue' ? 'selected' : ''}
-              onClick={() => setMode('queue')}
+              className={mode === "queue" ? "selected" : ""}
+              onClick={() => setMode("queue")}
             >
               Dejar en la cola
             </button>
             <button
               type="button"
-              className={mode === 'complete' ? 'selected' : ''}
-              onClick={() => setMode('complete')}
+              className={mode === "complete" ? "selected" : ""}
+              onClick={() => setMode("complete")}
             >
               Ya está fabricado
             </button>
           </div>
-          {mode === 'queue' ? (
+          {mode === "queue" ? (
             <>
               <label>
                 Fecha prevista (opcional)
@@ -682,16 +813,19 @@ export default function ProductionOrdersPage() {
                 />
               </label>
               <p className="production-muted">
-                Crear la orden reserva el stock libre sin descontarlo físicamente. Podés crearla
-                aunque falte material; consultá el detalle en «¿Tengo stock para fabricar?». El
-                descuento se produce al entregar insumos.
+                Crear la orden reserva el stock libre sin descontarlo
+                físicamente. Podés crearla aunque falte material; consultá el
+                detalle en «¿Tengo stock para fabricar?». El descuento se
+                produce al entregar insumos.
               </p>
             </>
           ) : (
             <>
               <div className="production-subtitle">Consumo real de insumos</div>
               {inputs.map((row, index) => {
-                const line = theoretical.find((entry) => entry.componentId === row.componentId);
+                const line = theoretical.find(
+                  (entry) => entry.componentId === row.componentId,
+                );
                 return (
                   <MaterialRow
                     key={row.rowId ?? row.componentId}
@@ -710,7 +844,10 @@ export default function ProductionOrdersPage() {
                     }
                     onRemove={
                       !line
-                        ? () => setInputs((current) => current.filter((_, at) => at !== index))
+                        ? () =>
+                            setInputs((current) =>
+                              current.filter((_, at) => at !== index),
+                            )
                         : null
                     }
                   />
@@ -720,12 +857,16 @@ export default function ProductionOrdersPage() {
                 <button
                   type="button"
                   className="production-link"
-                  onClick={() => setInputs((current) => [...current, freshInput()])}
+                  onClick={() =>
+                    setInputs((current) => [...current, freshInput()])
+                  }
                 >
                   <Plus size={16} /> Agregar otro insumo
                 </button>
               )}
-              <div className="production-subtitle">Resultado de fabricación</div>
+              <div className="production-subtitle">
+                Resultado de fabricación
+              </div>
               <div className="production-two-columns">
                 <label>
                   Cantidad realmente obtenida
@@ -739,8 +880,8 @@ export default function ProductionOrdersPage() {
                   />
                 </label>
                 <label>
-                  Lote del producto terminado{' '}
-                  {product?.track_lots ? '(obligatorio)' : '(no aplica)'}
+                  Lote del producto terminado{" "}
+                  {product?.track_lots ? "(obligatorio)" : "(no aplica)"}
                   <input
                     value={outputLot}
                     required={!!product?.track_lots}
@@ -774,7 +915,11 @@ export default function ProductionOrdersPage() {
           <div className="production-actions">
             <span>La fórmula queda guardada con la orden.</span>
             <button className="button primary" disabled={!canSubmit}>
-              {busy ? 'Guardando…' : mode === 'queue' ? 'Crear orden' : 'Completar fabricación'}
+              {busy
+                ? "Guardando…"
+                : mode === "queue"
+                  ? "Crear orden"
+                  : "Completar fabricación"}
             </button>
           </div>
         </form>
@@ -784,13 +929,20 @@ export default function ProductionOrdersPage() {
           <summary>Fabricaciones anteriores ({historicRuns.length})</summary>
           {historicRuns.map((run) => (
             <div className="production-history" key={run.id}>
-              <strong>{byId[run.product_id]?.name ?? 'Producto'}</strong>
+              <CleanupButton
+                resource="runs"
+                id={run.id}
+                label={byId[run.product_id]?.name ?? "Fabricación"}
+              />
+              <strong>{byId[run.product_id]?.name ?? "Producto"}</strong>
               <span>
-                {formatQuantity(run.quantity)} · {new Date(run.created_at).toLocaleString('es-AR')}
+                {formatQuantity(run.quantity)} ·{" "}
+                {new Date(run.created_at).toLocaleString("es-AR")}
               </span>
-              {role === 'admin' && can('finance', 'read') && (
+              {role === "admin" && can("finance", "read") && (
                 <small>
-                  Costo registrado: $ {Number(run.estimated_cost).toLocaleString('es-AR')}
+                  Costo registrado: ${" "}
+                  {Number(run.estimated_cost).toLocaleString("es-AR")}
                 </small>
               )}
             </div>

@@ -1,56 +1,61 @@
-import SupplierAccountsPage from '../modules/purchases/SupplierAccountsPage';
-import PackagingPage from '../modules/production/PackagingPage';
-import ProductionDocumentSettings from '../modules/settings/ProductionDocumentSettings';
-import { useState } from 'react';
-import { Navigate, Route, Routes } from 'react-router-dom';
-import { ArrowRight, Building2, ShieldCheck } from 'lucide-react';
-import { useAuth } from '../contexts/AuthContext';
-import { createCompany } from '../services/core';
-import { friendlyError, notifyError, notifySuccess } from '../lib/notifications';
-import Login from '../modules/auth/Login';
-import Dashboard from '../modules/dashboard/Dashboard';
-import AdminLayout from '../components/AdminLayout';
-import UsersPage from '../modules/settings/UsersPage';
-import RolesPage from '../modules/settings/RolesPage';
-import CatalogPage from '../modules/catalogs/CatalogPage';
-import ItemsPage from '../modules/inventory/ItemsPage';
-import ItemEditor from '../modules/inventory/ItemEditor';
-import StockPage from '../modules/inventory/StockPage';
-import MovementsPage from '../modules/inventory/MovementsPage';
-import DeliveryNotesPage from '../modules/inventory/DeliveryNotesPage';
-import SuppliersPage from '../modules/purchases/SuppliersPage';
-import PurchaseOrdersPage from '../modules/purchases/PurchaseOrdersPage';
-import FormulasPage from '../modules/production/FormulasPage';
-import ProductionOrdersPage from '../modules/production/ProductionOrdersPage';
-import ProductionPlanningPage from '../modules/production/ProductionPlanningPage';
-import ManufacturingAvailabilityPage from '../modules/production/ManufacturingAvailabilityPage';
-import ReplenishmentPage from '../modules/production/ReplenishmentPage';
-import CustomersPage from '../modules/sales/CustomersPage';
-import PriceListPage from '../modules/sales/PriceListPage';
-import SalesOrdersPage from '../modules/sales/SalesOrdersPage';
-import ReceivablesPage from '../modules/finance/ReceivablesPage';
-import TreasuryPage from '../modules/finance/TreasuryPage';
-import CostsPage from '../modules/finance/CostsPage';
-import ReportsPage from '../modules/reports/ReportsPage';
-import GuidePage from '../modules/help/GuidePage';
-import ProfilePage from '../modules/settings/ProfilePage';
-import UpdatesPage from '../modules/help/UpdatesPage';
+import ArchivesPage from "../modules/settings/ArchivesPage";
+import SupplierAccountsPage from "../modules/purchases/SupplierAccountsPage";
+import PackagingPage from "../modules/production/PackagingPage";
+import ProductionDocumentSettings from "../modules/settings/ProductionDocumentSettings";
+import { useState } from "react";
+import { Navigate, Route, Routes } from "react-router-dom";
+import { ArrowRight, Building2, ShieldCheck } from "lucide-react";
+import { useAuth } from "../contexts/AuthContext";
+import { createCompany } from "../services/core";
+import {
+  friendlyError,
+  notifyError,
+  notifySuccess,
+} from "../lib/notifications";
+import Login from "../modules/auth/Login";
+import Dashboard from "../modules/dashboard/Dashboard";
+import AdminLayout from "../components/AdminLayout";
+import UsersPage from "../modules/settings/UsersPage";
+import RolesPage from "../modules/settings/RolesPage";
+import CatalogPage from "../modules/catalogs/CatalogPage";
+import ItemsPage from "../modules/inventory/ItemsPage";
+import ItemEditor from "../modules/inventory/ItemEditor";
+import StockPage from "../modules/inventory/StockPage";
+import MovementsPage from "../modules/inventory/MovementsPage";
+import DeliveryNotesPage from "../modules/inventory/DeliveryNotesPage";
+import SuppliersPage from "../modules/purchases/SuppliersPage";
+import PurchaseOrdersPage from "../modules/purchases/PurchaseOrdersPage";
+import FormulasPage from "../modules/production/FormulasPage";
+import ProductionOrdersPage from "../modules/production/ProductionOrdersPage";
+import ProductionPlanningPage from "../modules/production/ProductionPlanningPage";
+import ManufacturingAvailabilityPage from "../modules/production/ManufacturingAvailabilityPage";
+import ReplenishmentPage from "../modules/production/ReplenishmentPage";
+import CustomersPage from "../modules/sales/CustomersPage";
+import PriceListPage from "../modules/sales/PriceListPage";
+import SalesOrdersPage from "../modules/sales/SalesOrdersPage";
+import ReceivablesPage from "../modules/finance/ReceivablesPage";
+import TreasuryPage from "../modules/finance/TreasuryPage";
+import CostsPage from "../modules/finance/CostsPage";
+import ReportsPage from "../modules/reports/ReportsPage";
+import GuidePage from "../modules/help/GuidePage";
+import ProfilePage from "../modules/settings/ProfilePage";
+import UpdatesPage from "../modules/help/UpdatesPage";
 
 function SetupCompany() {
   const { refresh, signOut } = useAuth();
-  const [name, setName] = useState('');
-  const [error, setError] = useState('');
+  const [name, setName] = useState("");
+  const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
     setBusy(true);
-    setError('');
+    setError("");
 
     try {
       await createCompany(name.trim());
       await refresh();
-      notifySuccess('Empresa creada', name.trim());
+      notifySuccess("Empresa creada", name.trim());
     } catch (err) {
       setError(notifyError(err));
     } finally {
@@ -64,7 +69,10 @@ function SetupCompany() {
       <span className="eyebrow">PRIMEROS PASOS</span>
       <Building2 size={34} />
       <h1>Creá tu espacio de trabajo</h1>
-      <p>Escribí el nombre de tu empresa para comenzar. Tu cuenta tendrá el rol administrador.</p>
+      <p>
+        Escribí el nombre de tu empresa para comenzar. Tu cuenta tendrá el rol
+        administrador.
+      </p>
 
       <form onSubmit={handleSubmit}>
         <input
@@ -76,7 +84,7 @@ function SetupCompany() {
           placeholder="Nombre de la empresa"
         />
         <button disabled={busy} className="button primary">
-          {busy ? 'Creando…' : 'Crear empresa'}
+          {busy ? "Creando…" : "Crear empresa"}
           <ArrowRight size={17} />
         </button>
       </form>
@@ -92,7 +100,7 @@ function SetupCompany() {
 function PermissionGate({ resource, children }) {
   const { can } = useAuth();
 
-  if (!can(resource, 'read')) {
+  if (!can(resource, "read")) {
     return (
       <div className="setup">
         <h1>Acceso limitado</h1>
@@ -113,8 +121,8 @@ function SuspendedCompany({ companies }) {
       <span className="eyebrow">ACCESO SUSPENDIDO</span>
       <h1>El acceso a tu empresa está suspendido</h1>
       <p>
-        {companies.map((item) => item.companies.name).join(', ')}. Contactá al administrador del
-        servicio para regularizar la cuenta.
+        {companies.map((item) => item.companies.name).join(", ")}. Contactá al
+        administrador del servicio para regularizar la cuenta.
       </p>
       <button className="button primary" onClick={refresh}>
         Comprobar estado
@@ -127,16 +135,17 @@ function SuspendedCompany({ companies }) {
 }
 
 function SupportAccess() {
-  const { activeCompany, activeCompanyId, openSupportCompany, signOut } = useAuth();
-  const [reason, setReason] = useState('');
+  const { activeCompany, activeCompanyId, openSupportCompany, signOut } =
+    useAuth();
+  const [reason, setReason] = useState("");
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
 
   async function enter(event) {
     event.preventDefault();
     if (busy || reason.trim().length < 8) return;
     setBusy(true);
-    setError('');
+    setError("");
     try {
       await openSupportCompany(activeCompanyId, reason);
     } catch (cause) {
@@ -151,8 +160,8 @@ function SupportAccess() {
       <ShieldCheck size={32} />
       <h1>Acceso de soporte</h1>
       <p>
-        Para consultar {activeCompany?.name}, indicá el motivo. El acceso será de solo lectura y
-        quedará registrado.
+        Para consultar {activeCompany?.name}, indicá el motivo. El acceso será
+        de solo lectura y quedará registrado.
       </p>
       <form onSubmit={enter}>
         <label className="sr-only" htmlFor="support-reason">
@@ -167,8 +176,11 @@ function SupportAccess() {
           onChange={(event) => setReason(event.target.value)}
           placeholder="Ej.: asistencia solicitada por el cliente"
         />
-        <button className="button primary" disabled={busy || reason.trim().length < 8}>
-          {busy ? 'Ingresando…' : 'Ingresar'}
+        <button
+          className="button primary"
+          disabled={busy || reason.trim().length < 8}
+        >
+          {busy ? "Ingresando…" : "Ingresar"}
         </button>
       </form>
       {error && (
@@ -184,8 +196,15 @@ function SupportAccess() {
 }
 
 function Gate() {
-  const { user, authLoading, error, memberships, suspendedCompanies, supportNeedsAccess, can } =
-    useAuth();
+  const {
+    user,
+    authLoading,
+    error,
+    memberships,
+    suspendedCompanies,
+    supportNeedsAccess,
+    can,
+  } = useAuth();
 
   if (authLoading) {
     return (
@@ -203,7 +222,10 @@ function Gate() {
       <div className="setup">
         <h1>No pudimos cargar tu acceso</h1>
         <p>{friendlyError(error)}</p>
-        <button className="button primary" onClick={() => window.location.reload()}>
+        <button
+          className="button primary"
+          onClick={() => window.location.reload()}
+        >
           Reintentar
         </button>
       </div>
@@ -217,11 +239,14 @@ function Gate() {
 
   if (supportNeedsAccess) return <SupportAccess />;
 
-  if (!can('dashboard', 'read')) {
+  if (!can("dashboard", "read")) {
     return (
       <div className="setup">
         <h1>Acceso limitado</h1>
-        <p>Tu cuenta no tiene permiso para ver el panel. Pedí acceso al administrador.</p>
+        <p>
+          Tu cuenta no tiene permiso para ver el panel. Pedí acceso al
+          administrador.
+        </p>
       </div>
     );
   }
@@ -388,7 +413,10 @@ export default function App() {
             </PermissionGate>
           }
         />
-        <Route path="/sales/prices" element={<Navigate to="/sales/lista-precios" replace />} />
+        <Route
+          path="/sales/prices"
+          element={<Navigate to="/sales/lista-precios" replace />}
+        />
         <Route
           path="/sales/lista-precios"
           element={
@@ -445,6 +473,7 @@ export default function App() {
             </PermissionGate>
           }
         />
+        <Route path="/archivados" element={<ArchivesPage />} />
         <Route
           path="/reports"
           element={

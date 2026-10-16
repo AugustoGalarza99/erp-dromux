@@ -1,6 +1,17 @@
 [
   {
-    "version": "1.2.0",
+    "version": "1.0.4",
+    "publishedAt": "2026-10-14",
+    "title": "Limpieza segura y control de densidad",
+    "changes": [
+      "Control compacto ¿Aplica densidad? en fórmulas.",
+      "Eliminación confirmada de registros sin uso y archivo de registros con historial.",
+      "Vista de archivados con búsqueda, paginación y recuperación.",
+      "Protección de stock, fórmulas, costos y trabajos pendientes."
+    ]
+  },
+  {
+    "version": "1.0.3",
     "publishedAt": "2026-10-13",
     "title": "Compras, pagos y documentos de producción",
     "changes": [

@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Link, useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Save, Tag } from 'lucide-react';
-import { useAuth } from '../../contexts/AuthContext';
+import CleanupButton from "../../components/CleanupButton";
+import { useEffect, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import { ArrowLeft, Save, Tag } from "lucide-react";
+import { useAuth } from "../../contexts/AuthContext";
 import {
   activateItemLots,
   getItem,
@@ -11,52 +12,60 @@ import {
   saveItem,
   searchItemOptions,
   setItemActive,
-} from '../../services/items';
-import { notifyError, notifySuccess, friendlyError } from '../../lib/notifications';
-import ItemCostFields, { emptyPurchaseCost } from './ItemCostFields';
-import { refreshSupplierData } from '../purchases/supplierUi';
-import './items.css';
+} from "../../services/items";
+import {
+  notifyError,
+  notifySuccess,
+  friendlyError,
+} from "../../lib/notifications";
+import ItemCostFields, { emptyPurchaseCost } from "./ItemCostFields";
+import { refreshSupplierData } from "../purchases/supplierUi";
+import "./items.css";
 
 const emptyForm = {
-  code: '',
-  name: '',
-  item_type: 'raw_material',
-  category_id: '',
-  unit_id: '',
-  barcode: '',
-  description: '',
-  minimum_stock: '0',
+  code: "",
+  name: "",
+  item_type: "raw_material",
+  category_id: "",
+  unit_id: "",
+  barcode: "",
+  description: "",
+  minimum_stock: "0",
   track_lots: false,
   infinite_stock: false,
-  reference_unit_cost: '',
+  reference_unit_cost: "",
 };
 
 const itemTypes = [
-  ['raw_material', 'Materia prima'],
-  ['semi_finished', 'Semielaborado'],
-  ['finished_product', 'Producto terminado'],
-  ['consumable', 'Insumo'],
+  ["raw_material", "Materia prima"],
+  ["semi_finished", "Semielaborado"],
+  ["finished_product", "Producto terminado"],
+  ["consumable", "Insumo"],
 ];
 
 function SelectCatalog({ label, value, onChange, query, selected }) {
   const options = query.data ?? [];
-  const chosen = selected && !options.some((option) => option.id === selected.id)
-    ? [selected, ...options]
-    : options;
+  const chosen =
+    selected && !options.some((option) => option.id === selected.id)
+      ? [selected, ...options]
+      : options;
 
   return (
     <label>
       {label}
-      <select required={label.includes('*')} value={value} onChange={onChange}>
+      <select required={label.includes("*")} value={value} onChange={onChange}>
         <option value="">Seleccionar</option>
         {chosen.map((option) => (
           <option key={option.id} value={option.id}>
-            {option.name}{option.symbol ? ` (${option.symbol})` : ''}
-            {option.active === false ? ' · inactiva' : ''}
+            {option.name}
+            {option.symbol ? ` (${option.symbol})` : ""}
+            {option.active === false ? " · inactiva" : ""}
           </option>
         ))}
       </select>
-      {query.error && <small className="error">{friendlyError(query.error)}</small>}
+      {query.error && (
+        <small className="error">{friendlyError(query.error)}</small>
+      )}
     </label>
   );
 }
@@ -69,33 +78,40 @@ export default function ItemEditor() {
   const { user, activeCompanyId, can } = useAuth();
   const [form, setForm] = useState(emptyForm);
   const [purchaseCost, setPurchaseCost] = useState(emptyPurchaseCost);
-  const [categorySearch, setCategorySearch] = useState('');
-  const [unitSearch, setUnitSearch] = useState('');
+  const [categorySearch, setCategorySearch] = useState("");
+  const [unitSearch, setUnitSearch] = useState("");
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState('');
-  const [message, setMessage] = useState('');
+  const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
 
   const detailQuery = useQuery({
-    queryKey: ['item-detail', user?.id, activeCompanyId, itemId],
+    queryKey: ["item-detail", user?.id, activeCompanyId, itemId],
     queryFn: () => getItem(activeCompanyId, itemId),
     enabled: Boolean(activeCompanyId && itemId),
   });
 
   const costContext = useQuery({
-    queryKey: ['item-cost-context', user?.id, activeCompanyId, itemId],
+    queryKey: ["item-cost-context", user?.id, activeCompanyId, itemId],
     queryFn: () => getItemCostContext(activeCompanyId, itemId),
-    enabled: Boolean(activeCompanyId && itemId && can('purchases', 'read')),
+    enabled: Boolean(activeCompanyId && itemId && can("purchases", "read")),
   });
 
   const categoryQuery = useQuery({
-    queryKey: ['item-options', user?.id, activeCompanyId, 'category', categorySearch],
-    queryFn: () => searchItemOptions(activeCompanyId, 'category', categorySearch),
+    queryKey: [
+      "item-options",
+      user?.id,
+      activeCompanyId,
+      "category",
+      categorySearch,
+    ],
+    queryFn: () =>
+      searchItemOptions(activeCompanyId, "category", categorySearch),
     enabled: Boolean(activeCompanyId),
   });
 
   const unitQuery = useQuery({
-    queryKey: ['item-options', user?.id, activeCompanyId, 'unit', unitSearch],
-    queryFn: () => searchItemOptions(activeCompanyId, 'unit', unitSearch),
+    queryKey: ["item-options", user?.id, activeCompanyId, "unit", unitSearch],
+    queryFn: () => searchItemOptions(activeCompanyId, "unit", unitSearch),
     enabled: Boolean(activeCompanyId),
   });
 
@@ -105,23 +121,26 @@ export default function ItemEditor() {
 
     setPurchaseCost({
       ...emptyPurchaseCost,
-      currency: item.reference_cost_usd == null ? 'ARS' : 'USD',
-      usd: item.reference_cost_usd == null ? '' : String(item.reference_cost_usd),
-      exchangeType: item.reference_exchange_rate_type_id ?? '',
+      currency: item.reference_cost_usd == null ? "ARS" : "USD",
+      usd:
+        item.reference_cost_usd == null ? "" : String(item.reference_cost_usd),
+      exchangeType: item.reference_exchange_rate_type_id ?? "",
     });
     setForm({
       code: item.code,
       name: item.name,
       item_type: item.item_type,
-      category_id: item.category_id ?? '',
+      category_id: item.category_id ?? "",
       unit_id: item.unit_id,
-      barcode: item.barcode ?? '',
-      description: item.description ?? '',
+      barcode: item.barcode ?? "",
+      description: item.description ?? "",
       minimum_stock: String(item.minimum_stock ?? 0),
       track_lots: item.track_lots,
       infinite_stock: item.infinite_stock ?? false,
-      reference_unit_cost: item.reference_unit_cost == null
-        ? '' : String(item.reference_unit_cost),
+      reference_unit_cost:
+        item.reference_unit_cost == null
+          ? ""
+          : String(item.reference_unit_cost),
     });
   }, [detailQuery.data]);
 
@@ -130,34 +149,49 @@ export default function ItemEditor() {
       setForm(emptyForm);
       setPurchaseCost(emptyPurchaseCost);
     }
-    setError('');
-    setMessage('');
+    setError("");
+    setMessage("");
   }, [isNew, activeCompanyId]);
 
   const item = detailQuery.data;
-  const canSave = can('items', isNew ? 'insert' : 'update');
+  const canSave = can("items", isNew ? "insert" : "update") && !item?.archived;
 
   const setField = (name, value) => {
     setForm((current) => ({ ...current, [name]: value }));
   };
 
-  const invalidate = () => Promise.all([
-    refreshSupplierData(queryClient),
-    queryClient.invalidateQueries({ queryKey: ['item-cost-context', user?.id, activeCompanyId] }),
-    queryClient.invalidateQueries({ queryKey: ['item-detail', user?.id, activeCompanyId] }),
-    queryClient.invalidateQueries({ queryKey: ['stock-options', user?.id, activeCompanyId, 'items'] }),
-    queryClient.invalidateQueries({ queryKey: ['stock-summary', user?.id, activeCompanyId] }),
-    queryClient.invalidateQueries({ queryKey: ['supplier-quotes', user?.id, activeCompanyId] }),
-    queryClient.invalidateQueries({ queryKey: ['product-costs', user?.id, activeCompanyId] }),
-    queryClient.invalidateQueries({ queryKey: ['purchase-items', user?.id, activeCompanyId] }),
-  ]);
+  const invalidate = () =>
+    Promise.all([
+      refreshSupplierData(queryClient),
+      queryClient.invalidateQueries({
+        queryKey: ["item-cost-context", user?.id, activeCompanyId],
+      }),
+      queryClient.invalidateQueries({
+        queryKey: ["item-detail", user?.id, activeCompanyId],
+      }),
+      queryClient.invalidateQueries({
+        queryKey: ["stock-options", user?.id, activeCompanyId, "items"],
+      }),
+      queryClient.invalidateQueries({
+        queryKey: ["stock-summary", user?.id, activeCompanyId],
+      }),
+      queryClient.invalidateQueries({
+        queryKey: ["supplier-quotes", user?.id, activeCompanyId],
+      }),
+      queryClient.invalidateQueries({
+        queryKey: ["product-costs", user?.id, activeCompanyId],
+      }),
+      queryClient.invalidateQueries({
+        queryKey: ["purchase-items", user?.id, activeCompanyId],
+      }),
+    ]);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
     if (busy) return;
     setBusy(true);
-    setError('');
-    setMessage('');
+    setError("");
+    setMessage("");
 
     let convertedStock = false;
     let savedId = itemId;
@@ -169,12 +203,17 @@ export default function ItemEditor() {
           convertedStock = true;
         }
       }
-      const latestItem = convertedStock ? await getItem(activeCompanyId, itemId) : item;
-      const unchangedCost = !purchaseCost.supplier
-        && String(item?.reference_unit_cost ?? '') === form.reference_unit_cost
-        && String(item?.reference_cost_usd ?? '') === purchaseCost.usd
-        && (item?.reference_exchange_rate_type_id ?? '') === purchaseCost.exchangeType
-        && (item?.reference_cost_usd == null ? 'ARS' : 'USD') === purchaseCost.currency;
+      const latestItem = convertedStock
+        ? await getItem(activeCompanyId, itemId)
+        : item;
+      const unchangedCost =
+        !purchaseCost.supplier &&
+        String(item?.reference_unit_cost ?? "") === form.reference_unit_cost &&
+        String(item?.reference_cost_usd ?? "") === purchaseCost.usd &&
+        (item?.reference_exchange_rate_type_id ?? "") ===
+          purchaseCost.exchangeType &&
+        (item?.reference_cost_usd == null ? "ARS" : "USD") ===
+          purchaseCost.currency;
       const input = {
         ...form,
         purchaseCost,
@@ -186,19 +225,25 @@ export default function ItemEditor() {
       savedId = saved.id;
       await invalidate();
       if (isNew) navigate(`/inventory/items/${saved.id}`, { replace: true });
-      else setMessage('Ficha actualizada correctamente.');
+      else setMessage("Ficha actualizada correctamente.");
       notifySuccess(
-        isNew ? 'Ítem creado' : convertedStock
-          ? 'Lotes activados con saldos iniciales' : 'Ítem actualizado',
+        isNew
+          ? "Ítem creado"
+          : convertedStock
+            ? "Lotes activados con saldos iniciales"
+            : "Ítem actualizado",
         form.name.trim(),
       );
     } catch (err) {
       const detail = convertedStock
-        ? new Error(`Los lotes se activaron, pero no se guardaron los otros cambios: ${err.message}. Reabrí la ficha y guardá nuevamente.`)
+        ? new Error(
+            `Los lotes se activaron, pero no se guardaron los otros cambios: ${err.message}. Reabrí la ficha y guardá nuevamente.`,
+          )
         : err;
       const finalError = detail;
       setError(notifyError(finalError));
-      if (!itemId && savedId) navigate(`/inventory/items/${savedId}`, { replace: true });
+      if (!itemId && savedId)
+        navigate(`/inventory/items/${savedId}`, { replace: true });
       if (convertedStock) await invalidate().catch(() => {});
     } finally {
       setBusy(false);
@@ -207,13 +252,16 @@ export default function ItemEditor() {
 
   const handleActive = async () => {
     setBusy(true);
-    setError('');
-    setMessage('');
+    setError("");
+    setMessage("");
     try {
       await setItemActive(activeCompanyId, itemId, !item.active);
       await invalidate();
-      setMessage(item.active ? 'Ítem desactivado.' : 'Ítem activado.');
-      notifySuccess(item.active ? 'Ítem desactivado' : 'Ítem activado', item.name);
+      setMessage(item.active ? "Ítem desactivado." : "Ítem activado.");
+      notifySuccess(
+        item.active ? "Ítem desactivado" : "Ítem activado",
+        item.name,
+      );
     } catch (err) {
       setError(notifyError(err));
     } finally {
@@ -222,11 +270,21 @@ export default function ItemEditor() {
   };
 
   if (!isNew && detailQuery.isPending) {
-    return <div className="items-page"><p>Cargando ficha…</p></div>;
+    return (
+      <div className="items-page">
+        <p>Cargando ficha…</p>
+      </div>
+    );
   }
 
   if (!isNew && detailQuery.error) {
-    return <div className="items-page"><p role="alert" className="error">{friendlyError(detailQuery.error)}</p></div>;
+    return (
+      <div className="items-page">
+        <p role="alert" className="error">
+          {friendlyError(detailQuery.error)}
+        </p>
+      </div>
+    );
   }
 
   return (
@@ -236,24 +294,39 @@ export default function ItemEditor() {
       </Link>
       <div className="page-head">
         <div>
-          <span className="eyebrow">INVENTARIO / ÍTEMS / {isNew ? 'ALTA' : 'DETALLE'}</span>
-          <h1>{isNew ? 'Nuevo ítem' : item?.name}</h1>
-          <p>Definí la identidad del ítem; el stock se registrará mediante movimientos.</p>
+          <span className="eyebrow">
+            INVENTARIO / ÍTEMS / {isNew ? "ALTA" : "DETALLE"}
+          </span>
+          <h1>{isNew ? "Nuevo ítem" : item?.name}</h1>
+          <p>
+            Definí la identidad del ítem; el stock se registrará mediante
+            movimientos.
+          </p>
         </div>
         {!isNew && (
-          <span className={`item-status ${item.active ? '' : 'inactive'}`}>
-            {item.active ? 'Activo' : 'Inactivo'}
+          <span className={`item-status ${item.active ? "" : "inactive"}`}>
+            {item.archived ? "Archivado" : item.active ? "Activo" : "Inactivo"}
           </span>
         )}
       </div>
 
-      {error && <p role="alert" className="error item-feedback">{error}</p>}
-      {message && <p role="status" className="success item-feedback">{message}</p>}
+      {error && (
+        <p role="alert" className="error item-feedback">
+          {error}
+        </p>
+      )}
+      {message && (
+        <p role="status" className="success item-feedback">
+          {message}
+        </p>
+      )}
 
       <div className="item-editor-grid">
         <form className="item-form" onSubmit={handleSubmit}>
           <div className="form-section-heading">
-            <span className="item-form-icon"><Tag size={19} /></span>
+            <span className="item-form-icon">
+              <Tag size={19} />
+            </span>
             <div>
               <h2>Identificación</h2>
               <p>Campos principales para clasificar el ítem.</p>
@@ -269,7 +342,7 @@ export default function ItemEditor() {
                 pattern="[A-Za-z0-9][A-Za-z0-9._\-]*"
                 placeholder="Ej.: MP-001"
                 value={form.code}
-                onChange={(event) => setField('code', event.target.value)}
+                onChange={(event) => setField("code", event.target.value)}
               />
             </label>
             <label>
@@ -277,10 +350,12 @@ export default function ItemEditor() {
               <select
                 required
                 value={form.item_type}
-                onChange={(event) => setField('item_type', event.target.value)}
+                onChange={(event) => setField("item_type", event.target.value)}
               >
                 {itemTypes.map(([value, label]) => (
-                  <option key={value} value={value}>{label}</option>
+                  <option key={value} value={value}>
+                    {label}
+                  </option>
                 ))}
               </select>
             </label>
@@ -293,7 +368,7 @@ export default function ItemEditor() {
               maxLength={160}
               placeholder="Ej.: Acero inoxidable AISI 304"
               value={form.name}
-              onChange={(event) => setField('name', event.target.value)}
+              onChange={(event) => setField("name", event.target.value)}
             />
           </label>
 
@@ -308,7 +383,9 @@ export default function ItemEditor() {
               <SelectCatalog
                 label="Categoría"
                 value={form.category_id}
-                onChange={(event) => setField('category_id', event.target.value)}
+                onChange={(event) =>
+                  setField("category_id", event.target.value)
+                }
                 query={categoryQuery}
                 selected={item?.category}
               />
@@ -323,7 +400,7 @@ export default function ItemEditor() {
               <SelectCatalog
                 label="Unidad de medida *"
                 value={form.unit_id}
-                onChange={(event) => setField('unit_id', event.target.value)}
+                onChange={(event) => setField("unit_id", event.target.value)}
                 query={unitQuery}
                 selected={item?.unit}
               />
@@ -331,7 +408,9 @@ export default function ItemEditor() {
           </div>
 
           <div className="form-section-heading divided">
-            <span className="item-form-icon"><Tag size={19} /></span>
+            <span className="item-form-icon">
+              <Tag size={19} />
+            </span>
             <div>
               <h2>Datos adicionales</h2>
               <p>Referencias para búsquedas y control posterior.</p>
@@ -345,7 +424,7 @@ export default function ItemEditor() {
                 maxLength={80}
                 placeholder="Opcional"
                 value={form.barcode}
-                onChange={(event) => setField('barcode', event.target.value)}
+                onChange={(event) => setField("barcode", event.target.value)}
               />
             </label>
             <label>
@@ -357,7 +436,9 @@ export default function ItemEditor() {
                 required
                 disabled={form.infinite_stock}
                 value={form.minimum_stock}
-                onChange={(event) => setField('minimum_stock', event.target.value)}
+                onChange={(event) =>
+                  setField("minimum_stock", event.target.value)
+                }
               />
             </label>
           </div>
@@ -369,7 +450,7 @@ export default function ItemEditor() {
               rows={4}
               placeholder="Especificaciones técnicas o notas"
               value={form.description}
-              onChange={(event) => setField('description', event.target.value)}
+              onChange={(event) => setField("description", event.target.value)}
             />
           </label>
 
@@ -377,28 +458,36 @@ export default function ItemEditor() {
             form={form}
             cost={purchaseCost}
             onCostChange={setPurchaseCost}
-            onPesosChange={(value) => setField('reference_unit_cost', value)}
+            onPesosChange={(value) => setField("reference_unit_cost", value)}
             context={costContext}
-            unitSymbol={unitQuery.data?.find((entry) => entry.id === form.unit_id)?.symbol ?? item?.unit?.symbol}
+            unitSymbol={
+              unitQuery.data?.find((entry) => entry.id === form.unit_id)
+                ?.symbol ?? item?.unit?.symbol
+            }
           />
 
           <label className="item-checkbox">
             <input
               type="checkbox"
               checked={form.infinite_stock}
-              onChange={(event) => setForm((current) => ({
-                ...current,
-                infinite_stock: event.target.checked,
-                minimum_stock: event.target.checked ? '0' : current.minimum_stock,
-                track_lots: event.target.checked ? false : current.track_lots,
-              }))}
+              onChange={(event) =>
+                setForm((current) => ({
+                  ...current,
+                  infinite_stock: event.target.checked,
+                  minimum_stock: event.target.checked
+                    ? "0"
+                    : current.minimum_stock,
+                  track_lots: event.target.checked ? false : current.track_lots,
+                }))
+              }
             />
             <span>
               <strong>Stock infinito</strong>
               <small>
-                Para recursos como agua: permite consumos y entregas sin cargar existencias.
-                Las operaciones quedan registradas. No admite lotes ni stock mínimo.
-                Para activarlo en un ítem existente, primero debe quedar sin saldo físico.
+                Para recursos como agua: permite consumos y entregas sin cargar
+                existencias. Las operaciones quedan registradas. No admite lotes
+                ni stock mínimo. Para activarlo en un ítem existente, primero
+                debe quedar sin saldo físico.
               </small>
             </span>
           </label>
@@ -408,14 +497,15 @@ export default function ItemEditor() {
               type="checkbox"
               checked={form.track_lots}
               disabled={form.infinite_stock}
-              onChange={(event) => setField('track_lots', event.target.checked)}
+              onChange={(event) => setField("track_lots", event.target.checked)}
             />
             <span>
               <strong>Seguir por lotes</strong>
               <small>
-                Cada entrada tendrá un lote; salidas y transferencias descontarán de uno.
-                Si ya tiene stock, se abrirá un lote inicial por depósito
-                con el saldo actual y quedará registrado quién hizo la apertura.
+                Cada entrada tendrá un lote; salidas y transferencias
+                descontarán de uno. Si ya tiene stock, se abrirá un lote inicial
+                por depósito con el saldo actual y quedará registrado quién hizo
+                la apertura.
               </small>
             </span>
           </label>
@@ -423,10 +513,16 @@ export default function ItemEditor() {
           {canSave && (
             <button
               className="button primary item-save"
-              disabled={busy || unitQuery.isPending || categoryQuery.isPending
-                || Boolean(itemId && can('purchases', 'read') && costContext.isPending)}
+              disabled={
+                busy ||
+                unitQuery.isPending ||
+                categoryQuery.isPending ||
+                Boolean(
+                  itemId && can("purchases", "read") && costContext.isPending,
+                )
+              }
             >
-              <Save size={17} /> {busy ? 'Guardando…' : 'Guardar ítem'}
+              <Save size={17} /> {busy ? "Guardando…" : "Guardar ítem"}
             </button>
           )}
         </form>
@@ -439,10 +535,22 @@ export default function ItemEditor() {
             cargan en esta ficha: se registrarán por depósito con entradas,
             salidas y transferencias.
           </p>
-          {!isNew && can('items', 'update') && (
-            <button className="item-active-action" disabled={busy} onClick={handleActive}>
-              {item.active ? 'Desactivar ítem' : 'Volver a activar ítem'}
+          {!isNew && !item.archived && can("items", "update") && (
+            <button
+              className="item-active-action"
+              disabled={busy}
+              onClick={handleActive}
+            >
+              {item.active ? "Desactivar ítem" : "Volver a activar ítem"}
             </button>
+          )}
+          {!isNew && !item.archived && (
+            <CleanupButton
+              resource="items"
+              id={itemId}
+              label={item.name}
+              onRemoved={() => navigate("/inventory/items")}
+            />
           )}
         </aside>
       </div>

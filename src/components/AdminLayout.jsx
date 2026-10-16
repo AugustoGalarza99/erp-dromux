@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { NavLink, Outlet, useLocation } from 'react-router-dom';
+import { useState } from "react";
+import { NavLink, Outlet, useLocation } from "react-router-dom";
 import {
   BarChart3,
   Boxes,
@@ -17,120 +17,210 @@ import {
   UserRound,
   X,
   Sparkles,
-} from 'lucide-react';
-import { useAuth } from '../contexts/AuthContext';
-import { notifyError, notifySuccess } from '../lib/notifications';
-import ModuleHelp from '../modules/help/ModuleHelp';
-import NotificationCenter from '../modules/operations/NotificationCenter';
-import ActionDialog from './ActionDialog';
+} from "lucide-react";
+import { useAuth } from "../contexts/AuthContext";
+import { notifyError, notifySuccess } from "../lib/notifications";
+import ModuleHelp from "../modules/help/ModuleHelp";
+import NotificationCenter from "../modules/operations/NotificationCenter";
+import ActionDialog from "./ActionDialog";
 
 const groups = [
   {
-    title: 'OPERACIÓN',
-    items: [{ label: 'Inicio', icon: LayoutDashboard, to: '/', permission: 'dashboard' }],
-  },
-  {
-    title: 'MÓDULOS',
+    title: "OPERACIÓN",
     items: [
       {
-        label: 'Inventario',
+        label: "Inicio",
+        icon: LayoutDashboard,
+        to: "/",
+        permission: "dashboard",
+      },
+    ],
+  },
+  {
+    title: "MÓDULOS",
+    items: [
+      {
+        label: "Inventario",
         icon: Boxes,
-        permission: 'inventory',
+        permission: "inventory",
         children: [
-          { label: 'Todos los ítems', to: '/inventory/items', permission: 'items' },
           {
-            label: 'Materias primas',
-            to: '/inventory/items?type=raw_material',
-            permission: 'items',
+            label: "Todos los ítems",
+            to: "/inventory/items",
+            permission: "items",
           },
-          { label: 'Productos', to: '/inventory/items?type=finished_product', permission: 'items' },
-          { label: 'Stock por depósito', to: '/inventory/stock', permission: 'stock' },
-          { label: 'Movimientos', to: '/inventory/movements', permission: 'stock' },
-          { label: 'Remitos de entrega', to: '/inventory/delivery-notes', permission: 'stock' },
+          {
+            label: "Materias primas",
+            to: "/inventory/items?type=raw_material",
+            permission: "items",
+          },
+          {
+            label: "Productos",
+            to: "/inventory/items?type=finished_product",
+            permission: "items",
+          },
+          {
+            label: "Stock por depósito",
+            to: "/inventory/stock",
+            permission: "stock",
+          },
+          {
+            label: "Movimientos",
+            to: "/inventory/movements",
+            permission: "stock",
+          },
+          {
+            label: "Remitos de entrega",
+            to: "/inventory/delivery-notes",
+            permission: "stock",
+          },
         ],
       },
       {
-        label: 'Producción',
+        label: "Producción",
         icon: Factory,
-        permission: 'production',
+        permission: "production",
         children: [
-          { label: 'Órdenes de fabricación', to: '/production/orders', permission: 'production' },
-          { label: 'Tipos de envasado', to: '/production/packaging', permission: 'production' },
-          { label: 'Fórmulas', to: '/production/formulas', permission: 'production' },
-          { label: 'Planificación', to: '/production/planning', permission: 'production' },
           {
-            label: '¿Tengo stock para fabricar?',
-            to: '/production/availability',
-            permission: 'production',
+            label: "Órdenes de fabricación",
+            to: "/production/orders",
+            permission: "production",
           },
           {
-            label: 'Pronóstico y reposición',
-            to: '/production/replenishment',
-            permission: 'production',
+            label: "Tipos de envasado",
+            to: "/production/packaging",
+            permission: "production",
+          },
+          {
+            label: "Fórmulas",
+            to: "/production/formulas",
+            permission: "production",
+          },
+          {
+            label: "Planificación",
+            to: "/production/planning",
+            permission: "production",
+          },
+          {
+            label: "¿Tengo stock para fabricar?",
+            to: "/production/availability",
+            permission: "production",
+          },
+          {
+            label: "Pronóstico y reposición",
+            to: "/production/replenishment",
+            permission: "production",
           },
         ],
       },
       {
-        label: 'Compras',
+        label: "Compras",
         icon: ShoppingCart,
-        permission: 'purchases',
+        permission: "purchases",
         children: [
-          { label: 'Compras y cuentas', to: '/purchases/accounts', permission: 'purchases' },
-          { label: 'Proveedores', to: '/purchases/suppliers', permission: 'purchases' },
-          { label: 'Órdenes de compra', to: '/purchases/orders', permission: 'purchases' },
-        ],
-      },
-      {
-        label: 'Ventas',
-        icon: ShoppingBag,
-        permission: 'sales',
-        children: [
-          { label: 'Clientes', to: '/sales/customers', permission: 'sales' },
-          { label: 'Lista de precios', to: '/sales/lista-precios', permission: 'sales' },
-          { label: 'Registrar venta', to: '/sales/orders', permission: 'sales' },
-        ],
-      },
-      {
-        label: 'Finanzas',
-        icon: Wallet,
-        permission: 'finance',
-        children: [
-          { label: 'Cuentas por cobrar', to: '/finance/receivables', permission: 'finance' },
-          { label: 'Tesorería', to: '/finance/treasury', permission: 'finance' },
           {
-            label: 'Rentabilidad y precios',
-            to: '/finance/costs',
-            permission: 'finance',
+            label: "Compras y cuentas",
+            to: "/purchases/accounts",
+            permission: "purchases",
+          },
+          {
+            label: "Proveedores",
+            to: "/purchases/suppliers",
+            permission: "purchases",
+          },
+          {
+            label: "Órdenes de compra",
+            to: "/purchases/orders",
+            permission: "purchases",
+          },
+        ],
+      },
+      {
+        label: "Ventas",
+        icon: ShoppingBag,
+        permission: "sales",
+        children: [
+          { label: "Clientes", to: "/sales/customers", permission: "sales" },
+          {
+            label: "Lista de precios",
+            to: "/sales/lista-precios",
+            permission: "sales",
+          },
+          {
+            label: "Registrar venta",
+            to: "/sales/orders",
+            permission: "sales",
+          },
+        ],
+      },
+      {
+        label: "Finanzas",
+        icon: Wallet,
+        permission: "finance",
+        children: [
+          {
+            label: "Cuentas por cobrar",
+            to: "/finance/receivables",
+            permission: "finance",
+          },
+          {
+            label: "Tesorería",
+            to: "/finance/treasury",
+            permission: "finance",
+          },
+          {
+            label: "Rentabilidad y precios",
+            to: "/finance/costs",
+            permission: "finance",
             adminOnly: true,
           },
         ],
       },
       {
-        label: 'Reportes',
+        label: "Reportes",
         icon: BarChart3,
-        permission: 'reports',
-        children: [{ label: 'Resumen por período', to: '/reports', permission: 'reports' }],
+        permission: "reports",
+        children: [
+          {
+            label: "Resumen por período",
+            to: "/reports",
+            permission: "reports",
+          },
+        ],
       },
     ],
   },
   {
-    title: 'SISTEMA',
+    title: "SISTEMA",
     items: [
       {
-        label: 'Configuración',
+        label: "Configuración",
         icon: Settings2,
-        permission: 'settings',
+        permission: "settings",
         children: [
           {
-            label: 'Documentos de producción',
-            to: '/settings/production-documents',
-            permission: 'production',
+            label: "Documentos de producción",
+            to: "/settings/production-documents",
+            permission: "production",
           },
-          { label: 'Usuarios', to: '/settings/users', permission: 'users' },
-          { label: 'Roles y permisos', to: '/settings/roles', permission: 'roles' },
-          { label: 'Unidades', to: '/settings/units', permission: 'units' },
-          { label: 'Categorías', to: '/settings/categories', permission: 'categories' },
-          { label: 'Depósitos', to: '/settings/warehouses', permission: 'warehouses' },
+          { label: "Archivados", to: "/archivados", permission: "settings" },
+          { label: "Usuarios", to: "/settings/users", permission: "users" },
+          {
+            label: "Roles y permisos",
+            to: "/settings/roles",
+            permission: "roles",
+          },
+          { label: "Unidades", to: "/settings/units", permission: "units" },
+          {
+            label: "Categorías",
+            to: "/settings/categories",
+            permission: "categories",
+          },
+          {
+            label: "Depósitos",
+            to: "/settings/warehouses",
+            permission: "warehouses",
+          },
         ],
       },
     ],
@@ -150,52 +240,56 @@ export default function AdminLayout() {
   } = useAuth();
   const location = useLocation();
   const routeName = {
-    '/': 'Inicio',
-    '/inventory/items': 'Ítems',
-    '/inventory/stock': 'Stock por depósito',
-    '/inventory/movements': 'Movimientos',
-    '/inventory/delivery-notes': 'Remitos',
-    '/purchases/suppliers': 'Proveedores',
-    '/purchases/orders': 'Órdenes de compra',
-    '/production/formulas': 'Fórmulas',
-    '/production/orders': 'Órdenes de fabricación',
-    '/production/planning': 'Planificación',
-    '/production/availability': 'Disponibilidad para fabricar',
-    '/production/replenishment': 'Pronóstico y reposición',
-    '/sales/customers': 'Clientes',
-    '/sales/lista-precios': 'Lista de precios',
-    '/sales/orders': 'Ventas',
-    '/finance/receivables': 'Cuentas por cobrar',
-    '/finance/treasury': 'Tesorería',
-    '/finance/costs': 'Rentabilidad y precios',
-    '/reports': 'Reportes',
-    '/ayuda': 'Guía de uso',
-    '/mi-perfil': 'Mi perfil',
-    '/settings/users': 'Usuarios',
-    '/settings/roles': 'Roles y permisos',
-    '/settings/units': 'Unidades',
-    '/settings/categories': 'Categorías',
-    '/settings/warehouses': 'Depósitos',
-    '/actualizaciones': 'Actualizaciones',
+    "/": "Inicio",
+    "/archivados": "Archivados",
+    "/inventory/items": "Ítems",
+    "/inventory/stock": "Stock por depósito",
+    "/inventory/movements": "Movimientos",
+    "/inventory/delivery-notes": "Remitos",
+    "/purchases/suppliers": "Proveedores",
+    "/purchases/orders": "Órdenes de compra",
+    "/production/formulas": "Fórmulas",
+    "/production/orders": "Órdenes de fabricación",
+    "/production/planning": "Planificación",
+    "/production/availability": "Disponibilidad para fabricar",
+    "/production/replenishment": "Pronóstico y reposición",
+    "/sales/customers": "Clientes",
+    "/sales/lista-precios": "Lista de precios",
+    "/sales/orders": "Ventas",
+    "/finance/receivables": "Cuentas por cobrar",
+    "/finance/treasury": "Tesorería",
+    "/finance/costs": "Rentabilidad y precios",
+    "/reports": "Reportes",
+    "/ayuda": "Guía de uso",
+    "/mi-perfil": "Mi perfil",
+    "/settings/users": "Usuarios",
+    "/settings/roles": "Roles y permisos",
+    "/settings/units": "Unidades",
+    "/settings/categories": "Categorías",
+    "/settings/warehouses": "Depósitos",
+    "/actualizaciones": "Actualizaciones",
   };
   const sectionName =
     routeName[location.pathname] ??
-    (location.pathname.startsWith('/inventory/items/') ? 'Ficha de ítem' : 'Espacio de trabajo');
+    (location.pathname.startsWith("/inventory/items/")
+      ? "Ficha de ítem"
+      : "Espacio de trabajo");
   const [open, setOpen] = useState({});
   const [menuOpen, setMenuOpen] = useState(false);
   const [supportTarget, setSupportTarget] = useState(null);
-  const [supportReason, setSupportReason] = useState('');
+  const [supportReason, setSupportReason] = useState("");
   const [supportBusy, setSupportBusy] = useState(false);
 
   async function switchSupportCompany(event) {
     event.preventDefault();
-    if (!supportTarget || supportReason.trim().length < 8 || supportBusy) return;
+    if (!supportTarget || supportReason.trim().length < 8 || supportBusy)
+      return;
     setSupportBusy(true);
     try {
       await openSupportCompany(supportTarget.company_id, supportReason);
-      notifySuccess('Empresa seleccionada', supportTarget.companies.name);
+      notifySuccess("Empresa seleccionada", supportTarget.companies.name);
       setSupportTarget(null);
-      setSupportReason('');
+      setSupportReason("");
       setMenuOpen(false);
     } catch (error) {
       notifyError(error);
@@ -206,7 +300,7 @@ export default function AdminLayout() {
 
   return (
     <div className="app-shell">
-      <aside className={`sidebar ${menuOpen ? 'mobile-open' : ''}`}>
+      <aside className={`sidebar ${menuOpen ? "mobile-open" : ""}`}>
         <div className="sidebar-top">
           <div className="brand">
             <span className="brand-mark">D</span>
@@ -231,10 +325,12 @@ export default function AdminLayout() {
             <small>ESPACIO ACTUAL</small>
             <select
               aria-label="Empresa activa"
-              value={activeCompany?.id ?? ''}
+              value={activeCompany?.id ?? ""}
               onChange={(event) => {
-                const target = memberships.find((item) => item.company_id === event.target.value);
-                if (target?.roles?.code === 'support') {
+                const target = memberships.find(
+                  (item) => item.company_id === event.target.value,
+                );
+                if (target?.roles?.code === "support") {
                   setSupportTarget(target);
                 } else {
                   setActiveCompanyId(event.target.value);
@@ -242,7 +338,10 @@ export default function AdminLayout() {
               }}
             >
               {memberships.map((membership) => (
-                <option key={membership.company_id} value={membership.company_id}>
+                <option
+                  key={membership.company_id}
+                  value={membership.company_id}
+                >
                   {membership.companies.name}
                 </option>
               ))}
@@ -255,12 +354,12 @@ export default function AdminLayout() {
           {groups.map((group) => {
             const visible = group.items.filter(
               (item) =>
-                can(item.permission, 'read') ||
+                can(item.permission, "read") ||
                 item.children?.some(
                   (child) =>
-                    typeof child === 'object' &&
-                    (!child.adminOnly || role === 'admin') &&
-                    can(child.permission, 'read'),
+                    typeof child === "object" &&
+                    (!child.adminOnly || role === "admin") &&
+                    can(child.permission, "read"),
                 ),
             );
             if (!visible.length) return null;
@@ -278,10 +377,11 @@ export default function AdminLayout() {
                           <button
                             className={`nav-item ${
                               item.children.some(
-                                (child) => child.to?.split('?')[0] === location.pathname,
+                                (child) =>
+                                  child.to?.split("?")[0] === location.pathname,
                               )
-                                ? 'active'
-                                : ''
+                                ? "active"
+                                : ""
                             }`}
                             onClick={() =>
                               setOpen((previous) => ({
@@ -289,7 +389,9 @@ export default function AdminLayout() {
                                 [item.label]: !(
                                   previous[item.label] ??
                                   item.children.some(
-                                    (child) => child.to?.split('?')[0] === location.pathname,
+                                    (child) =>
+                                      child.to?.split("?")[0] ===
+                                      location.pathname,
                                   )
                                 ),
                               }))
@@ -297,7 +399,8 @@ export default function AdminLayout() {
                             aria-expanded={Boolean(
                               open[item.label] ??
                               item.children.some(
-                                (child) => child.to?.split('?')[0] === location.pathname,
+                                (child) =>
+                                  child.to?.split("?")[0] === location.pathname,
                               ),
                             )}
                           >
@@ -307,10 +410,12 @@ export default function AdminLayout() {
                               className={
                                 (open[item.label] ??
                                 item.children.some(
-                                  (child) => child.to?.split('?')[0] === location.pathname,
+                                  (child) =>
+                                    child.to?.split("?")[0] ===
+                                    location.pathname,
                                 ))
-                                  ? 'rotated'
-                                  : ''
+                                  ? "rotated"
+                                  : ""
                               }
                               size={16}
                             />
@@ -318,23 +423,24 @@ export default function AdminLayout() {
 
                           {(open[item.label] ??
                             item.children.some(
-                              (child) => child.to?.split('?')[0] === location.pathname,
+                              (child) =>
+                                child.to?.split("?")[0] === location.pathname,
                             )) && (
                             <div className="subnav">
                               {item.children
                                 .filter(
                                   (child) =>
-                                    typeof child !== 'object' ||
-                                    ((!child.adminOnly || role === 'admin') &&
-                                      can(child.permission, 'read')),
+                                    typeof child !== "object" ||
+                                    ((!child.adminOnly || role === "admin") &&
+                                      can(child.permission, "read")),
                                 )
                                 .map((child) =>
-                                  typeof child === 'object' && child.to ? (
+                                  typeof child === "object" && child.to ? (
                                     <NavLink
                                       key={child.label}
                                       to={child.to}
                                       className={({ isActive }) =>
-                                        `subnav-item ${isActive && location.search === (child.to.split('?')[1] ? `?${child.to.split('?')[1]}` : '') ? 'selected' : ''}`
+                                        `subnav-item ${isActive && location.search === (child.to.split("?")[1] ? `?${child.to.split("?")[1]}` : "") ? "selected" : ""}`
                                       }
                                       onClick={() => setMenuOpen(false)}
                                     >
@@ -342,11 +448,17 @@ export default function AdminLayout() {
                                     </NavLink>
                                   ) : (
                                     <span
-                                      key={typeof child === 'object' ? child.label : child}
+                                      key={
+                                        typeof child === "object"
+                                          ? child.label
+                                          : child
+                                      }
                                       className="subnav-item"
                                       title="Se habilitará en una fase posterior"
                                     >
-                                      {typeof child === 'object' ? child.label : child}
+                                      {typeof child === "object"
+                                        ? child.label
+                                        : child}
                                       <span className="subnav-lock">·</span>
                                     </span>
                                   ),
@@ -358,7 +470,9 @@ export default function AdminLayout() {
                         <NavLink
                           to={item.to}
                           end
-                          className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+                          className={({ isActive }) =>
+                            `nav-item ${isActive ? "active" : ""}`
+                          }
                           onClick={() => setMenuOpen(false)}
                         >
                           <Icon size={19} />
@@ -374,13 +488,25 @@ export default function AdminLayout() {
         </nav>
 
         <div className="sidebar-footer">
-          <NavLink className="nav-item" to="/actualizaciones" onClick={() => setMenuOpen(false)}>
+          <NavLink
+            className="nav-item"
+            to="/actualizaciones"
+            onClick={() => setMenuOpen(false)}
+          >
             <Sparkles size={18} /> <span>Actualizaciones</span>
           </NavLink>
-          <NavLink className="nav-item" to="/mi-perfil" onClick={() => setMenuOpen(false)}>
+          <NavLink
+            className="nav-item"
+            to="/mi-perfil"
+            onClick={() => setMenuOpen(false)}
+          >
             <UserRound size={18} /> <span>Mi perfil</span>
           </NavLink>
-          <NavLink className="help-box" to="/ayuda" onClick={() => setMenuOpen(false)}>
+          <NavLink
+            className="help-box"
+            to="/ayuda"
+            onClick={() => setMenuOpen(false)}
+          >
             <CircleHelp size={19} />
             <div>
               <strong>Guía de uso</strong>
@@ -392,7 +518,7 @@ export default function AdminLayout() {
             onClick={async () => {
               try {
                 await signOut();
-                notifySuccess('Sesión cerrada');
+                notifySuccess("Sesión cerrada");
               } catch (err) {
                 notifyError(err);
               }
@@ -407,7 +533,7 @@ export default function AdminLayout() {
         open={!!supportTarget}
         busy={supportBusy}
         title="Consultar otra empresa"
-        description={`El acceso a ${supportTarget?.companies.name ?? 'esta empresa'} será de solo lectura y quedará registrado.`}
+        description={`El acceso a ${supportTarget?.companies.name ?? "esta empresa"} será de solo lectura y quedará registrado.`}
         onClose={() => setSupportTarget(null)}
       >
         <form onSubmit={switchSupportCompany}>
@@ -435,7 +561,7 @@ export default function AdminLayout() {
               className="button primary"
               disabled={supportBusy || supportReason.trim().length < 8}
             >
-              {supportBusy ? 'Ingresando…' : 'Ingresar en modo lectura'}
+              {supportBusy ? "Ingresando…" : "Ingresar en modo lectura"}
             </button>
           </div>
         </form>
@@ -467,7 +593,9 @@ export default function AdminLayout() {
             <strong>{sectionName}</strong>
           </div>
           <div className="topbar-right">
-            {role === 'support' && <span className="support-readonly">Soporte · solo lectura</span>}
+            {role === "support" && (
+              <span className="support-readonly">Soporte · solo lectura</span>
+            )}
             <span className="online">
               <i /> Sistema activo
             </span>
@@ -478,7 +606,8 @@ export default function AdminLayout() {
               aria-label="Abrir mi perfil"
               title={user.email}
             >
-              {(user.user_metadata?.full_name || user.email)?.[0]?.toUpperCase()}
+              {(user.user_metadata?.full_name ||
+                user.email)?.[0]?.toUpperCase()}
             </NavLink>
           </div>
         </header>
