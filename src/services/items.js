@@ -5,15 +5,6 @@ function unwrap({ data, error }) {
   return data;
 }
 
-const detailColumns = `
-  id, company_id, code, name, item_type, category_id, unit_id,
-  barcode, description, minimum_stock, track_lots, infinite_stock, active, archived, reference_unit_cost,
-  reference_cost_usd, reference_exchange_rate_type_id,
-  created_at, updated_at,
-  category:item_categories!items_category_company_fk(id, name, active),
-  unit:units!items_unit_company_fk(id, name, symbol, active)
-`;
-
 export async function listItems(companyId, { page, search, type, status }) {
   let query = supabase
     .from("items")
@@ -40,12 +31,10 @@ export async function listItems(companyId, { page, search, type, status }) {
 
 export async function getItem(companyId, itemId) {
   return unwrap(
-    await supabase
-      .from("items")
-      .select(detailColumns)
-      .eq("company_id", companyId)
-      .eq("id", itemId)
-      .single(),
+    await supabase.rpc("get_item_detail", {
+      p_company: companyId,
+      p_item: itemId,
+    }),
   );
 }
 

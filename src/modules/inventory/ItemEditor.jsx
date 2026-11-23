@@ -75,7 +75,10 @@ export default function ItemEditor() {
   const isNew = !itemId;
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { user, activeCompanyId, can } = useAuth();
+  const { user, activeCompanyId, can, role } = useAuth();
+  // El costo de referencia es solo para administración y compras. El servidor lo
+  // vuelve a validar: aquí solo evitamos mostrar un campo vacío que parecería editable.
+  const canSeeCost = role === "admin" || can("purchases", "read");
   const [form, setForm] = useState(emptyForm);
   const [purchaseCost, setPurchaseCost] = useState(emptyPurchaseCost);
   const [categorySearch, setCategorySearch] = useState("");
@@ -454,17 +457,26 @@ export default function ItemEditor() {
             />
           </label>
 
-          <ItemCostFields
-            form={form}
-            cost={purchaseCost}
-            onCostChange={setPurchaseCost}
-            onPesosChange={(value) => setField("reference_unit_cost", value)}
-            context={costContext}
-            unitSymbol={
-              unitQuery.data?.find((entry) => entry.id === form.unit_id)
-                ?.symbol ?? item?.unit?.symbol
-            }
-          />
+          {!canSeeCost && (
+            <p className="field-hint">
+              El costo de referencia lo gestionan Administración y Compras.
+              Una materia prima nueva necesita costo, así que debe crearla
+              alguno de esos roles.
+            </p>
+          )}
+          {canSeeCost && (
+            <ItemCostFields
+              form={form}
+              cost={purchaseCost}
+              onCostChange={setPurchaseCost}
+              onPesosChange={(value) => setField("reference_unit_cost", value)}
+              context={costContext}
+              unitSymbol={
+                unitQuery.data?.find((entry) => entry.id === form.unit_id)
+                  ?.symbol ?? item?.unit?.symbol
+              }
+            />
+          )}
 
           <label className="item-checkbox">
             <input

@@ -111,7 +111,7 @@ export default function FormulasPage() {
       .find(
         (item) =>
           item &&
-          item.reference_unit_cost == null &&
+          item.has_reference_cost === false &&
           (["raw_material", "consumable"].includes(item.item_type) ||
             !formulas.some((formula) => formula.product_id === item.id)),
       );

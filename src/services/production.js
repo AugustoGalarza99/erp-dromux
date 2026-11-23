@@ -6,23 +6,11 @@ function unwrap({ data, error }) {
 }
 
 export async function listProductionItems(companyId, includeInactive = false) {
-  let query = supabase
-    .from("items")
-    .select(
-      "id, code, name, active, item_type, track_lots, infinite_stock, yield_enabled, yield_factor, reference_unit_cost, units!items_unit_company_fk(symbol)",
-    )
-    .eq("company_id", companyId);
-  if (!includeInactive) query = query.eq("active", true);
   return unwrap(
-    await query
-      .in("item_type", [
-        "raw_material",
-        "semi_finished",
-        "finished_product",
-        "consumable",
-      ])
-      .order("name")
-      .limit(500),
+    await supabase.rpc("list_production_items", {
+      p_company: companyId,
+      p_include_inactive: includeInactive,
+    }),
   );
 }
 
@@ -97,15 +85,7 @@ export async function listProductionBalances(companyId, componentIds) {
 
 export async function listProductionRuns(companyId) {
   return unwrap(
-    await supabase
-      .from("production_runs")
-      .select(
-        "id, product_id, quantity, formula_version, estimated_cost, created_at, warehouse_id, production_run_lines(component_id, quantity, lot_code, warehouse_id, unit_cost)",
-      )
-      .eq("company_id", companyId)
-      .eq("archived", false)
-      .order("created_at", { ascending: false })
-      .limit(30),
+    await supabase.rpc("list_production_runs", { p_company: companyId }),
   );
 }
 
@@ -131,15 +111,7 @@ export async function postProductionRun(companyId, payload, requestId) {
 
 export async function listProductionPlans(companyId) {
   return unwrap(
-    await supabase
-      .from("production_plans")
-      .select(
-        "id, product_id, warehouse_id, quantity, formula_version, estimated_cost, component_snapshot, due_on, note, status, run_id, created_at",
-      )
-      .eq("company_id", companyId)
-      .eq("archived", false)
-      .order("created_at", { ascending: false })
-      .limit(100),
+    await supabase.rpc("list_production_plans", { p_company: companyId }),
   );
 }
 
@@ -192,20 +164,7 @@ export async function completeProductionPlan(
 
 export async function listProductionJobs(companyId) {
   return unwrap(
-    await supabase
-      .from("production_jobs")
-      .select(
-        `id, number, yield_factor, expected_output, document_snapshot, work_options, details_updated_at, product_id, plan_id, planned_quantity, actual_quantity,
-      warehouse_id, due_on, formula_version, formula_snapshot, status,
-      note, cancel_reason, variance_note, output_lot, output_expiry,
-      run_id, created_at, started_at, completed_at,
-      production_job_events(id, kind, issue_id, component_id, warehouse_id,
-        lot_code, quantity, unit_cost, note, created_at)`,
-      )
-      .eq("company_id", companyId)
-      .eq("archived", false)
-      .order("created_at", { ascending: false })
-      .limit(70),
+    await supabase.rpc("list_production_jobs", { p_company: companyId }),
   );
 }
 
