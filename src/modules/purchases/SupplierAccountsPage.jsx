@@ -16,6 +16,7 @@ import {
   findFinanceSuppliers,
 } from '../../services/supplierFinance';
 import { money, argentinaToday } from './supplierUi';
+import PurchasesShell from './PurchasesShell';
 import './supplierAccounts.css';
 
 function Pager({ page, count, onChange }) {
@@ -192,14 +193,11 @@ export default function SupplierAccountsPage() {
   }
 
   return (
+    <PurchasesShell
+      title="Compras y cuentas de proveedores"
+      description="Lo que compraste en un período, lo que le debés a cada proveedor y las órdenes de pago conectadas a Tesorería."
+    >
     <section className="supplier-finance-page">
-      <header className="page-head">
-        <div>
-          <span className="eyebrow">COMPRAS</span>
-          <h1>Compras y cuentas de proveedores</h1>
-          <p>Recepciones, saldos y órdenes de pago conectadas a Tesorería.</p>
-        </div>
-      </header>
       <nav className="supplier-finance-tabs" aria-label="Compras de proveedores">
         {[
           ['stats', 'Estadísticas'],
@@ -588,5 +586,6 @@ export default function SupplierAccountsPage() {
         </div>
       </ActionDialog>
     </section>
+    </PurchasesShell>
   );
 }

@@ -7,6 +7,9 @@ import { listStockLots } from '../../services/stock';
 import { listProductionBalances } from '../../services/production';
 import { issueDeliveryNote, issueSaleDeliveryNote } from '../../services/deliveryNotes';
 import { formatQuantity } from './stockNumber';
+import { itemTypeLabels } from './itemTypes';
+import { lotLabel } from '../../lib/display';
+import { LINE_LIMITS } from '../../lib/limits';
 import './deliveryNotes.css';
 
 const newLine = (itemId = '', quantity = '', warehouseId = '', lotCode = '') => ({
@@ -17,6 +20,12 @@ const newLine = (itemId = '', quantity = '', warehouseId = '', lotCode = '') => 
   quantity,
   search: '',
 });
+const kindOptions = [
+  { value: 'materials', title: 'Materiales', hint: 'Materias primas, insumos o semielaborados que salen del depósito.' },
+  { value: 'products', title: 'Productos o semielaborados', hint: 'Mercadería terminada que se entrega.' },
+  { value: 'production', title: 'Para fabricación', hint: 'Insumos para una orden activa; queda como consumo real.' },
+  { value: 'sale', title: 'De una venta', hint: 'Documenta lo entregado de una venta; no vuelve a descontar stock.' },
+];
 const validAmount = (value) =>
   /^\d+(?:\.\d{1,6})?$/.test(String(value)) && Number(value) > 0 && Number(value) < 1000000000000;
 
@@ -46,8 +55,11 @@ function LineEditor({ companyId, line, index, items, warehouses, onUpdate, onRem
   if (item && !choices.some((entry) => entry.id === item.id)) choices.unshift(item);
 
   return (
-    <fieldset className="delivery-line">
-      <legend>Ítem {index + 1}</legend>
+    <fieldset className="delivery-line" data-type={item?.item_type}>
+      <legend>
+        Ítem {index + 1}
+        {item && <span className="item-type-tag">{itemTypeLabels[item.item_type]}</span>}
+      </legend>
       <button
         className="delivery-line-remove"
         type="button"
@@ -128,7 +140,7 @@ function LineEditor({ companyId, line, index, items, warehouses, onUpdate, onRem
               .filter((lot) => Number(lot.available) > 0)
               .map((lot) => (
                 <option key={lot.id} value={lot.code}>
-                  {lot.code} · {formatQuantity(lot.available)} disponibles
+                  {lotLabel(lot.code)} · {formatQuantity(lot.available)} disponibles
                 </option>
               ))}
           </select>
@@ -142,7 +154,9 @@ function LineEditor({ companyId, line, index, items, warehouses, onUpdate, onRem
         >
           {item.infinite_stock
             ? 'Stock infinito'
-            : `Disponible: ${formatQuantity(available.toFixed(6))} ${item.units?.symbol}`}
+            : Number(line.quantity) > available
+              ? `Stock insuficiente: pedís ${formatQuantity(String(line.quantity))} y hay ${formatQuantity(available.toFixed(6))} ${item.units?.symbol ?? ''}`
+              : `Disponible: ${formatQuantity(available.toFixed(6))} ${item.units?.symbol ?? ''}`}
         </small>
       )}
       {(balanceQuery.error || lotsQuery.error) && (
@@ -181,10 +195,21 @@ export default function DeliveryNoteComposer({
   );
   const [lines, setLines] = useState([newLine()]);
   const [busy, setBusy] = useState(false);
+  const [reviewing, setReviewing] = useState(false);
   const [requestId, setRequestId] = useState(() => crypto.randomUUID());
   useEffect(() => {
     onBusyChange?.(busy);
   }, [busy, onBusyChange]);
+
+  function changeKind(value) {
+    setKind(value);
+    setJobId('');
+    setSaleId('');
+    setSaleQuantities({});
+    setLines([newLine()]);
+    setRecipient(value === 'production' ? 'Sector de producción' : '');
+    setNote(value === 'production' ? 'Entrega para fabricación' : 'Entrega de mercadería');
+  }
   const initializedJob = useRef(null);
   const initializedSale = useRef(null);
   const activeJobs = jobs.filter((job) => ['queued', 'in_progress'].includes(job.status));
@@ -302,6 +327,29 @@ export default function DeliveryNoteComposer({
     setLines(suggestions.length ? suggestions : [newLine()]);
   }
 
+  const reviewRows = reviewing
+    ? kind === 'sale'
+      ? (selectedSale?.sale_lines ?? [])
+          .filter((line) => Number(saleQuantities[line.line_no]) > 0)
+          .map((line) => ({
+            key: line.line_no,
+            name: line.item_name,
+            warehouse: '',
+            lot: line.lot_code,
+            quantity: `${formatQuantity(saleQuantities[line.line_no])} ${line.unit_symbol ?? ''}`,
+          }))
+      : lines.map((line) => {
+          const found = items.find((entry) => entry.id === line.itemId);
+          return {
+            key: line.key,
+            name: found ? `${found.code} · ${found.name}` : 'Ítem',
+            warehouse: warehouses.find((entry) => entry.id === line.warehouseId)?.name ?? '',
+            lot: line.lotCode,
+            quantity: `${formatQuantity(line.quantity)} ${found?.units?.symbol ?? ''}`,
+          };
+        })
+    : [];
+
   async function submit(event) {
     event.preventDefault();
     const saleLines =
@@ -337,6 +385,11 @@ export default function DeliveryNoteComposer({
           )))
     ) {
       notifyError(new Error('Revisá el destino, ítems, depósitos, lotes y cantidades.'));
+      return;
+    }
+    // Primer envío: se muestra el resumen. Recién el segundo emite el remito.
+    if (!reviewing) {
+      setReviewing(true);
       return;
     }
     setBusy(true);
@@ -381,25 +434,27 @@ export default function DeliveryNoteComposer({
 
   return (
     <form className="delivery-composer" onSubmit={submit}>
-      <label>
-        Tipo de entrega
-        <select
-          value={kind}
-          disabled={!!(initialJobId || initialSaleId)}
-          onChange={(event) => {
-            setKind(event.target.value);
-            setJobId('');
-            setSaleId('');
-            setLines([newLine()]);
-            setRecipient(event.target.value === 'production' ? 'Sector de producción' : '');
-          }}
-        >
-          <option value="materials">Entrega de materiales</option>
-          <option value="products">Entrega de semielaborados o productos</option>
-          <option value="production">Para una orden de fabricación</option>
-          {sales.length > 0 && <option value="sale">Entrega de una venta registrada</option>}
-        </select>
-      </label>
+      <fieldset className="delivery-kinds" disabled={!!(initialJobId || initialSaleId) || reviewing}>
+        <legend>¿Qué vas a entregar?</legend>
+        <div>
+          {kindOptions
+            .filter((option) => option.value !== 'sale' || sales.length > 0)
+            .map(({ value, title, hint }) => (
+              <label key={value} className={`delivery-kind ${kind === value ? 'is-selected' : ''}`}>
+                <input
+                  type="radio"
+                  name="delivery-kind"
+                  value={value}
+                  checked={kind === value}
+                  onChange={() => changeKind(value)}
+                />
+                <strong>{title}</strong>
+                <small>{hint}</small>
+              </label>
+            ))}
+        </div>
+      </fieldset>
+      <div className="delivery-edit" hidden={reviewing}>
       {kind === 'production' && (
         <label>
           Orden de fabricación
@@ -489,7 +544,7 @@ export default function DeliveryNoteComposer({
                 <strong>{line.item_name}</strong>
                 <small>
                   Disponible para remitir: {formatQuantity(remaining.toFixed(6))} {line.unit_symbol}
-                  {line.lot_code && ` · Lote ${line.lot_code}`}
+                  {line.lot_code && ` · Lote ${lotLabel(line.lot_code)}`}
                 </small>
                 <label>
                   Cantidad a entregar ahora
@@ -537,15 +592,49 @@ export default function DeliveryNoteComposer({
         <button
           type="button"
           className="button outline"
-          disabled={lines.length >= 40}
+          disabled={lines.length >= LINE_LIMITS.deliveryNote}
           onClick={() => setLines((current) => [...current, newLine()])}
         >
           <Plus size={16} /> Agregar ítem
         </button>
       )}
+      </div>
+
+      {reviewing && (
+        <section className="delivery-review" aria-label="Resumen de la entrega">
+          <h3>Revisá antes de emitir</h3>
+          <p>
+            Para <strong>{recipient}</strong> · {note}
+            {kind === 'production' && selectedJob && ' · Orden de fabricación vinculada'}
+            {kind === 'sale' && selectedSale && ` · Venta Nº ${selectedSale.number}`}
+          </p>
+          <ul>
+            {reviewRows.map((row) => (
+              <li key={row.key}>
+                <span>
+                  <strong>{row.name}</strong>
+                  <small>{[row.warehouse, row.lot && `Lote ${lotLabel(row.lot)}`].filter(Boolean).join(' · ')}</small>
+                </span>
+                <strong>{row.quantity}</strong>
+              </li>
+            ))}
+          </ul>
+          <p className="delivery-review-effect">
+            {kind === 'sale'
+              ? 'No se descuenta stock: la venta ya lo hizo. Solo queda documentada la entrega.'
+              : 'Al confirmar se descuenta el stock una sola vez. Si hay un error, el remito se anula y el stock vuelve.'}
+          </p>
+        </section>
+      )}
+
       <div className="erp-action-dialog-actions">
-        <button type="button" className="button outline" disabled={busy} onClick={onCancel}>
-          Cancelar
+        <button
+          type="button"
+          className="button outline"
+          disabled={busy}
+          onClick={reviewing ? () => setReviewing(false) : onCancel}
+        >
+          {reviewing ? 'Volver a editar' : 'Cancelar'}
         </button>
         <button
           className="button primary"
@@ -558,9 +647,11 @@ export default function DeliveryNoteComposer({
         >
           {busy
             ? 'Emitiendo…'
-            : kind === 'sale'
-              ? 'Emitir sin descontar stock nuevamente'
-              : 'Confirmar entrega y descontar stock'}
+            : !reviewing
+              ? 'Revisar entrega'
+              : kind === 'sale'
+                ? 'Emitir remito (sin descontar de nuevo)'
+                : 'Confirmar y descontar stock'}
         </button>
       </div>
     </form>

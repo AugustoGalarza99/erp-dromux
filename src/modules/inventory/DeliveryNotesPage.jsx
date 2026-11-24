@@ -23,6 +23,8 @@ import {
 import { formatQuantity } from "./stockNumber";
 import { listSales } from "../../services/sales";
 import DeliveryNoteComposer from "./DeliveryNoteComposer";
+import StockShell from "./StockShell";
+import { lotLabel } from "../../lib/display";
 import "./deliveryNotes.css";
 
 const kinds = {
@@ -80,13 +82,27 @@ export default function DeliveryNotesPage() {
   });
   const items = itemsQuery.data ?? [];
   const jobs = jobsQuery.data ?? [];
-  const rows = (notesQuery.data ?? []).filter((entry) =>
-    `${entry.number} ${entry.recipient} ${entry.note} ${entry.delivery_note_lines
-      ?.map((line) => line.item_name)
-      .join(" ")}`
-      .toLowerCase()
-      .includes(search.toLowerCase()),
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [kindFilter, setKindFilter] = useState("all");
+  const allNotes = notesQuery.data ?? [];
+  const rows = allNotes.filter(
+    (entry) =>
+      (statusFilter === "all" ||
+        (statusFilter === "voided") === (entry.status === "voided")) &&
+      (kindFilter === "all" || entry.kind === kindFilter) &&
+      `${entry.number} ${entry.recipient} ${entry.note} ${entry.delivery_note_lines
+        ?.map((line) => line.item_name)
+        .join(" ")}`
+        .toLowerCase()
+        .includes(search.toLowerCase()),
   );
+  const voidedCount = allNotes.filter((entry) => entry.status === "voided").length;
+  const hasFilters = Boolean(search || statusFilter !== "all" || kindFilter !== "all");
+  const clearFilters = () => {
+    setSearch("");
+    setStatusFilter("all");
+    setKindFilter("all");
+  };
 
   useEffect(() => {
     setSearch("");
@@ -163,38 +179,64 @@ export default function DeliveryNotesPage() {
   }
 
   return (
+    <StockShell
+      title="Remitos de entrega"
+      description="Documentá cada entrega: al confirmar se descuenta el stock, y si se anula vuelve al depósito. Las entregas para fabricación quedan asociadas a su orden."
+      actions={(
+        <>
+          <Link className="button outline" to="/archivados?type=delivery_notes">
+            Archivados
+          </Link>
+          {can("stock", "insert") && can("items", "read") && (
+            <button
+              type="button"
+              className="button primary"
+              onClick={() => setCreateOpen(true)}
+            >
+              <Plus size={17} aria-hidden="true" /> Nuevo remito
+            </button>
+          )}
+        </>
+      )}
+    >
     <section className="delivery-page">
-      <header className="delivery-page-head">
-        <div>
-          <span className="eyebrow">INVENTARIO / ENTREGAS</span>
-          <h1>Remitero</h1>
-          <p>
-            Documentá las entregas y descontá stock al confirmar. Las entregas
-            para fabricación también quedan asociadas a su orden.
-          </p>
-        </div>
-        {can("stock", "insert") && can("items", "read") && (
-          <button
-            type="button"
-            className="button primary"
-            onClick={() => setCreateOpen(true)}
-          >
-            <Plus size={17} /> Nuevo remito
+      <div className="delivery-filters">
+        <label className="delivery-search">
+          Buscar número, destinatario o producto
+          <input
+            type="search"
+            value={search}
+            placeholder="Buscar en los últimos 100 remitos…"
+            onChange={(event) => setSearch(event.target.value)}
+          />
+        </label>
+        <label>
+          Estado
+          <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
+            <option value="all">Todos</option>
+            <option value="issued">Entregados</option>
+            <option value="voided">Anulados ({voidedCount})</option>
+          </select>
+        </label>
+        <label>
+          Tipo
+          <select value={kindFilter} onChange={(event) => setKindFilter(event.target.value)}>
+            <option value="all">Todos</option>
+            {Object.entries(kinds).map(([value, label]) => (
+              <option key={value} value={value}>{label}</option>
+            ))}
+          </select>
+        </label>
+        {hasFilters && (
+          <button type="button" className="button outline" onClick={clearFilters}>
+            Limpiar filtros
           </button>
         )}
-      </header>
-      <Link className="button outline" to="/archivados?type=delivery_notes">
-        Ver remitos archivados
-      </Link>
-      <label className="delivery-search">
-        Buscar número, destinatario o producto
-        <input
-          type="search"
-          value={search}
-          placeholder="Buscar en los últimos 100 remitos…"
-          onChange={(event) => setSearch(event.target.value)}
-        />
-      </label>
+      </div>
+      <p className="delivery-count" role="status">
+        {rows.length} {rows.length === 1 ? "remito" : "remitos"}
+        {hasFilters ? " con estos filtros" : ""}
+      </p>
       {(notesQuery.error || itemsQuery.error || jobsQuery.error) && (
         <p role="alert" className="error">
           {friendlyError(
@@ -204,14 +246,21 @@ export default function DeliveryNotesPage() {
       )}
       {notesQuery.isPending && <p>Cargando remitos…</p>}
       {!notesQuery.isPending && !rows.length && (
-        <p>
-          No hay remitos para esta búsqueda. Usá «Nuevo remito» para registrar
-          una entrega.
-        </p>
+        <div className="stock-empty">
+          <h2>{hasFilters ? "No hay remitos con esos filtros" : "Todavía no emitiste remitos"}</h2>
+          <p>
+            {hasFilters
+              ? "Probá con otra búsqueda o limpiá los filtros."
+              : "Usá «Nuevo remito» para registrar la primera entrega."}
+          </p>
+        </div>
       )}
       <div className="delivery-list">
         {rows.map((note) => (
-          <article className="delivery-card" key={note.id}>
+          <article
+            className={`delivery-card ${note.status === "voided" ? "is-voided" : ""}`}
+            key={note.id}
+          >
             <div className="delivery-card-head">
               <div>
                 <h2>
@@ -251,7 +300,7 @@ export default function DeliveryNotesPage() {
                       {line.unit_symbol}
                       {" · "}
                       {line.warehouse_name}
-                      {line.lot_code && ` · Lote ${line.lot_code}`}
+                      {line.lot_code && ` · Lote ${lotLabel(line.lot_code)}`}
                     </li>
                   ))}
               </ul>
@@ -368,5 +417,6 @@ export default function DeliveryNotesPage() {
         </form>
       </ActionDialog>
     </section>
+    </StockShell>
   );
 }

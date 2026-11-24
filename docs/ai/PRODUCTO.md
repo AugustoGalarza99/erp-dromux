@@ -1,7 +1,7 @@
 # Producto y reglas de negocio — requisitos, no certificado de implementación
 
 ## Identidad y alcance
-Dromux ERP industrial para pymes de Argentina/LATAM. Fuerte en fabricación, semielaborados, órdenes de trabajo, stock, reservas, lotes, remitos y alertas. Compras, proveedores, ventas básicas y tesorería integradas. Uso real esperado en metalúrgica y otros rubros, sin campos exclusivos de pintura u otra industria.
+Dromux ERP industrial para pymes de Argentina/LATAM. Fuerte en fabricación, semielaborados, órdenes de trabajo, stock, reservas, lotes, remitos y alertas. Compras, proveedores, ventas básicas y tesorería integradas. Producto multirrubro (D-006): debe servir a cualquier pyme que fabrique (metalúrgica, jabones, alimentos, textil, pinturería…). Sin campos, textos ni ejemplos exclusivos de una industria; lo específico de cada empresa es configurable (unidades, categorías, envasados, campos opcionales).
 
 ## Catálogo y proveedores
 - Materias primas, semielaborados, terminados e insumos con ID estable, código, nombre, unidad, mínimo decimal y stock infinito opcional.

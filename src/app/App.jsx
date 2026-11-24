@@ -21,6 +21,10 @@ import CatalogPage from "../modules/catalogs/CatalogPage";
 import ItemsPage from "../modules/inventory/ItemsPage";
 import ItemEditor from "../modules/inventory/ItemEditor";
 import StockPage from "../modules/inventory/StockPage";
+import StockOverview from "../modules/inventory/StockOverview";
+import PurchasesOverview from "../modules/purchases/PurchasesOverview";
+import PurchaseRequestsPage from "../modules/purchases/PurchaseRequestsPage";
+import ProductionOverview from "../modules/production/ProductionOverview";
 import MovementsPage from "../modules/inventory/MovementsPage";
 import DeliveryNotesPage from "../modules/inventory/DeliveryNotesPage";
 import SuppliersPage from "../modules/purchases/SuppliersPage";
@@ -97,10 +101,11 @@ function SetupCompany() {
   );
 }
 
-function PermissionGate({ resource, children }) {
+function PermissionGate({ resource, anyOf, children }) {
   const { can } = useAuth();
+  const allowed = (anyOf ?? [resource]).some((entry) => can(entry, "read"));
 
-  if (!can(resource, "read")) {
+  if (!allowed) {
     return (
       <div className="setup">
         <h1>Acceso limitado</h1>
@@ -298,6 +303,31 @@ export default function App() {
           element={
             <PermissionGate resource="warehouses">
               <CatalogPage resource="warehouses" />
+            </PermissionGate>
+          }
+        />
+        <Route path="/inventory" element={<StockOverview />} />
+        <Route
+          path="/purchases/requests"
+          element={
+            <PermissionGate anyOf={["purchases", "purchase_requests"]}>
+              <PurchaseRequestsPage />
+            </PermissionGate>
+          }
+        />
+        <Route
+          path="/purchases"
+          element={
+            <PermissionGate resource="purchases">
+              <PurchasesOverview />
+            </PermissionGate>
+          }
+        />
+        <Route
+          path="/production"
+          element={
+            <PermissionGate resource="production">
+              <ProductionOverview />
             </PermissionGate>
           }
         />

@@ -4,3 +4,7 @@ dist/
 .env.*
 !.env.example
 .supabase/
+
+# Referencias con datos reales del propietario
+docs/ai/referencias/*
+!docs/ai/referencias/LEEME.md

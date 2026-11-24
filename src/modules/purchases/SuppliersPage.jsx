@@ -12,6 +12,7 @@ import { SupplierCatalog, SupplierComparison, SupplierPagination } from './Suppl
 import { SupplierEditDialog, SupplierQuoteDialog, SupplierAdjustDialog } from './SupplierDialogs';
 import SupplierExchangePanel from './SupplierExchangePanel';
 import { refreshSupplierData } from './supplierUi';
+import PurchasesShell from './PurchasesShell';
 import './purchases.css';
 import './suppliers.css';
 
@@ -80,19 +81,18 @@ export default function SuppliersPage() {
   }
 
   return (
-    <div className="purchase-page suppliers-page" aria-busy={busy}>
-      <div className="page-head">
-        <div>
-          <span className="eyebrow">COMPRAS</span>
-          <h1>Proveedores</h1>
-          <p>Encontrá quién te provee cada ítem, compará costos y mantené sus precios al día.</p>
-        </div>
-        <div className="supplier-header-actions">
+    <PurchasesShell
+      title="Proveedores"
+      description="Encontrá quién te provee cada ítem, compará costos y mantené sus precios al día."
+      actions={(
+        <>
           <Link to="/purchases/orders" className="button outline">Órdenes de compra</Link>
           {can('purchases', 'insert') && <button type="button" className="button primary"
-            onClick={() => openAction('supplier', null)}><Plus size={17} /> Nuevo proveedor</button>}
-        </div>
-      </div>
+            onClick={() => openAction('supplier', null)}><Plus size={17} aria-hidden="true" /> Nuevo proveedor</button>}
+        </>
+      )}
+    >
+    <div className="purchase-page suppliers-page" aria-busy={busy}>
       <div className="purchase-tabs" role="tablist" aria-label="Vistas de proveedores">
         {[
           ['directory', 'Proveedores e ítems'], ['comparison', 'Comparar precios'], ['currency', 'Cotizaciones del dólar'],
@@ -131,9 +131,15 @@ export default function SuppliersPage() {
             {can('purchases', 'update') && <div className="supplier-header-actions">
               <button type="button" className="button outline" disabled={busy}
                 onClick={() => openAction('supplier', supplier)}>Editar datos</button>
+              {supplier.active && can('purchases', 'insert') && (
+                <Link className="button outline" to={`/purchases/orders?new=1&supplier=${supplier.id}`}>
+                  Nueva orden
+                </Link>
+              )}
               <button type="button" className="button outline" disabled={busy}
-                onClick={() => run(() => setSupplierActive(activeCompanyId, supplier.id, !supplier.active),
-                  supplier.active ? 'Proveedor desactivado' : 'Proveedor activado')}>
+                onClick={() => (supplier.active
+                  ? setAction({ kind: 'deactivate', supplier })
+                  : run(() => setSupplierActive(activeCompanyId, supplier.id, true), 'Proveedor activado'))}>
                 {supplier.active ? 'Desactivar' : 'Activar'}
               </button>
             </div>}
@@ -171,6 +177,15 @@ export default function SuppliersPage() {
       <ConfirmDeleteDialog open={action?.kind === 'remove'} busy={busy}
         description={action?.quote ? `Se quitará ${action.quote.item_name} de ${action.supplier.name}. El ítem, el stock y las órdenes anteriores se conservan.` : ''}
         confirmLabel="Quitar relación" onCancel={() => setAction(null)} onConfirm={remove} />
+      <ConfirmDeleteDialog open={action?.kind === 'deactivate'} busy={busy}
+        title="¿Desactivar este proveedor?"
+        description={`${action?.supplier?.name ?? ''} dejará de ofrecerse al crear órdenes de compra. Sus órdenes, cotizaciones y cuenta se conservan y podés volver a activarlo.`}
+        confirmLabel="Desactivar" onCancel={() => setAction(null)}
+        onConfirm={() => run(async () => {
+          await setSupplierActive(activeCompanyId, action.supplier.id, false);
+          setAction(null);
+        }, 'Proveedor desactivado')} />
     </div>
+    </PurchasesShell>
   );
 }

@@ -21,6 +21,8 @@ import {
   listProductionPlans,
   listProductionWarehouses,
 } from "../../services/production";
+import ProductionShell from "./ProductionShell";
+import ListPager, { usePagedList } from "../../components/ListPager";
 import "./production.css";
 
 const money = (value) =>
@@ -90,6 +92,9 @@ export default function ProductionPlanningPage() {
     ),
   });
   const balances = balancesQuery.data?.lines ?? [];
+  // Las necesidades se muestran de a 10 y las órdenes planificadas de a 10 (D-007).
+  const requiredPager = usePagedList(required, { pageSize: 10, resetKey: `${productId}|${quantity}` });
+  const plansPager = usePagedList(plans, { pageSize: 10 });
 
   useEffect(() => {
     setProductId("");
@@ -154,20 +159,16 @@ export default function ProductionPlanningPage() {
   }
 
   return (
-    <section className="production-page">
-      <div className="production-heading">
-        <div>
-          <span className="eyebrow">PRODUCCIÓN / PLANIFICACIÓN</span>
-          <h1>Plan de fabricación</h1>
-          <p>
-            Prepará cantidades y fechas. Los insumos se descuentan al retirarlos
-            en fabricación.
-          </p>
-        </div>
-        <Link className="button" to="/production/orders">
-          Ver órdenes de fabricación
+    <ProductionShell
+      title="Planificación"
+      description="Prepará cantidades y fechas antes de fabricar. Planificar no descuenta stock: los materiales se descuentan al retirarlos para la fabricación."
+      actions={(
+        <Link className="button outline" to="/production/orders">
+          Ver órdenes
         </Link>
-      </div>
+      )}
+    >
+    <section className="production-page">
       <div className="production-grid">
         <form className="production-card" onSubmit={submit}>
           <h2>
@@ -245,7 +246,7 @@ export default function ProductionPlanningPage() {
                   {friendlyError(balancesQuery.error)}
                 </p>
               )}
-              {required.map((line) => {
+              {requiredPager.visible.map((line) => {
                 const balance = balances.find(
                   (entry) => entry.item_id === line.componentId,
                 );
@@ -279,6 +280,7 @@ export default function ProductionPlanningPage() {
                   </div>
                 );
               })}
+              <ListPager pager={requiredPager} noun="insumos" sizes={[10, 25, 50]} />
               <p className="production-muted">
                 El plan todavía no reserva stock. La reserva se asigna al crear
                 la orden de fabricación; el depósito y el lote reales se eligen
@@ -323,7 +325,7 @@ export default function ProductionPlanningPage() {
               Todavía no hay órdenes planificadas.
             </p>
           )}
-          {plans.map((plan) => {
+          {plansPager.visible.map((plan) => {
             const currentFormula = formulas.find(
               (entry) => entry.product_id === plan.product_id,
             );
@@ -357,13 +359,15 @@ export default function ProductionPlanningPage() {
                     : ""}
                 </small>
                 <details>
-                  <summary>Insumos previstos</summary>
-                  {plan.component_snapshot.map((line) => (
-                    <p key={line.component_id}>
-                      {byId[line.component_id]?.name ?? "Insumo"} ·{" "}
-                      {formatQuantity(line.quantity)}
-                    </p>
-                  ))}
+                  <summary>Insumos previstos ({plan.component_snapshot.length})</summary>
+                  <div className="production-plan-components">
+                    {plan.component_snapshot.map((line) => (
+                      <p key={line.component_id}>
+                        {byId[line.component_id]?.name ?? "Insumo"} ·{" "}
+                        {formatQuantity(line.quantity)}
+                      </p>
+                    ))}
+                  </div>
                 </details>
                 {plan.status === "planned" && (
                   <div className="production-plan-actions">
@@ -406,6 +410,7 @@ export default function ProductionPlanningPage() {
               </div>
             );
           })}
+          <ListPager pager={plansPager} noun="planes" sizes={[10, 25, 50]} />
         </aside>
       </div>
       <ConfirmDeleteDialog
@@ -418,5 +423,6 @@ export default function ProductionPlanningPage() {
         onConfirm={cancelPlan}
       />
     </section>
+    </ProductionShell>
   );
 }

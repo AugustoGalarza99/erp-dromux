@@ -1,5 +1,7 @@
 import CleanupButton from "../../components/CleanupButton";
 import WorkDetailsDialog from "./WorkDetailsDialog";
+import JobComponentsTable from "./JobComponentsTable";
+import ListPager, { usePagedList } from "../../components/ListPager";
 import "../purchases/supplierAccounts.css";
 import { useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -22,6 +24,7 @@ import {
   friendlyError,
 } from "../../lib/notifications";
 import { formatQuantity } from "../inventory/stockNumber";
+import { lotLabel } from "../../lib/display";
 import { listStockLots } from "../../services/stock";
 import {
   cancelProductionJob,
@@ -83,6 +86,8 @@ export default function ProductionJobCard({
   const events = [...(job.production_job_events ?? [])].sort(
     (a, b) => new Date(a.created_at) - new Date(b.created_at),
   );
+  // Lo más reciente primero y paginado: una orden grande puede tener cientos de movimientos.
+  const eventsPager = usePagedList([...events].reverse(), { pageSize: 10 });
   const expected = job.formula_snapshot ?? [];
   const net = new Map();
   for (const event of events) {
@@ -408,63 +413,14 @@ export default function ProductionJobCard({
           </span>
         )}
       </div>
-      <div className="production-job-expected" aria-label="Avance de insumos">
-        {expected.map((entry) => {
-          const issued = net.get(entry.component_id) ?? 0;
-          const pending = Math.max(0, Number(entry.quantity) - issued);
-          const slots = allocations.filter(
-            (row) => row.component_id === entry.component_id,
-          );
-          const assigned = slots.reduce(
-            (sum, row) => sum + Number(row.quantity),
-            0,
-          );
-          return (
-            <div className="production-job-progress" key={entry.component_id}>
-              <strong>{itemName(entry.component_id)}</strong>
-              <span>Previsto: {formatQuantity(entry.quantity)}</span>
-              <span>Entregado: {formatQuantity(issued.toFixed(6))}</span>
-              {active && (
-                <span>Asignado: {formatQuantity(assigned.toFixed(6))}</span>
-              )}
-              {slots.map((slot) => (
-                <small
-                  key={`${slot.warehouse_id}:${slot.lot_code ?? ""}`}
-                  className="production-job-slot"
-                >
-                  {warehouses.find(
-                    (warehouse) => warehouse.id === slot.warehouse_id,
-                  )?.name ?? "Depósito"}
-                  {slot.lot_code && ` · Lote ${slot.lot_code}`}
-                  {" · "}
-                  {formatQuantity(slot.quantity)}
-                </small>
-              ))}
-              <span
-                className={
-                  pending > 0.000001 ? "production-awaiting" : "production-ok"
-                }
-              >
-                {pending > 0.000001
-                  ? `Falta: ${formatQuantity(pending.toFixed(6))}`
-                  : "Entrega cubierta"}
-              </span>
-            </div>
-          );
-        })}
-        {[...net]
-          .filter(
-            ([id, quantity]) =>
-              quantity > 0.000001 &&
-              !expected.some((entry) => entry.component_id === id),
-          )
-          .map(([id, quantity]) => (
-            <div className="production-job-progress" key={id}>
-              <strong>{itemName(id)} · adicional</strong>
-              <span>Entregado: {formatQuantity(quantity.toFixed(6))}</span>
-            </div>
-          ))}
-      </div>
+      <JobComponentsTable
+        expected={expected}
+        net={net}
+        allocations={allocations}
+        warehouses={warehouses}
+        items={items}
+        active={active}
+      />
       {remitos.length > 0 && (
         <p className="production-linked-notes">
           Remitos:{" "}
@@ -563,7 +519,7 @@ export default function ProductionJobCard({
       <details className="production-movements">
         <summary>Historial de insumos ({events.length} movimientos)</summary>
         {events.length === 0 && <p>Todavía no se entregaron materiales.</p>}
-        {events.map((entry) => {
+        {eventsPager.visible.map((entry) => {
           const returned = events
             .filter((row) => row.kind === "return" && row.issue_id === entry.id)
             .reduce((sum, row) => sum + Number(row.quantity), 0);
@@ -576,7 +532,7 @@ export default function ProductionJobCard({
                 {itemName(entry.component_id)}
                 {" · "}
                 {formatQuantity(entry.quantity)}
-                {entry.lot_code && ` · Lote ${entry.lot_code}`}
+                {entry.lot_code && ` · Lote ${lotLabel(entry.lot_code)}`}
               </span>
               <small>
                 {entry.note} ·{" "}
@@ -598,6 +554,7 @@ export default function ProductionJobCard({
             </div>
           );
         })}
+        <ListPager pager={eventsPager} noun="movimientos" sizes={[10, 25, 50]} />
       </details>
       <ActionDialog
         open={action === "remito"}
@@ -716,7 +673,7 @@ export default function ProductionJobCard({
                   .filter((lot) => Number(lot.available) > 0)
                   .map((lot) => (
                     <option key={lot.id} value={lot.code}>
-                      {lot.code} · {formatQuantity(lot.available)} disponibles
+                      {lotLabel(lot.code)} · {formatQuantity(lot.available)} disponibles
                     </option>
                   ))}
               </select>

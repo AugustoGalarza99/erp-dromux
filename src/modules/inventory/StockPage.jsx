@@ -1,8 +1,10 @@
 import { friendlyError } from '../../lib/notifications';
 import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Link } from 'react-router-dom';
-import { Boxes, ChevronLeft, ChevronRight, Search } from 'lucide-react';
+import { Link, useSearchParams } from 'react-router-dom';
+import {
+  ArrowRightLeft, Boxes, ChevronLeft, ChevronRight, Pencil, Search, X,
+} from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import {
   listStock,
@@ -10,14 +12,18 @@ import {
   listStockLotBreakdown,
 } from '../../services/stock';
 import PostStockOperation from './PostStockOperation';
+import StockShell from './StockShell';
+import { dateEs, lotLabel } from '../../lib/display';
 import { formatQuantity, isAtOrBelow } from './stockNumber';
 import './stock.css';
 
 export default function StockPage() {
-  const { activeCompanyId, user } = useAuth();
+  const { activeCompanyId, user, can } = useAuth();
+  const [params, setParams] = useSearchParams();
+  const initialSearch = params.get('q') ?? '';
   const [page, setPage] = useState(0);
-  const [search, setSearch] = useState('');
-  const [inputSearch, setInputSearch] = useState('');
+  const [search, setSearch] = useState(initialSearch);
+  const [inputSearch, setInputSearch] = useState(initialSearch);
   const [selected, setSelected] = useState(null);
 
   useEffect(() => {
@@ -51,35 +57,39 @@ export default function StockPage() {
   const pages = Math.max(1, Math.ceil(count / 25));
   const balances = balanceQuery.data ?? [];
 
-  const submitSearch = () => {
+  const submitSearch = (term = inputSearch) => {
+    const clean = term.trim();
     setPage(0);
-    setSearch(inputSearch.trim());
+    setSearch(clean);
     setSelected(null);
+    const next = new URLSearchParams(params);
+    if (clean) next.set('q', clean); else next.delete('q');
+    setParams(next, { replace: true });
   };
 
-  return (
-    <div className="stock-page">
-      <div className="page-head">
-        <div>
-          <span className="eyebrow">INVENTARIO / EXISTENCIAS</span>
-          <h1>Stock actual</h1>
-          <p>Consultá lo disponible por ítem y por depósito.</p>
-        </div>
-        <Link to="/inventory/movements" className="button stock-outline">
-          Ver historial
-        </Link>
-      </div>
+  // Llegando desde Ítems con ?q=código: si hay un único resultado, se abre su detalle.
+  useEffect(() => {
+    if (!selected && initialSearch && rows.length === 1 && search === initialSearch) {
+      setSelected(rows[0]);
+    }
+  }, [rows, search]);
 
-      <div className="stock-intro">
-        <Boxes size={21} />
-        <div>
-          <strong>Una sola fuente de stock</strong>
-          <p>
-            Los saldos se actualizan al registrar movimientos. El valor inicial
-            se carga como una entrada con motivo “Conteo inicial”.
-          </p>
-        </div>
-      </div>
+  return (
+    <StockShell
+      title="Stock por depósito"
+      description="Consultá lo disponible por ítem y por depósito, y registrá entradas, salidas y transferencias."
+      actions={(
+        <Link to="/inventory/movements" className="button outline">
+          <ArrowRightLeft size={16} aria-hidden="true" /> Ver historial
+        </Link>
+      )}
+    >
+      <div className="stock-page">
+      <p className="stock-hint">
+        <Boxes size={17} aria-hidden="true" />
+        Los saldos cambian solo al registrar movimientos. La existencia inicial se carga
+        como una entrada con motivo “Conteo inicial”.
+      </p>
 
       <div className="stock-layout">
         <div className="stock-left">
@@ -97,9 +107,18 @@ export default function StockPage() {
                   }}
                 />
               </div>
-              <button className="button stock-search-button" onClick={submitSearch}>
+              <button type="button" className="button stock-search-button" onClick={() => submitSearch()}>
                 Buscar
               </button>
+              {search && (
+                <button
+                  type="button"
+                  className="button outline"
+                  onClick={() => { setInputSearch(''); submitSearch(''); }}
+                >
+                  <X size={15} aria-hidden="true" /> Limpiar
+                </button>
+              )}
             </div>
             {stockQuery.error && (
               <p role="alert" className="error">{friendlyError(stockQuery.error)}</p>
@@ -160,6 +179,19 @@ export default function StockPage() {
               <p>
                 Total actual: {selected.infinite_stock ? '∞ · stock infinito' : `${formatQuantity(rows.find((row) => row.item_id === selected.item_id)?.total_quantity ?? selected.total_quantity)} ${selected.unit_symbol}`}
               </p>
+              <div className="stock-detail-links">
+                <Link
+                  className="button outline"
+                  to={`/inventory/movements?item=${selected.item_id}&code=${encodeURIComponent(selected.item_code)}`}
+                >
+                  <ArrowRightLeft size={15} aria-hidden="true" /> Ver movimientos
+                </Link>
+                {can('items', 'read') && (
+                  <Link className="button outline" to={`/inventory/items/${selected.item_id}`}>
+                    <Pencil size={15} aria-hidden="true" /> Ver ficha del ítem
+                  </Link>
+                )}
+              </div>
               {balanceQuery.error && (
                 <p role="alert" className="error">{friendlyError(balanceQuery.error)}</p>
               )}
@@ -169,7 +201,7 @@ export default function StockPage() {
               )}
               {balances.map((balance) => (
                 <div className="stock-warehouse-row" key={balance.warehouse_id}>
-                  <span>{balance.warehouse?.name ?? balance.warehouse_id}</span>
+                  <span>{balance.warehouse?.name ?? 'Depósito'}</span>
                   <strong>{formatQuantity(balance.quantity)} {selected.unit_symbol}</strong>
                 </div>
               ))}
@@ -192,8 +224,8 @@ export default function StockPage() {
                       key={`${lot.warehouse_id}-${lot.lot_code}`}
                     >
                       <span>
-                        <strong>{lot.lot_code}</strong> · {lot.warehouse_name}
-                        {lot.expires_on ? ` · vence ${lot.expires_on}` : ''}
+                        <strong>{lotLabel(lot.lot_code)}</strong> · {lot.warehouse_name}
+                        {lot.expires_on ? ` · vence ${dateEs(lot.expires_on)}` : ''}
                       </span>
                       <strong>{formatQuantity(lot.quantity)} {selected.unit_symbol}</strong>
                     </div>
@@ -205,6 +237,7 @@ export default function StockPage() {
         </div>
         <PostStockOperation initialItem={selected} />
       </div>
-    </div>
+      </div>
+    </StockShell>
   );
 }

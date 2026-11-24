@@ -2,7 +2,10 @@ import { useEffect, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowDownToLine, X } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import ConfirmDeleteDialog from '../../components/ConfirmDeleteDialog';
+import ListPager, { usePagedList } from '../../components/ListPager';
 import { notifyError, notifySuccess, friendlyError } from '../../lib/notifications';
+import { hasInternalId, lotLabel } from '../../lib/display';
 import { findStockWarehouses, listStockLots } from '../../services/stock';
 import { subtractQuantity } from '../inventory/stockNumber';
 import {
@@ -39,9 +42,11 @@ function LotFields({ companyId, userId, line, value, update, disabled }) {
           })}
         />
         <datalist id={`receipt-lots-${line.line_no}`}>
-          {(query.data ?? []).map((lot) => (
-            <option key={lot.id} value={lot.code} />
-          ))}
+          {(query.data ?? [])
+            .filter((lot) => !hasInternalId(lot.code))
+            .map((lot) => (
+              <option key={lot.id} value={lot.code} />
+            ))}
         </datalist>
       </label>
       <label>
@@ -74,6 +79,8 @@ export default function ReceiveOrderPanel({ order, onClose, onBusyChange }) {
   useEffect(() => { onBusyChange?.(busy); }, [busy, onBusyChange]);
   useEffect(() => () => onBusyChange?.(false), [onBusyChange]);
   const [reviewRequired, setReviewRequired] = useState(false);
+  const [lineSearch, setLineSearch] = useState('');
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   const linesQuery = useQuery({
     queryKey: ['purchase-receivable', user?.id, activeCompanyId, order.id],
@@ -114,17 +121,54 @@ export default function ReceiveOrderPanel({ order, onClose, onBusyChange }) {
     subtractQuantity(line.quantity, line.received_quantity) !== '0'
   ));
   const chosen = pending.filter((line) => values[line.line_no]?.checked);
+  // Con muchas líneas: búsqueda y paginación; "marcar todo" para el caso en que llegó todo (D-007).
+  const shownPending = pending.filter((line) => `${line.item_code} ${line.item_name}`
+    .toLowerCase().includes(lineSearch.toLowerCase()));
+  const linesPager = usePagedList(shownPending, { pageSize: 10, resetKey: lineSearch });
+  const historyPager = usePagedList(historyQuery.data ?? [], { pageSize: 5 });
+  const markAll = (checked) => setValues((current) => {
+    const next = { ...current };
+    pending.forEach((line) => {
+      next[line.line_no] = checked
+        ? { ...next[line.line_no], checked: true,
+          quantity: next[line.line_no]?.quantity
+            || String(subtractQuantity(line.quantity, line.received_quantity)) }
+        : { ...next[line.line_no], checked: false, quantity: '' };
+    });
+    return next;
+  });
   const warehouses = selectedWarehouse && !(warehousesQuery.data ?? []).some(
     (entry) => entry.id === selectedWarehouse.id,
   ) ? [selectedWarehouse, ...(warehousesQuery.data ?? [])]
     : (warehousesQuery.data ?? []);
 
-  const submit = async (event) => {
+  // El botón valida y abre el resumen; la recepción real ocurre al confirmar.
+  const askConfirmation = (event) => {
     event.preventDefault();
     if (!chosen.length) {
       notifyError(new Error('Marcá al menos un ítem para recibir.'));
       return;
     }
+    const missingLot = chosen.filter((line) => line.track_lots
+      && !(values[line.line_no]?.lot_code ?? '').trim());
+    if (missingLot.length) {
+      notifyError(new Error(`Falta el lote de ${missingLot.length === 1 ? 'un ítem' : `${missingLot.length} ítems`}: ${missingLot[0].item_name}${missingLot.length > 1 ? ' y otros' : ''}.`));
+      return;
+    }
+    const invalid = chosen.filter((line) => {
+      const quantity = Number(values[line.line_no]?.quantity);
+      return !(quantity > 0)
+        || quantity > Number(subtractQuantity(line.quantity, line.received_quantity));
+    });
+    if (invalid.length) {
+      notifyError(new Error(`Revisá la cantidad de ${invalid.length === 1 ? invalid[0].item_name : `${invalid.length} ítems`}: debe ser mayor que cero y no superar lo pendiente.`));
+      return;
+    }
+    setConfirmOpen(true);
+  };
+
+  const submit = async () => {
+    setConfirmOpen(false);
 
     const payload = chosen.map((line) => {
       const entry = values[line.line_no];
@@ -162,7 +206,7 @@ export default function ReceiveOrderPanel({ order, onClose, onBusyChange }) {
       setValues({});
       setNote('');
       setReviewRequired(false);
-      notifySuccess('Recepción registrada', `N.º ${receiptId.slice(0, 8)} · Stock actualizado.`);
+      notifySuccess('Recepción registrada', 'El stock ya se actualizó.');
     } catch (error) {
       notifyError(error);
       if (!error?.code || /fetch|network|timeout/i.test(error.message)) {
@@ -202,7 +246,7 @@ export default function ReceiveOrderPanel({ order, onClose, onBusyChange }) {
       {linesQuery.isPending && <p className="purchase-muted">Cargando pendientes…</p>}
 
       {canReceive && (
-        <form className="purchase-form" onSubmit={submit}>
+        <form className="purchase-form" onSubmit={askConfirmation}>
           <label>Buscar depósito
             <input value={warehouseSearch} disabled={reviewRequired}
               onChange={(event) => setWarehouseSearch(event.target.value)}
@@ -224,7 +268,25 @@ export default function ReceiveOrderPanel({ order, onClose, onBusyChange }) {
             </select>
           </label>
           {warehousesQuery.error && <p className="error">{friendlyError(warehousesQuery.error)}</p>}
-          {pending.map((line) => {
+          {pending.length > 0 && (
+            <div className="receive-tools">
+              <p className="mod-muted">
+                <strong>{chosen.length}</strong> de {pending.length} ítems marcados para recibir.
+              </p>
+              <div className="receive-tools-actions">
+                <button type="button" className="button outline" disabled={reviewRequired}
+                  onClick={() => markAll(true)}>Marcar todo lo pendiente</button>
+                <button type="button" className="button outline" disabled={reviewRequired || !chosen.length}
+                  onClick={() => markAll(false)}>Quitar marcas</button>
+              </div>
+              {pending.length > 8 && (
+                <input type="search" aria-label="Buscar ítem pendiente" value={lineSearch}
+                  placeholder="Buscar ítem pendiente por nombre o código"
+                  onChange={(event) => setLineSearch(event.target.value)} />
+              )}
+            </div>
+          )}
+          {linesPager.visible.map((line) => {
             const remaining = subtractQuantity(line.quantity, line.received_quantity);
             const value = values[line.line_no] ?? {};
             return (
@@ -260,6 +322,7 @@ export default function ReceiveOrderPanel({ order, onClose, onBusyChange }) {
               </div>
             );
           })}
+          <ListPager pager={linesPager} noun="ítems pendientes" sizes={[10, 25, 50]} />
           {!pending.length && (
             <p className="purchase-muted">No quedan cantidades pendientes.</p>
           )}
@@ -282,10 +345,20 @@ export default function ReceiveOrderPanel({ order, onClose, onBusyChange }) {
           )}
           <button className="button primary" disabled={busy || !pending.length
             || warehousesQuery.isPending || Boolean(warehousesQuery.error)}>
-            <ArrowDownToLine size={16} /> {busy ? 'Registrando…' : 'Confirmar recepción'}
+            <ArrowDownToLine size={16} /> {busy ? 'Registrando…' : 'Revisar y confirmar recepción'}
           </button>
         </form>
       )}
+      <ConfirmDeleteDialog
+        open={confirmOpen}
+        intent="primary"
+        busy={busy}
+        title="¿Confirmás la recepción?"
+        description={`Vas a ingresar ${chosen.length} ítem${chosen.length === 1 ? '' : 's'} de la orden Nº ${order.number} al depósito ${warehouses.find((entry) => entry.id === warehouseId)?.name ?? ''}. El stock se actualiza ahora y la recepción queda en el historial.`}
+        confirmLabel="Sí, recibir"
+        onCancel={() => setConfirmOpen(false)}
+        onConfirm={submit}
+      />
 
       <div className="purchase-receipt-history">
         <h3>Historial de recepciones</h3>
@@ -293,7 +366,7 @@ export default function ReceiveOrderPanel({ order, onClose, onBusyChange }) {
         {!historyQuery.isPending && !historyQuery.data?.length && (
           <p className="purchase-muted">Todavía no hay entregas registradas.</p>
         )}
-        {(historyQuery.data ?? []).map((receipt) => (
+        {historyPager.visible.map((receipt) => (
           <div className="purchase-receipt-entry" key={receipt.id}>
             <strong>{new Date(receipt.created_at).toLocaleString('es-AR')}</strong>
             <span>{receipt.note}</span>
@@ -302,11 +375,12 @@ export default function ReceiveOrderPanel({ order, onClose, onBusyChange }) {
                 {lines.find((entry) => entry.line_no === line.line_no)?.item_code
                   ?? `Línea ${line.line_no}`} · {line.quantity}
                 · depósito {line.warehouse_code}
-                {line.lot_code ? ` · lote ${line.lot_code}` : ''}
+                {line.lot_code ? ` · lote ${lotLabel(line.lot_code)}` : ''}
               </small>
             ))}
           </div>
         ))}
+        <ListPager pager={historyPager} noun="recepciones" sizes={[5, 10, 25]} />
       </div>
     </section>
   );

@@ -12,6 +12,9 @@ import {
   friendlyError,
 } from "../../lib/notifications";
 import { formatQuantity } from "../inventory/stockNumber";
+import { lotLabel } from "../../lib/display";
+import ProductionShell from "./ProductionShell";
+import ListPager, { usePagedList } from "../../components/ListPager";
 import { listStockLots } from "../../services/stock";
 import {
   completeProductionNow,
@@ -168,7 +171,7 @@ function MaterialRow({
                 .filter((lot) => Number(lot.available) > 0)
                 .map((lot) => (
                   <option key={lot.id} value={lot.code}>
-                    {lot.code} · {formatQuantity(lot.available)}
+                    {lotLabel(lot.code)} · {formatQuantity(lot.available)}
                   </option>
                 ))}
             </select>
@@ -220,7 +223,9 @@ export default function ProductionOrdersPage() {
   const [expiresOn, setExpiresOn] = useState("");
   const [inputs, setInputs] = useState([]);
   const [busy, setBusy] = useState(false);
-  const [createOpen, setCreateOpen] = useState(Boolean(planId));
+  const [createOpen, setCreateOpen] = useState(
+    Boolean(planId) || (params.get("new") === "1" && can("production", "insert")),
+  );
   const [requestId, setRequestId] = useState(() => crypto.randomUUID());
   const [finishRequestId, setFinishRequestId] = useState(() =>
     crypto.randomUUID(),
@@ -266,6 +271,7 @@ export default function ProductionOrdersPage() {
     queryFn: () => listProductionPlans(activeCompanyId),
     enabled: !!(activeCompanyId && planId),
   });
+  const inputsPager = usePagedList(inputs, { pageSize: 10, resetKey: productId });
   const items = itemsQuery.data ?? [];
   const formulas = formulasQuery.data ?? [];
   const warehouses = warehousesQuery.data ?? [];
@@ -544,40 +550,32 @@ export default function ProductionOrdersPage() {
   );
 
   return (
-    <section className="production-page">
-      <div className="production-heading">
-        <div>
-          <span className="eyebrow">PRODUCCIÓN / ÓRDENES</span>
-          <h1>Órdenes de fabricación</h1>
-          <p>
-            Programá el trabajo o registrá la fabricación con consumo y
-            rendimiento reales.
-          </p>
-        </div>
-        <Link className="button" to="/production/formulas">
-          Gestionar fórmulas
-        </Link>
-      </div>
-      <div className="production-toolbar">
-        <Link className="button outline" to="/archivados?type=jobs">
-          Ver archivados
-        </Link>
-        <button
-          type="button"
-          className="button primary"
-          onClick={() => setCreateOpen(true)}
-        >
-          <Plus size={17} /> Nueva orden
-        </button>
-        {can("stock", "read") && (
-          <Link className="button outline" to="/inventory/delivery-notes">
-            <Truck size={17} /> Abrir remitero
+    <ProductionShell
+      title="Órdenes de fabricación"
+      description="Programá el trabajo o registrá la fabricación con el consumo y el rendimiento reales."
+      actions={(
+        <>
+          <Link className="button outline" to="/archivados?type=jobs">
+            Archivadas
           </Link>
-        )}
-        <Link className="button outline" to="/production/planning">
-          Ver planificación
-        </Link>
-      </div>
+          {can("stock", "read") && (
+            <Link className="button outline" to="/inventory/delivery-notes">
+              <Truck size={17} aria-hidden="true" /> Remitos
+            </Link>
+          )}
+          {can("production", "insert") && (
+            <button
+              type="button"
+              className="button primary"
+              onClick={() => setCreateOpen(true)}
+            >
+              <Plus size={17} aria-hidden="true" /> Nueva orden
+            </button>
+          )}
+        </>
+      )}
+    >
+    <section className="production-page">
       <div className="production-overview">
         <article>
           <strong>
@@ -821,8 +819,17 @@ export default function ProductionOrdersPage() {
             </>
           ) : (
             <>
-              <div className="production-subtitle">Consumo real de insumos</div>
-              {inputs.map((row, index) => {
+              <div className="production-subtitle">
+                Consumo real de insumos ({inputs.length})
+              </div>
+              {inputs.length > 10 && (
+                <p className="production-muted">
+                  Se muestran de a 10. Los insumos que no tocás se registran con la
+                  cantidad de la fórmula.
+                </p>
+              )}
+              {inputsPager.visible.map((row) => {
+                const index = inputs.indexOf(row);
                 const line = theoretical.find(
                   (entry) => entry.componentId === row.componentId,
                 );
@@ -853,6 +860,7 @@ export default function ProductionOrdersPage() {
                   />
                 );
               })}
+              <ListPager pager={inputsPager} noun="insumos" sizes={[10, 25, 50]} />
               {formula && (
                 <button
                   type="button"
@@ -950,5 +958,6 @@ export default function ProductionOrdersPage() {
         </details>
       )}
     </section>
+    </ProductionShell>
   );
 }

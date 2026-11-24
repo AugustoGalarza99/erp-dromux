@@ -1,6 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowDownToLine, ArrowRightLeft, ArrowUpFromLine } from 'lucide-react';
+import ActionDialog from '../../components/ActionDialog';
+import { hasInternalId, lotLabel } from '../../lib/display';
+import { formatQuantity } from './stockNumber';
 import { useAuth } from '../../contexts/AuthContext';
 import { notifyError, notifySuccess, friendlyError } from '../../lib/notifications';
 import { useDebouncedValue } from '../../hooks/useDebouncedValue';
@@ -41,6 +44,7 @@ export default function PostStockOperation({ initialItem = null }) {
   const [lotCode, setLotCode] = useState('');
   const [expiresOn, setExpiresOn] = useState('');
   const [busy, setBusy] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
 
@@ -116,12 +120,20 @@ export default function PostStockOperation({ initialItem = null }) {
     (lot) => lot.code.toLocaleLowerCase() === lotCode.trim().toLocaleLowerCase(),
   );
 
-  const handleSubmit = async (event) => {
+  // Las entradas se registran directo; salidas y transferencias piden confirmación.
+  const handleSubmit = (event) => {
     event.preventDefault();
+    if (busy) return;
     if (requiresLots && (lotsQuery.isPending || lotsQuery.isFetching || lotsQuery.error)) {
       setError(notifyError(new Error('Esperá a que se carguen los lotes del ítem.')));
       return;
     }
+    if (kind === 'receipt') execute();
+    else setConfirmOpen(true);
+  };
+
+  const execute = async () => {
+    setConfirmOpen(false);
     setBusy(true);
     setError('');
     setMessage('');
@@ -146,11 +158,12 @@ export default function PostStockOperation({ initialItem = null }) {
         setLotCode('');
         setExpiresOn('');
       }
-      setMessage(`Operación ${operationId.slice(0, 8)} registrada correctamente.`);
+      const quantityText = `${formatQuantity(quantity)} ${currentItem?.unit_symbol ?? ''}`.trim();
+      setMessage('Movimiento registrado correctamente. Ya figura en el historial.');
       notifySuccess(
         kind === 'receipt' ? 'Entrada registrada'
           : kind === 'issue' ? 'Salida registrada' : 'Transferencia registrada',
-        `Operación ${operationId.slice(0, 8)}`,
+        currentItem ? `${currentItem.name} · ${quantityText}` : undefined,
       );
       await Promise.allSettled([
         queryClient.invalidateQueries({ queryKey: ['stock-summary', user.id, activeCompanyId] }),
@@ -297,9 +310,11 @@ export default function PostStockOperation({ initialItem = null }) {
                     list="stock-known-lots"
                   />
                   <datalist id="stock-known-lots">
-                    {(lotsQuery.data ?? []).map((lot) => (
-                      <option value={lot.code} key={lot.id} />
-                    ))}
+                    {(lotsQuery.data ?? [])
+                      .filter((lot) => !hasInternalId(lot.code))
+                      .map((lot) => (
+                        <option value={lot.code} key={lot.id} />
+                      ))}
                   </datalist>
                 </label>
                 <label>
@@ -329,7 +344,7 @@ export default function PostStockOperation({ initialItem = null }) {
                   <option value="">Seleccionar lote</option>
                   {availableLots.map((lot) => (
                     <option key={lot.id} value={lot.code}>
-                      {lot.code} · {lot.available} disponibles
+                      {lotLabel(lot.code)} · {formatQuantity(lot.available)} disponibles
                       {lot.expires_on ? ` · vence ${lot.expires_on}` : ''}
                     </option>
                   ))}
@@ -402,9 +417,43 @@ export default function PostStockOperation({ initialItem = null }) {
           data-busy={busy}
         >
           {busy ? 'Registrando…' : kind === 'transfer'
-            ? 'Confirmar transferencia' : 'Confirmar movimiento'}
+            ? 'Revisar transferencia' : kind === 'issue' ? 'Revisar salida' : 'Registrar entrada'}
         </button>
       </form>
+
+      <ActionDialog
+        open={confirmOpen}
+        busy={busy}
+        title={kind === 'transfer' ? '¿Confirmás la transferencia?' : '¿Confirmás la salida de stock?'}
+        description="Va a quedar en el historial con tu usuario. Si te equivocás, se corrige con un movimiento contrario, no se borra."
+        onClose={() => setConfirmOpen(false)}
+      >
+        <dl className="stock-confirm-summary">
+          <div><dt>Ítem</dt><dd>{currentItem ? `${currentItem.code} · ${currentItem.name}` : '—'}</dd></div>
+          <div><dt>Cantidad</dt><dd>{quantity} {currentItem?.unit_symbol ?? ''}</dd></div>
+          <div>
+            <dt>{kind === 'transfer' ? 'Desde' : 'Depósito'}</dt>
+            <dd>{selectedSource?.name ?? visibleWarehouses.find((entry) => entry.id === warehouseId)?.name ?? '—'}</dd>
+          </div>
+          {kind === 'transfer' && (
+            <div>
+              <dt>Hacia</dt>
+              <dd>{selectedTarget?.name ?? visibleWarehouses.find((entry) => entry.id === targetId)?.name ?? '—'}</dd>
+            </div>
+          )}
+          {requiresLots && lotCode && <div><dt>Lote</dt><dd>{lotLabel(lotCode)}</dd></div>}
+          <div><dt>Motivo</dt><dd>{note}</dd></div>
+        </dl>
+        <div className="erp-action-dialog-actions">
+          <button type="button" className="button outline" disabled={busy}
+            onClick={() => setConfirmOpen(false)}>
+            Volver y revisar
+          </button>
+          <button type="button" className="button primary" disabled={busy} onClick={execute}>
+            {busy ? 'Registrando…' : kind === 'transfer' ? 'Sí, transferir' : 'Sí, registrar salida'}
+          </button>
+        </div>
+      </ActionDialog>
     </section>
   );
 }

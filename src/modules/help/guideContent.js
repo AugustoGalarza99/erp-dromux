@@ -10,7 +10,7 @@ export const guideSections = [
       'Consultá Stock por depósito y Movimientos para comprobar cada entrada o salida.',
       'Usá Remitos de entrega para documentar retiros de materiales, semielaborados o productos.',
     ],
-    routes: ['/inventory/'],
+    routes: ['/inventory'],
     hint: 'El stock real cambia con recepciones, consumos de fabricación y ventas.',
   },
   {
@@ -19,11 +19,13 @@ export const guideSections = [
     resource: 'purchases',
     description: 'Registrá proveedores y recibí la mercadería sin duplicar entradas.',
     steps: [
-      'Creá el proveedor y vinculá los materiales que entrega.',
-      'Armá una orden de compra con el depósito de destino.',
-      'Registrá las recepciones: ahí aumentará el stock disponible.',
+      'Pedidos internos: el equipo pide lo que le falta. Convertí el pedido en una orden de compra o rechazalo con un motivo.',
+      'Cargá los proveedores y los precios de los materiales que te entregan.',
+      'Armá la orden: elegí el proveedor y agregá los ítems (podés sumar lo que conviene reponer). Revisala, creala y descargala en PDF.',
+      'Cuando llegue la mercadería usá "Recibir mercadería": ahí recién aumenta el stock.',
+      'Registrá el pago en Compras y cuentas para que descuente de Tesorería.',
     ],
-    routes: ['/purchases/'],
+    routes: ['/purchases'],
     hint: 'Crear una orden no agrega stock; recibirla sí.',
   },
   {
@@ -38,7 +40,7 @@ export const guideSections = [
       'Al finalizar indicá la cantidad real, el lote si corresponde y el motivo de las diferencias.',
       'Descargá la hoja de fabricación para el operario.',
     ],
-    routes: ['/production/'],
+    routes: ['/production'],
     hint: 'La cola no cambia stock. Cada retiro lo descuenta y el cierre ingresa la producción real.',
   },
   {

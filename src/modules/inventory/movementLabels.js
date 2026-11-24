@@ -1,3 +1,5 @@
+import { stripIds } from '../../lib/display';
+
 const uuid = '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}';
 const saleNote = new RegExp(`^Venta (${uuid})$`, 'i');
 const productionNote = new RegExp(`^(?:Orden producción|Fabricación orden) (${uuid})$`, 'i');
@@ -14,5 +16,6 @@ export function readableMovementNote(note, sales = {}) {
     return sale ? `Venta Nº ${sale.number} · ${sale.customer_name}` : 'Venta registrada';
   }
   if (productionNote.test(text)) return 'Consumo o ingreso de fabricación';
-  return text;
+  // Cualquier otro identificador interno que haya quedado en la nota no se muestra.
+  return stripIds(text);
 }

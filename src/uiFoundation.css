@@ -194,3 +194,235 @@
   .erp-action-dialog-actions { align-items: stretch; }
   .erp-action-dialog-actions .button { flex: 1 1 100%; }
 }
+
+/* ==========================================================================
+   Color por módulo (D-005). Único lugar donde se definen los acentos.
+   Todos cumplen contraste WCAG AA como texto sobre blanco (>= 4,5:1) y como
+   fondo con texto blanco. El color acompaña a ícono y texto, nunca va solo.
+   ========================================================================== */
+:root {
+  --mod-home: #4338ca;       --mod-home-soft: #eef2ff;        /* índigo 7,9:1 */
+  --mod-stock: #1d4ed8;      --mod-stock-soft: #eff6ff;       /* azul 6,7:1 */
+  --mod-production: #b45309; --mod-production-soft: #fff4e5; /* naranja 5,0:1 */
+  --mod-purchases: #6d28d9;  --mod-purchases-soft: #f5f0ff;   /* violeta 7,1:1 */
+  --mod-sales: #15803d;      --mod-sales-soft: #edf9f0;       /* verde 5,0:1 */
+  --mod-finance: #0f766e;    --mod-finance-soft: #e8f7f5;     /* verde azulado 5,5:1 */
+  --mod-reports: #4a6078;    --mod-reports-soft: #eef2f6;     /* gris azulado 6,5:1 */
+  --mod-settings: #334155;   --mod-settings-soft: #f1f4f8;    /* pizarra 10,4:1 */
+  --module-accent: var(--mod-home);
+  --module-soft: var(--mod-home-soft);
+}
+
+.mod-home { --module-accent: var(--mod-home); --module-soft: var(--mod-home-soft); }
+.mod-stock { --module-accent: var(--mod-stock); --module-soft: var(--mod-stock-soft); }
+.mod-production { --module-accent: var(--mod-production); --module-soft: var(--mod-production-soft); }
+.mod-purchases { --module-accent: var(--mod-purchases); --module-soft: var(--mod-purchases-soft); }
+.mod-sales { --module-accent: var(--mod-sales); --module-soft: var(--mod-sales-soft); }
+.mod-finance { --module-accent: var(--mod-finance); --module-soft: var(--mod-finance-soft); }
+.mod-reports { --module-accent: var(--mod-reports); --module-soft: var(--mod-reports-soft); }
+.mod-settings { --module-accent: var(--mod-settings); --module-soft: var(--mod-settings-soft); }
+
+/* Tipo de ítem (sutil, siempre acompañado del nombre del tipo). Contraste >= 4,9:1. */
+:root {
+  --type-raw: #8a5a00;        --type-raw-soft: #fff6e0;        /* materia prima: ocre */
+  --type-semi: #0f766e;       --type-semi-soft: #e6f6f4;       /* semielaborado: verde azulado */
+  --type-finished: #166534;   --type-finished-soft: #eaf7ee;   /* producto terminado: verde */
+  --type-consumable: #5b4b8a; --type-consumable-soft: #f1eefa; /* insumo: lavanda */
+}
+[data-type="raw_material"] { --type-color: var(--type-raw); --type-soft: var(--type-raw-soft); }
+[data-type="semi_finished"] { --type-color: var(--type-semi); --type-soft: var(--type-semi-soft); }
+[data-type="finished_product"] { --type-color: var(--type-finished); --type-soft: var(--type-finished-soft); }
+[data-type="consumable"] { --type-color: var(--type-consumable); --type-soft: var(--type-consumable-soft); }
+
+/* Confirmaciones que no son destructivas (crear, recibir, salir sin guardar): ícono y color del módulo. */
+.erp-confirm-icon.is-primary { background: var(--module-soft); color: var(--module-accent); }
+.erp-confirm-dialog .button.primary { background: var(--module-accent); border-color: var(--module-accent); color: #fff; }
+.erp-confirm-dialog .button.primary:hover:not(:disabled) { background: var(--module-accent); filter: brightness(.88); }
+
+/* Foco visible en la navegación y los atajos. */
+.sidebar :is(a, button, select):focus-visible,
+.topbar :is(a, button):focus-visible,
+.cmdk :is(input, button):focus-visible,
+.module-guide-toggle:focus-visible {
+  outline: 3px solid var(--module-accent);
+  outline-offset: 2px;
+}
+
+/* ----- Menú lateral agrupado ------------------------------------------ */
+.sidebar .nav-group { display: grid; gap: 2px; margin-top: 14px; }
+.sidebar .nav-title { color: #4b6571; font-size: 11px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+.sidebar .nav-module { min-width: 0; }
+.sidebar .nav-module .nav-item { position: relative; border-radius: 9px; }
+.sidebar .nav-module .nav-item svg:first-child { color: var(--module-accent); }
+.sidebar .nav-module .nav-item.active {
+  background: var(--module-soft);
+  color: var(--module-accent);
+  font-weight: 800;
+  box-shadow: inset 4px 0 0 var(--module-accent);
+}
+.sidebar .nav-module .nav-item:hover { background: var(--module-soft); }
+.sidebar .nav-module .subnav a.subnav-item.selected {
+  background: var(--module-soft);
+  color: var(--module-accent);
+  font-weight: 800;
+  box-shadow: inset 3px 0 0 var(--module-accent);
+}
+.sidebar .nav-module .subnav a.subnav-item:hover { background: var(--module-soft); color: var(--module-accent); }
+
+.nav-search {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex-shrink: 0;
+  width: calc(100% - 4px);
+  min-height: 40px;
+  margin: 10px 0 0;
+  padding: 0 11px;
+  border: 1px solid var(--ui-line);
+  border-radius: 9px;
+  background: #fff;
+  color: var(--ui-muted);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+.nav-search:hover { border-color: var(--module-accent); color: var(--ui-ink); }
+.nav-search span { flex: 1; text-align: left; }
+.nav-search kbd, .cmdk kbd {
+  padding: 2px 6px;
+  border: 1px solid var(--ui-line);
+  border-bottom-width: 2px;
+  border-radius: 5px;
+  background: #f7fafa;
+  color: var(--ui-ink);
+  font: inherit;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+/* ----- Encabezado con color de módulo y migas -------------------------- */
+.topbar { border-top: 3px solid var(--module-accent); }
+.crumbs { min-width: 0; }
+.crumbs ol { display: flex; align-items: center; gap: 0; min-width: 0; margin: 0; padding: 0; list-style: none; font-size: 13px; color: var(--ui-muted); }
+.crumbs li { display: inline-flex; align-items: center; min-width: 0; white-space: nowrap; }
+.crumbs li + li::before { content: "/"; margin: 0 8px; color: #7a909a; }
+.crumbs a { color: var(--module-accent); font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
+.crumbs .crumb-page { min-width: 0; }
+.crumbs .crumb-page strong { overflow: hidden; text-overflow: ellipsis; color: var(--ui-ink); font-size: 15px; }
+.crumbs .crumb-page strong::before {
+  content: "";
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 8px;
+  border-radius: 2px;
+  background: var(--module-accent);
+}
+.topbar-search {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 38px;
+  padding: 0 12px;
+  border: 1px solid var(--ui-line);
+  border-radius: 9px;
+  background: #fff;
+  color: var(--ui-ink);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.topbar-search:hover { border-color: var(--module-accent); color: var(--module-accent); }
+
+/* ----- Búsqueda global (Ctrl+K) ---------------------------------------- */
+.cmdk-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 10vh 14px 14px;
+  background: #0f1d2466;
+}
+.cmdk {
+  display: flex;
+  flex-direction: column;
+  width: min(620px, 100%);
+  max-height: min(560px, 80dvh);
+  overflow: hidden;
+  border: 1px solid var(--ui-line);
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 24px 60px #0f1d2440;
+}
+.cmdk-field { display: flex; align-items: center; gap: 10px; padding: 0 16px; border-bottom: 1px solid var(--ui-line); color: var(--ui-muted); }
+.cmdk-field input { flex: 1; min-width: 0; min-height: 52px; border: 0; background: transparent; color: var(--ui-ink); font: inherit; font-size: 15px; }
+.cmdk-field input:focus-visible { outline: none; }
+.cmdk-field:focus-within { box-shadow: inset 0 -3px 0 var(--ui-focus); }
+.cmdk-list { margin: 0; padding: 6px; overflow-y: auto; overscroll-behavior: contain; list-style: none; }
+.cmdk-item { display: flex; align-items: center; gap: 11px; min-height: 48px; padding: 6px 10px; border-radius: 9px; color: var(--ui-ink); cursor: pointer; }
+.cmdk-item[aria-selected="true"] { background: var(--module-soft); box-shadow: inset 3px 0 0 var(--module-accent); }
+.cmdk-dot { display: inline-grid; place-items: center; flex-shrink: 0; width: 30px; height: 30px; border-radius: 8px; background: var(--module-soft); color: var(--module-accent); }
+.cmdk-text { display: grid; flex: 1; min-width: 0; }
+.cmdk-text strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; }
+.cmdk-text small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ui-muted); font-size: 12px; }
+.cmdk-empty { padding: 22px 14px; color: var(--ui-muted); font-size: 14px; text-align: center; }
+.cmdk-foot { margin: 0; padding: 9px 14px; border-top: 1px solid var(--ui-line); background: #f7fafa; color: var(--ui-muted); font-size: 12px; line-height: 1.7; }
+
+/* ----- Guía "Cómo usar este módulo" ------------------------------------ */
+.module-guide { max-width: 1470px; margin: 14px auto 0; padding: 0 43px; }
+.module-guide-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 42px;
+  padding: 0 14px;
+  border: 1px solid var(--module-accent);
+  border-radius: 10px;
+  background: var(--module-soft);
+  color: var(--module-accent);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  text-align: left;
+  cursor: pointer;
+}
+.module-guide-toggle > span:nth-of-type(1) { flex: 1; }
+.module-guide-toggle .rotated { transform: rotate(180deg); }
+.module-guide-state { font-size: 12px; font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
+.module-guide-body { margin-top: 8px; padding: 12px 16px 14px; border: 1px solid var(--ui-line); border-left: 4px solid var(--module-accent); border-radius: 10px; background: #fff; color: var(--ui-ink); }
+.module-guide-body ol { display: grid; gap: 7px; margin: 0; padding-left: 22px; font-size: 13px; line-height: 1.55; }
+.module-guide-body li::marker { color: var(--module-accent); font-weight: 800; }
+.module-guide-hint { margin: 10px 0 0; color: var(--ui-muted); font-size: 12.5px; line-height: 1.55; }
+.module-guide-link { display: inline-flex; align-items: center; gap: 5px; margin-top: 10px; color: var(--module-accent); font-size: 13px; font-weight: 800; text-underline-offset: 3px; }
+
+@media (max-width: 1100px) {
+  .topbar-search span { display: none; }
+}
+
+@media (max-width: 900px) {
+  .topbar .online { display: none; }
+}
+
+/* Pantallas bajas: el pie del menú se compacta para dejar lugar a los módulos. */
+@media (min-width: 761px) and (max-height: 860px) {
+  .sidebar .sidebar-footer .nav-item { min-height: 34px; padding-top: 4px; padding-bottom: 4px; }
+  .sidebar .sidebar-footer .help-box { padding: 6px 10px; }
+  .sidebar .sidebar-footer .help-box span { display: none; }
+  .sidebar .nav-group { margin-top: 8px; }
+}
+
+@media (max-width: 760px) {
+  .module-guide { padding: 0 16px; }
+  .crumbs .crumb-area, .crumbs .crumb-module { display: none; }
+  .crumbs li + li::before { display: none; }
+  .crumbs .crumb-page strong { font-size: 14px; }
+  .cmdk-backdrop { padding-top: 6dvh; }
+  .cmdk-foot { display: none; }
+  .topbar-search { min-width: 42px; min-height: 42px; justify-content: center; }
+  .topbar .mobile-menu { min-width: 42px; min-height: 42px; }
+  .topbar .avatar { min-width: 40px; min-height: 40px; }
+}

@@ -1,19 +1,12 @@
-import { useState } from "react";
-import { NavLink, Outlet, useLocation } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
 import {
-  BarChart3,
-  Boxes,
   Building2,
   ChevronDown,
   CircleHelp,
-  Factory,
-  LayoutDashboard,
   LogOut,
   Menu,
-  Settings2,
-  ShoppingCart,
-  ShoppingBag,
-  Wallet,
+  Search,
   UserRound,
   X,
   Sparkles,
@@ -23,209 +16,8 @@ import { notifyError, notifySuccess } from "../lib/notifications";
 import ModuleHelp from "../modules/help/ModuleHelp";
 import NotificationCenter from "../modules/operations/NotificationCenter";
 import ActionDialog from "./ActionDialog";
-
-const groups = [
-  {
-    title: "OPERACIÓN",
-    items: [
-      {
-        label: "Inicio",
-        icon: LayoutDashboard,
-        to: "/",
-        permission: "dashboard",
-      },
-    ],
-  },
-  {
-    title: "MÓDULOS",
-    items: [
-      {
-        label: "Inventario",
-        icon: Boxes,
-        permission: "inventory",
-        children: [
-          {
-            label: "Todos los ítems",
-            to: "/inventory/items",
-            permission: "items",
-          },
-          {
-            label: "Materias primas",
-            to: "/inventory/items?type=raw_material",
-            permission: "items",
-          },
-          {
-            label: "Productos",
-            to: "/inventory/items?type=finished_product",
-            permission: "items",
-          },
-          {
-            label: "Stock por depósito",
-            to: "/inventory/stock",
-            permission: "stock",
-          },
-          {
-            label: "Movimientos",
-            to: "/inventory/movements",
-            permission: "stock",
-          },
-          {
-            label: "Remitos de entrega",
-            to: "/inventory/delivery-notes",
-            permission: "stock",
-          },
-        ],
-      },
-      {
-        label: "Producción",
-        icon: Factory,
-        permission: "production",
-        children: [
-          {
-            label: "Órdenes de fabricación",
-            to: "/production/orders",
-            permission: "production",
-          },
-          {
-            label: "Tipos de envasado",
-            to: "/production/packaging",
-            permission: "production",
-          },
-          {
-            label: "Fórmulas",
-            to: "/production/formulas",
-            permission: "production",
-          },
-          {
-            label: "Planificación",
-            to: "/production/planning",
-            permission: "production",
-          },
-          {
-            label: "¿Tengo stock para fabricar?",
-            to: "/production/availability",
-            permission: "production",
-          },
-          {
-            label: "Pronóstico y reposición",
-            to: "/production/replenishment",
-            permission: "production",
-          },
-        ],
-      },
-      {
-        label: "Compras",
-        icon: ShoppingCart,
-        permission: "purchases",
-        children: [
-          {
-            label: "Compras y cuentas",
-            to: "/purchases/accounts",
-            permission: "purchases",
-          },
-          {
-            label: "Proveedores",
-            to: "/purchases/suppliers",
-            permission: "purchases",
-          },
-          {
-            label: "Órdenes de compra",
-            to: "/purchases/orders",
-            permission: "purchases",
-          },
-        ],
-      },
-      {
-        label: "Ventas",
-        icon: ShoppingBag,
-        permission: "sales",
-        children: [
-          { label: "Clientes", to: "/sales/customers", permission: "sales" },
-          {
-            label: "Lista de precios",
-            to: "/sales/lista-precios",
-            permission: "sales",
-          },
-          {
-            label: "Registrar venta",
-            to: "/sales/orders",
-            permission: "sales",
-          },
-        ],
-      },
-      {
-        label: "Finanzas",
-        icon: Wallet,
-        permission: "finance",
-        children: [
-          {
-            label: "Cuentas por cobrar",
-            to: "/finance/receivables",
-            permission: "finance",
-          },
-          {
-            label: "Tesorería",
-            to: "/finance/treasury",
-            permission: "finance",
-          },
-          {
-            label: "Rentabilidad y precios",
-            to: "/finance/costs",
-            permission: "finance",
-            adminOnly: true,
-          },
-        ],
-      },
-      {
-        label: "Reportes",
-        icon: BarChart3,
-        permission: "reports",
-        children: [
-          {
-            label: "Resumen por período",
-            to: "/reports",
-            permission: "reports",
-          },
-        ],
-      },
-    ],
-  },
-  {
-    title: "SISTEMA",
-    items: [
-      {
-        label: "Configuración",
-        icon: Settings2,
-        permission: "settings",
-        children: [
-          {
-            label: "Documentos de producción",
-            to: "/settings/production-documents",
-            permission: "production",
-          },
-          { label: "Archivados", to: "/archivados", permission: "settings" },
-          { label: "Usuarios", to: "/settings/users", permission: "users" },
-          {
-            label: "Roles y permisos",
-            to: "/settings/roles",
-            permission: "roles",
-          },
-          { label: "Unidades", to: "/settings/units", permission: "units" },
-          {
-            label: "Categorías",
-            to: "/settings/categories",
-            permission: "categories",
-          },
-          {
-            label: "Depósitos",
-            to: "/settings/warehouses",
-            permission: "warehouses",
-          },
-        ],
-      },
-    ],
-  },
-];
+import CommandPalette from "./CommandPalette";
+import { canSeeChild, locate, navGroups, pathOf } from "./navConfig";
 
 export default function AdminLayout() {
   const {
@@ -239,46 +31,25 @@ export default function AdminLayout() {
     openSupportCompany,
   } = useAuth();
   const location = useLocation();
-  const routeName = {
-    "/": "Inicio",
-    "/archivados": "Archivados",
-    "/inventory/items": "Ítems",
-    "/inventory/stock": "Stock por depósito",
-    "/inventory/movements": "Movimientos",
-    "/inventory/delivery-notes": "Remitos",
-    "/purchases/suppliers": "Proveedores",
-    "/purchases/orders": "Órdenes de compra",
-    "/production/formulas": "Fórmulas",
-    "/production/orders": "Órdenes de fabricación",
-    "/production/planning": "Planificación",
-    "/production/availability": "Disponibilidad para fabricar",
-    "/production/replenishment": "Pronóstico y reposición",
-    "/sales/customers": "Clientes",
-    "/sales/lista-precios": "Lista de precios",
-    "/sales/orders": "Ventas",
-    "/finance/receivables": "Cuentas por cobrar",
-    "/finance/treasury": "Tesorería",
-    "/finance/costs": "Rentabilidad y precios",
-    "/reports": "Reportes",
-    "/ayuda": "Guía de uso",
-    "/mi-perfil": "Mi perfil",
-    "/settings/users": "Usuarios",
-    "/settings/roles": "Roles y permisos",
-    "/settings/units": "Unidades",
-    "/settings/categories": "Categorías",
-    "/settings/warehouses": "Depósitos",
-    "/actualizaciones": "Actualizaciones",
-  };
-  const sectionName =
-    routeName[location.pathname] ??
-    (location.pathname.startsWith("/inventory/items/")
-      ? "Ficha de ítem"
-      : "Espacio de trabajo");
+  const where = locate(location.pathname);
+  const activeModuleId = where?.module.id ?? "home";
   const [open, setOpen] = useState({});
   const [menuOpen, setMenuOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
   const [supportTarget, setSupportTarget] = useState(null);
   const [supportReason, setSupportReason] = useState("");
   const [supportBusy, setSupportBusy] = useState(false);
+
+  // Al navegar en pantallas chicas el menú se cierra solo.
+  useEffect(() => setMenuOpen(false), [location.pathname]);
+
+  // Escape cierra el menú lateral en pantallas chicas.
+  useEffect(() => {
+    if (!menuOpen) return undefined;
+    const onKey = (event) => event.key === "Escape" && setMenuOpen(false);
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [menuOpen]);
 
   async function switchSupportCompany(event) {
     event.preventDefault();
@@ -298,8 +69,15 @@ export default function AdminLayout() {
     }
   }
 
+  const allowedChildren = (module) =>
+    (module.children ?? []).filter((child) => canSeeChild(child, { can, role }));
+
+  const crumbModule = where?.module;
+  const crumbLast = where?.page?.crumb ?? where?.page?.label;
+  const pageTitle = crumbLast ?? crumbModule?.label ?? "Espacio de trabajo";
+
   return (
-    <div className="app-shell">
+    <div className={`app-shell mod-${activeModuleId}`}>
       <aside className={`sidebar ${menuOpen ? "mobile-open" : ""}`}>
         <div className="sidebar-top">
           <div className="brand">
@@ -350,134 +128,110 @@ export default function AdminLayout() {
           <ChevronDown size={16} />
         </div>
 
+        <button
+          type="button"
+          className="nav-search"
+          onClick={() => setSearchOpen(true)}
+          aria-label="Buscar en el sistema (Ctrl+K)"
+          aria-keyshortcuts="Control+K Meta+K"
+        >
+          <Search size={16} aria-hidden="true" />
+          <span>Buscar…</span>
+          <kbd>Ctrl K</kbd>
+        </button>
+
         <nav aria-label="Menú principal">
-          {groups.map((group) => {
-            const visible = group.items.filter(
-              (item) =>
-                can(item.permission, "read") ||
-                item.children?.some(
-                  (child) =>
-                    typeof child === "object" &&
-                    (!child.adminOnly || role === "admin") &&
-                    can(child.permission, "read"),
-                ),
+          {navGroups.map((group) => {
+            const visible = group.modules.filter((module) =>
+              module.to
+                ? can(module.permission, "read")
+                : allowedChildren(module).length > 0 ||
+                  can(module.permission, "read"),
             );
             if (!visible.length) return null;
 
             return (
-              <section className="nav-group" key={group.title}>
+              <section className="nav-group" key={group.title} aria-label={group.title}>
                 <span className="nav-title">{group.title}</span>
-                {visible.map((item) => {
-                  const Icon = item.icon;
+                {visible.map((module) => {
+                  const Icon = module.icon;
+                  const isActive = activeModuleId === module.id;
+
+                  if (module.to) {
+                    return (
+                      <div key={module.id} className={`nav-module mod-${module.id}`}>
+                        <NavLink
+                          to={module.to}
+                          end
+                          className={({ isActive: current }) =>
+                            `nav-item ${current ? "active" : ""}`
+                          }
+                          aria-label={module.label}
+                        >
+                          <Icon size={19} aria-hidden="true" />
+                          <span>{module.label}</span>
+                        </NavLink>
+                      </div>
+                    );
+                  }
+
+                  const children = allowedChildren(module);
+                  const expanded = open[module.id] ?? isActive;
+                  const panelId = `subnav-${module.id}`;
 
                   return (
-                    <div key={item.label}>
-                      {item.children ? (
-                        <>
-                          <button
-                            className={`nav-item ${
-                              item.children.some(
-                                (child) =>
-                                  child.to?.split("?")[0] === location.pathname,
-                              )
-                                ? "active"
-                                : ""
-                            }`}
-                            onClick={() =>
-                              setOpen((previous) => ({
-                                ...previous,
-                                [item.label]: !(
-                                  previous[item.label] ??
-                                  item.children.some(
-                                    (child) =>
-                                      child.to?.split("?")[0] ===
-                                      location.pathname,
-                                  )
-                                ),
-                              }))
-                            }
-                            aria-expanded={Boolean(
-                              open[item.label] ??
-                              item.children.some(
-                                (child) =>
-                                  child.to?.split("?")[0] === location.pathname,
-                              ),
-                            )}
-                          >
-                            <Icon size={19} />
-                            <span>{item.label}</span>
-                            <ChevronDown
-                              className={
-                                (open[item.label] ??
-                                item.children.some(
-                                  (child) =>
-                                    child.to?.split("?")[0] ===
-                                    location.pathname,
-                                ))
-                                  ? "rotated"
-                                  : ""
-                              }
-                              size={16}
-                            />
-                          </button>
+                    <div key={module.id} className={`nav-module mod-${module.id}`}>
+                      <button
+                        type="button"
+                        className={`nav-item ${isActive ? "active" : ""}`}
+                        aria-expanded={expanded}
+                        aria-controls={panelId}
+                        onClick={() =>
+                          setOpen((previous) => ({
+                            ...previous,
+                            [module.id]: !(previous[module.id] ?? isActive),
+                          }))
+                        }
+                      >
+                        <Icon size={19} aria-hidden="true" />
+                        <span>{module.label}</span>
+                        <ChevronDown
+                          className={expanded ? "rotated" : ""}
+                          size={16}
+                          aria-hidden="true"
+                        />
+                      </button>
 
-                          {(open[item.label] ??
-                            item.children.some(
-                              (child) =>
-                                child.to?.split("?")[0] === location.pathname,
-                            )) && (
-                            <div className="subnav">
-                              {item.children
-                                .filter(
-                                  (child) =>
-                                    typeof child !== "object" ||
-                                    ((!child.adminOnly || role === "admin") &&
-                                      can(child.permission, "read")),
-                                )
-                                .map((child) =>
-                                  typeof child === "object" && child.to ? (
-                                    <NavLink
-                                      key={child.label}
-                                      to={child.to}
-                                      className={({ isActive }) =>
-                                        `subnav-item ${isActive && location.search === (child.to.split("?")[1] ? `?${child.to.split("?")[1]}` : "") ? "selected" : ""}`
-                                      }
-                                      onClick={() => setMenuOpen(false)}
-                                    >
-                                      {child.label}
-                                    </NavLink>
-                                  ) : (
-                                    <span
-                                      key={
-                                        typeof child === "object"
-                                          ? child.label
-                                          : child
-                                      }
-                                      className="subnav-item"
-                                      title="Se habilitará en una fase posterior"
-                                    >
-                                      {typeof child === "object"
-                                        ? child.label
-                                        : child}
-                                      <span className="subnav-lock">·</span>
-                                    </span>
-                                  ),
-                                )}
-                            </div>
-                          )}
-                        </>
-                      ) : (
-                        <NavLink
-                          to={item.to}
-                          end
-                          className={({ isActive }) =>
-                            `nav-item ${isActive ? "active" : ""}`
-                          }
-                          onClick={() => setMenuOpen(false)}
-                        >
-                          <Icon size={19} />
-                          <span>{item.label}</span>
-                        </NavLink>
+                      {expanded && (
+                        <div className="subnav" id={panelId}>
+                          {children.map((child) => {
+                            const query = child.to.split("?")[1];
+                            // Sin filtro propio, la entrada está activa aunque la URL tenga otros parámetros (búsquedas, fechas).
+                            const sameSearch = query
+                              ? location.search === `?${query}`
+                              : !/[?&]type=/.test(location.search);
+                            return (
+                              <NavLink
+                                key={child.to}
+                                to={child.to}
+                                end
+                                className={({ isActive: current }) =>
+                                  `subnav-item ${
+                                    current && sameSearch ? "selected" : ""
+                                  }`
+                                }
+                                aria-current={
+                                  pathOf(child.to) === location.pathname &&
+                                  sameSearch
+                                    ? "page"
+                                    : undefined
+                                }
+                              >
+                                {child.label}
+                              </NavLink>
+                            );
+                          })}
+                        </div>
                       )}
                     </div>
                   );
@@ -488,25 +242,13 @@ export default function AdminLayout() {
         </nav>
 
         <div className="sidebar-footer">
-          <NavLink
-            className="nav-item"
-            to="/actualizaciones"
-            onClick={() => setMenuOpen(false)}
-          >
+          <NavLink className="nav-item" to="/actualizaciones">
             <Sparkles size={18} /> <span>Actualizaciones</span>
           </NavLink>
-          <NavLink
-            className="nav-item"
-            to="/mi-perfil"
-            onClick={() => setMenuOpen(false)}
-          >
+          <NavLink className="nav-item" to="/mi-perfil">
             <UserRound size={18} /> <span>Mi perfil</span>
           </NavLink>
-          <NavLink
-            className="help-box"
-            to="/ayuda"
-            onClick={() => setMenuOpen(false)}
-          >
+          <NavLink className="help-box" to="/ayuda">
             <CircleHelp size={19} />
             <div>
               <strong>Guía de uso</strong>
@@ -567,6 +309,8 @@ export default function AdminLayout() {
         </form>
       </ActionDialog>
 
+      <CommandPalette open={searchOpen} onOpenChange={setSearchOpen} />
+
       {menuOpen && (
         <button
           type="button"
@@ -588,14 +332,43 @@ export default function AdminLayout() {
             >
               <Menu size={22} />
             </button>
-            <span>Espacio de trabajo</span>
-            <span className="crumb-divider">/</span>
-            <strong>{sectionName}</strong>
+            <nav className="crumbs" aria-label="Ubicación">
+              <ol>
+                <li className="crumb-area">
+                  {where ? where.group.title : "Espacio de trabajo"}
+                </li>
+                {crumbModule &&
+                  crumbModule.to !== location.pathname &&
+                  crumbModule.label !== pageTitle && (
+                  <li className="crumb-module">
+                    {crumbModule.children?.[0] ? (
+                      <Link to={allowedChildren(crumbModule)[0]?.to ?? "/"}>
+                        {crumbModule.label}
+                      </Link>
+                    ) : (
+                      crumbModule.label
+                    )}
+                  </li>
+                )}
+                <li aria-current="page" className="crumb-page">
+                  <strong>{pageTitle}</strong>
+                </li>
+              </ol>
+            </nav>
           </div>
           <div className="topbar-right">
             {role === "support" && (
               <span className="support-readonly">Soporte · solo lectura</span>
             )}
+            <button
+              type="button"
+              className="topbar-search"
+              onClick={() => setSearchOpen(true)}
+              aria-label="Buscar en el sistema (Ctrl+K)"
+            >
+              <Search size={17} aria-hidden="true" />
+              <span>Buscar</span>
+            </button>
             <span className="online">
               <i /> Sistema activo
             </span>

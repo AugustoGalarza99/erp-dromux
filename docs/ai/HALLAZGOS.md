@@ -59,6 +59,14 @@ Base observada: proyecto `drcexqsewiwfhiowrgtv`, conexión de solo lectura, 20/1
 ### H-005 — P2 — abierto — Código muerto
 - `completeProductionPlan` en `src/services/production.js:169` llama a `complete_production_plan`, que la migración 020 revoca. No se usa en ninguna pantalla. Borrarlo o dejar un comentario.
 
+### H-006 — P1 — abierto (23/11/2026) — Tope de 40 líneas incompatible con fábricas grandes (D-007)
+- Evidencia (fuente local, no se comparó el cuerpo remoto): `save_production_formula` exige `jsonb_array_length(p_lines) not between 1 and 40` (`supabase/033_documentos_produccion.sql:377`); `issue_delivery_note` y el remito de venta, igual (`022_remitos_produccion.sql:155,352`); venta (`019:142`) y orden de pago (`032:65`) también. La UI de fórmulas copia el tope en `FORMULA_LINE_LIMIT` (`services/production.js`).
+- Impacto: una fórmula de 200 componentes no se puede guardar, y un remito de entrega para una orden de 200 insumos exige varios remitos de 40 líneas. Bloquea el caso de fábrica grande.
+- Corrección propuesta (NO aplicada, requiere migración y autorización): subir el tope a un valor acordado (por ejemplo 500 en fórmulas y 200 en remitos) en las funciones afectadas con `create or replace`, probar rendimiento y concurrencia en base de pruebas, y luego subir `FORMULA_LINE_LIMIT`. Interfaz ya preparada (tabla paginada, buscador, cambios resaltados).
+- Clasificación: confirmado en archivos locales y en la base (catálogo, solo lectura, 23/11/2026: 6 funciones relevantes con exactamente una aparición del literal).
+- Avance (23/11/2026): preparada `supabase/037_limites_lineas_volumen.sql` (NO aplicada), con `reparacion/0_deshacer_037.sql` y `verificaciones/037_comprobaciones.sql`. Sube a 500 `save_production_formula`, `complete_production_now` e `issue_delivery_note`, y a 200 `issue_sale_delivery_note`, `create_purchase_order` y `receive_purchase_order`. Lee la definición vigente de cada función y cambia solo el literal (conserva cuerpo, SECURITY DEFINER, search_path y permisos); aborta sin cambios si una función no tiene exactamente una aparición. No toca `post_sale`, `adjust_sale` ni `create_supplier_payment_order` (dinero). Comprobado en solo lectura que las 6 firmas resuelven y empiezan con CREATE OR REPLACE FUNCTION; la migración en sí no se ejecutó. Frontend: topes centralizados en `src/lib/limits.js` (hoy 40; subir tras aplicar y comprobar).
+- Pendiente para cerrar: autorización del entorno, respaldo, aplicar, correr comprobaciones, subir `LINE_LIMITS`, publicar frontend, probar guardar una fórmula de 200 componentes y emitir un remito de 200 líneas (rendimiento y PDF).
+
 ## Hipótesis o falta de evidencia
 
 - HI-001 (P1): concurrencia e idempotencia. Las funciones usan `request_id`, bloqueos asesores y `for update`, pero no se probaron con llamadas simultáneas ni reintentos. Requiere base de pruebas.

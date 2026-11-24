@@ -35,9 +35,11 @@ export default function WorkOrderOptions({ value, onChange }) {
       {(packaging.data?.rows ?? [])
         .filter((entry) => entry.active)
         .map((entry) => (
-          <label key={entry.id}>
-            {entry.name} · {Number(entry.capacity).toLocaleString('es-AR')} {entry.unit?.symbol} por
-            envase
+          <label key={entry.id} className="work-option-row">
+            <span>
+              <strong>{entry.name}</strong>
+              <small> · {Number(entry.capacity).toLocaleString('es-AR')} {entry.unit?.symbol} por envase</small>
+            </span>
             <input
               type="number"
               min="0"

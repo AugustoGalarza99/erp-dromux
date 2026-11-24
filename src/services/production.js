@@ -1,4 +1,5 @@
 import { supabase } from "../lib/supabase";
+import { LINE_LIMITS } from "../lib/limits";
 
 function unwrap({ data, error }) {
   if (error) throw error;
@@ -26,6 +27,9 @@ export async function listFormulas(companyId) {
       .order("updated_at", { ascending: false }),
   );
 }
+
+/* Tope de componentes por fórmula: debe coincidir con la base. Ver `lib/limits.js` y H-006. */
+export const FORMULA_LINE_LIMIT = LINE_LIMITS.formula;
 
 export async function saveFormula(
   companyId,

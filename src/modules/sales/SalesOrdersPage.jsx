@@ -5,6 +5,7 @@ import { Plus, ReceiptText, ShoppingBag, Trash2 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { notifyError, notifySuccess, friendlyError } from '../../lib/notifications';
 import { formatQuantity } from '../inventory/stockNumber';
+import { lotLabel } from '../../lib/display';
 import { listStockLots } from '../../services/stock';
 import { listProductionBalances, listProductionWarehouses } from '../../services/production';
 import { listCustomers, listSaleProducts, listSales, postSale } from '../../services/sales';
@@ -60,7 +61,7 @@ function SaleLine({ line, item, warehouses, companyId, balance, onChange, onRemo
           }}>
           <option value="">Seleccionar lote…</option>
           {lots.map((lot) => <option key={lot.id} value={lot.code}>
-            {lot.code} · {formatQuantity(lot.available)} disponibles
+            {lotLabel(lot.code)} · {formatQuantity(lot.available)} disponibles
           </option>)}
         </select>
       </label>}
@@ -366,7 +367,7 @@ export default function SalesOrdersPage() {
             <summary>Productos y gestión de devoluciones</summary>
             {sale.sale_lines.map((line) => <p key={line.line_no}>
               {line.item_name} · {formatQuantity(line.quantity)} {line.unit_symbol} · $ {money(line.line_total)}
-              {line.lot_code ? ` · Lote ${line.lot_code}` : ''}
+              {line.lot_code ? ` · Lote ${lotLabel(line.lot_code)}` : ''}
             </p>)}
             {openSaleIds.has(sale.id) && <SaleAdjustmentPanel
               sale={sale}

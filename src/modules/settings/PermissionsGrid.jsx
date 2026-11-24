@@ -3,6 +3,7 @@ const resources = [
   ['inventory', 'Inventario'],
   ['production', 'Producción'],
   ['purchases', 'Compras'],
+  ['purchase_requests', 'Pedidos de compra internos'],
   ['sales', 'Ventas'],
   ['finance', 'Finanzas'],
   ['reports', 'Reportes'],

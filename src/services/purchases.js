@@ -17,6 +17,12 @@ export async function listSuppliers(companyId, search = '') {
   return unwrap(await query);
 }
 
+export async function getSupplier(companyId, supplierId) {
+  return unwrap(await supabase.from('suppliers')
+    .select('id, name, active')
+    .eq('company_id', companyId).eq('id', supplierId).single());
+}
+
 export async function getPurchaseSuggestion(companyId, itemId, supplierId) {
   const item = unwrap(await supabase.from('items')
     .select('id, code')

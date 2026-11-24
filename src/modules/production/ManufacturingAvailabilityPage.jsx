@@ -9,6 +9,9 @@ import {
   listProductionJobs, listProductionReservations, recalculateProductionReservations,
 } from '../../services/production';
 import { formatQuantity } from '../inventory/stockNumber';
+import { lotLabel } from '../../lib/display';
+import ProductionShell from './ProductionShell';
+import ListPager, { usePagedList } from '../../components/ListPager';
 import './availability.css';
 
 const validQuantity = (value) => /^\d+(?:\.\d{1,6})?$/.test(String(value))
@@ -22,6 +25,8 @@ export default function ManufacturingAvailabilityPage() {
   const [result, setResult] = useState(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [lineFilter, setLineFilter] = useState('missing');
+  const [lineSearch, setLineSearch] = useState('');
   const allowed = can('stock', 'read');
   const itemsQuery = useQuery({
     queryKey: ['production-items', user?.id, activeCompanyId],
@@ -60,6 +65,17 @@ export default function ManufacturingAvailabilityPage() {
     items.find((item) => item.id === entry.product_id)).filter(Boolean);
   const lines = result?.lines ?? [];
   const missing = lines.filter((line) => Number(line.required) > Number(line.free) + 0.000001);
+  // Con muchos componentes: faltantes primero, filtro, búsqueda y paginación (D-007).
+  const shortageOf = (line) => Math.max(0, Number(line.required) - Number(line.free));
+  const normalizeText = (text) => String(text ?? '').toLowerCase()
+    .normalize('NFD').replace(/[̀-ͯ]/g, '');
+  const filteredLines = lines
+    .filter((line) => (lineFilter === 'all' || shortageOf(line) > 0.000001)
+      && normalizeText(`${line.item_name} ${line.item_code}`).includes(normalizeText(lineSearch)))
+    .sort((a, b) => shortageOf(b) - shortageOf(a) || String(a.item_name).localeCompare(String(b.item_name)));
+  const linesPager = usePagedList(filteredLines, {
+    pageSize: 25, resetKey: `${lineFilter}|${lineSearch}|${result?.formula_version}|${productId}`,
+  });
   const part = (value) => formatQuantity(Number(value).toFixed(6));
 
   async function simulate(event) {
@@ -104,14 +120,11 @@ export default function ManufacturingAvailabilityPage() {
   }
 
   return (
+    <ProductionShell
+      title="¿Alcanza el stock para fabricar?"
+      description="Simulá una cantidad antes de crear la orden. Consultamos las existencias y las reservas vigentes de otras órdenes."
+    >
     <section className="manufacturing-availability">
-      <div className="page-head">
-        <div>
-          <span className="eyebrow">PRODUCCIÓN / DISPONIBILIDAD</span>
-          <h1>¿Tengo stock para fabricar?</h1>
-          <p>Simulá una cantidad antes de crear la orden. Consultamos existencias y reservas vigentes.</p>
-        </div>
-      </div>
       {!allowed && <p role="alert" className="error">Tu rol necesita permiso de lectura de stock para esta consulta.</p>}
       {(error || itemsQuery.error || formulasQuery.error || reservationsQuery.error) && (
         <p role="alert" className="error">{error || friendlyError(itemsQuery.error
@@ -150,11 +163,33 @@ export default function ManufacturingAvailabilityPage() {
               <p>Simulación de {part(result.quantity)} unidades · Fórmula v{result.formula_version}.</p>
             </div>
           </div>
+          {lines.length > 8 && (
+            <div className="mod-filters">
+              <div className="mod-segments" role="group" aria-label="Filtrar componentes">
+                <button type="button" className="mod-segment" aria-pressed={lineFilter === 'missing'}
+                  onClick={() => setLineFilter('missing')}>Con faltante <b>{missing.length}</b></button>
+                <button type="button" className="mod-segment" aria-pressed={lineFilter === 'all'}
+                  onClick={() => setLineFilter('all')}>Todos <b>{lines.length}</b></button>
+              </div>
+              <label className="mod-filter-grow">
+                <span className="sr-only">Buscar componente</span>
+                <input type="search" value={lineSearch} placeholder="Buscar componente por nombre o código"
+                  onChange={(event) => setLineSearch(event.target.value)} />
+              </label>
+            </div>
+          )}
+          {!filteredLines.length && (
+            <p className="mod-muted">
+              {lineFilter === 'missing' && !lineSearch
+                ? 'No falta ningún componente: hay stock libre suficiente.'
+                : 'No hay componentes con ese filtro.'}
+            </p>
+          )}
           <div className="manufacturing-table-wrap">
             <table>
               <thead><tr><th>Componente y ubicación</th><th>Necesario</th><th>Físico</th>
                 <th>Utilizable</th><th>Reservado</th><th>Libre</th><th>Faltante</th></tr></thead>
-              <tbody>{lines.map((line) => {
+              <tbody>{linesPager.visible.map((line) => {
                 const shortage = Math.max(0, Number(line.required) - Number(line.free));
                 return <tr key={line.item_id}>
                   <td><strong>{line.item_name}</strong><small>{line.item_code} · {line.unit_symbol}</small>
@@ -162,7 +197,7 @@ export default function ManufacturingAvailabilityPage() {
                       <summary>Ver {line.locations.length} ubicaciones disponibles</summary>
                       {line.locations.map((slot) => <small
                         key={`${slot.warehouse_id}:${slot.lot_code ?? ''}`}>
-                        {slot.warehouse_name}{slot.lot_code && ` · Lote ${slot.lot_code}`}
+                        {slot.warehouse_name}{slot.lot_code && ` · Lote ${lotLabel(slot.lot_code)}`}
                         {slot.expires_on && ` · Vence ${slot.expires_on.split('-').reverse().join('/')}`}
                         {' · '}{part(slot.free)} libre de {part(slot.physical)}
                       </small>)}
@@ -178,6 +213,7 @@ export default function ManufacturingAvailabilityPage() {
               })}</tbody>
             </table>
           </div>
+          <ListPager pager={linesPager} noun="componentes" sizes={[25, 50, 100]} />
           <p className="manufacturing-note">Esta simulación no aparta stock: la reserva por depósito y
             lote se asigna al confirmar la orden, priorizando lotes próximos a vencer.
             Los semielaborados se consideran ítems existentes; si necesitás producirlos,
@@ -221,5 +257,6 @@ export default function ManufacturingAvailabilityPage() {
         </section>
       </>}
     </section>
+    </ProductionShell>
   );
 }

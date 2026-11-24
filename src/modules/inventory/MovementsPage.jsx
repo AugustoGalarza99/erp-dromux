@@ -1,15 +1,17 @@
 import { friendlyError } from '../../lib/notifications';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import {
   ArrowDownToLine,
-  ArrowLeft,
   ArrowRightLeft,
   ArrowUpFromLine,
   ChevronLeft,
   ChevronRight,
+  X,
 } from 'lucide-react';
+import StockShell from './StockShell';
+import { dateEs, lotLabel } from '../../lib/display';
 import { useAuth } from '../../contexts/AuthContext';
 import { useDebouncedValue } from '../../hooks/useDebouncedValue';
 import {
@@ -31,29 +33,58 @@ const labels = {
 
 export default function MovementsPage() {
   const { user, activeCompanyId, can } = useAuth();
+  const [params, setParams] = useSearchParams();
+  const isDate = (value) => /^\d{4}-\d{2}-\d{2}$/.test(value ?? '');
   const [page, setPage] = useState(0);
-  const [itemId, setItemId] = useState('');
+  const [itemId, setItemId] = useState(params.get('item') ?? '');
   const [warehouseId, setWarehouseId] = useState('');
   const [kind, setKind] = useState('');
-  const [from, setFrom] = useState('');
-  const [to, setTo] = useState('');
+  const [from, setFrom] = useState(isDate(params.get('from')) ? params.get('from') : '');
+  const [to, setTo] = useState(isDate(params.get('to')) ? params.get('to') : '');
   const [selectedItem, setSelectedItem] = useState(null);
   const [selectedWarehouse, setSelectedWarehouse] = useState(null);
-  const [itemSearch, setItemSearch] = useState('');
+  // Si llegamos desde un ítem, el código precarga la lista de opciones del selector.
+  const [itemSearch, setItemSearch] = useState(params.get('code') ?? '');
   const [warehouseSearch, setWarehouseSearch] = useState('');
   const itemTerm = useDebouncedValue(itemSearch);
   const warehouseTerm = useDebouncedValue(warehouseSearch);
+  const hasFilters = Boolean(itemId || warehouseId || kind || from || to);
 
   useEffect(() => {
+    if (params.toString()) setParams({}, { replace: true });
+  }, []);
+
+  const isFirstCompany = useRef(true);
+  useEffect(() => {
+    if (isFirstCompany.current) {
+      isFirstCompany.current = false;
+      return;
+    }
+    clearFilters();
+  }, [activeCompanyId]);
+
+  function clearFilters() {
     setPage(0);
     setItemId('');
     setWarehouseId('');
     setKind('');
     setFrom('');
     setTo('');
+    setItemSearch('');
+    setWarehouseSearch('');
     setSelectedItem(null);
     setSelectedWarehouse(null);
-  }, [activeCompanyId]);
+  }
+
+  function setRange(days) {
+    const end = new Date();
+    const start = new Date();
+    start.setDate(end.getDate() - days);
+    const iso = (date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+    setFrom(iso(start));
+    setTo(iso(end));
+    setPage(0);
+  }
 
   const query = useQuery({
     queryKey: ['stock-movements', user?.id, activeCompanyId, page, itemId, warehouseId, kind, from, to],
@@ -95,19 +126,22 @@ export default function MovementsPage() {
     : (warehousesQuery.data ?? []);
 
   return (
+    <StockShell
+      title="Movimientos"
+      description="Historial de cada entrada, salida y transferencia, con fecha, depósito y saldo resultante. No se puede editar: es el respaldo del stock."
+    >
     <div className="stock-page">
-      <Link to="/inventory/stock" className="back-link">
-        <ArrowLeft size={17} /> Volver a stock
-      </Link>
-      <div className="page-head">
-        <div>
-          <span className="eyebrow">INVENTARIO / AUDITORÍA</span>
-          <h1>Movimientos de stock</h1>
-          <p>Cada fila representa una variación real en un depósito.</p>
-        </div>
-      </div>
-
       <section className="stock-card">
+        <div className="movement-ranges" role="group" aria-label="Rangos de fecha rápidos">
+          <button type="button" className="button outline" onClick={() => setRange(0)}>Hoy</button>
+          <button type="button" className="button outline" onClick={() => setRange(7)}>Últimos 7 días</button>
+          <button type="button" className="button outline" onClick={() => setRange(30)}>Últimos 30 días</button>
+          {hasFilters && (
+            <button type="button" className="button outline" onClick={clearFilters}>
+              <X size={15} aria-hidden="true" /> Limpiar filtros
+            </button>
+          )}
+        </div>
         <div className="movement-filters">
           <label>
             Buscar ítem
@@ -206,15 +240,20 @@ export default function MovementsPage() {
                 <Icon size={19} />
               </span>
               <div className="movement-description">
-                <strong>{label} · {row.item_code}</strong>
+                <strong>
+                  {label} ·{' '}
+                  {can('items', 'read')
+                    ? <Link className="movement-item-link" to={`/inventory/items/${row.item_id}`}>{row.item_code}</Link>
+                    : row.item_code}
+                </strong>
                 <small>
                   {row.warehouse_code} · {new Date(row.created_at).toLocaleString('es-AR')}
                 </small>
                 <p>{readableMovementNote(row.note, saleNames)}</p>
                 {row.lot_code && (
                   <small>
-                    Lote {row.lot_code}
-                    {row.lot_expires_on ? ` · vence ${row.lot_expires_on}` : ''}
+                    Lote {lotLabel(row.lot_code)}
+                    {row.lot_expires_on ? ` · vence ${dateEs(row.lot_expires_on)}` : ''}
                   </small>
                 )}
 
@@ -245,5 +284,6 @@ export default function MovementsPage() {
         </div>
       </section>
     </div>
+    </StockShell>
   );
 }

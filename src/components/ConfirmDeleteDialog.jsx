@@ -1,5 +1,5 @@
 import { useEffect, useId, useRef } from "react";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, HelpCircle } from "lucide-react";
 
 export default function ConfirmDeleteDialog({
   open,
@@ -32,8 +32,8 @@ export default function ConfirmDeleteDialog({
         if (!busy) onCancel();
       }}
     >
-      <span className="erp-confirm-icon">
-        <AlertTriangle size={24} />
+      <span className={`erp-confirm-icon ${intent === "primary" ? "is-primary" : ""}`}>
+        {intent === "primary" ? <HelpCircle size={24} /> : <AlertTriangle size={24} />}
       </span>
       <h2 id={titleId}>{title}</h2>
       <p id={descriptionId}>{description}</p>

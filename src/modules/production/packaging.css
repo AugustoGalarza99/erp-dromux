@@ -1,0 +1,14 @@
+/* Envases y presentaciones (usa --module-accent del módulo) */
+.packaging-page { display: grid; gap: 16px; min-width: 0; }
+.packaging-hint { display: flex; align-items: flex-start; gap: 10px; margin: 0; padding: 12px 14px; border: 1px solid var(--ui-line); border-radius: 10px; background: var(--module-soft); color: var(--ui-ink); font-size: 13px; line-height: 1.5; }
+.packaging-hint svg { flex-shrink: 0; margin-top: 1px; color: var(--module-accent); }
+.packaging-page .mod-table tr.is-inactive td { color: var(--ui-muted); }
+.packaging-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.packaging-form label { display: grid; gap: 6px; min-width: 0; color: var(--ui-ink); font-size: 13px; font-weight: 700; }
+.packaging-form .is-wide { grid-column: 1 / -1; }
+.packaging-form input:not([type="checkbox"]), .packaging-form select { width: 100%; }
+.packaging-switch { display: flex !important; align-items: flex-start; gap: 10px; padding: 12px 14px; border: 1px solid var(--ui-line); border-radius: 10px; background: #f8fbfb; }
+.packaging-switch input { width: 18px; height: 18px; min-height: 0; margin-top: 2px; accent-color: var(--module-accent); }
+.packaging-switch strong, .packaging-switch small { display: block; }
+.packaging-switch small { margin-top: 3px; color: var(--ui-muted); font-weight: 400; line-height: 1.45; }
+@media (max-width: 600px) { .packaging-form { grid-template-columns: 1fr; } }
