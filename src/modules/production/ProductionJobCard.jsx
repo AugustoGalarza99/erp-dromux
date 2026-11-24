@@ -16,6 +16,8 @@ import {
   XCircle,
 } from "lucide-react";
 import ActionDialog from "../../components/ActionDialog";
+import ConfirmDeleteDialog from "../../components/ConfirmDeleteDialog";
+import FinishJobDialog from "./FinishJobDialog";
 import DeliveryNoteComposer from "../inventory/DeliveryNoteComposer";
 import { useAuth } from "../../contexts/AuthContext";
 import {
@@ -28,7 +30,6 @@ import { lotLabel } from "../../lib/display";
 import { listStockLots } from "../../services/stock";
 import {
   cancelProductionJob,
-  finishProductionJob,
   issueProductionMaterial,
   listProductionBalances,
   returnProductionMaterial,
@@ -70,14 +71,9 @@ export default function ProductionJobCard({
   const [returnNote, setReturnNote] = useState(
     "No utilizado en la fabricación",
   );
-  const [actual, setActual] = useState(
-    String(job.actual_quantity ?? job.expected_output ?? job.planned_quantity),
-  );
-  const [outputLot, setOutputLot] = useState(job.output_lot ?? "");
-  const [expiresOn, setExpiresOn] = useState(job.output_expiry ?? "");
-  const [varianceNote, setVarianceNote] = useState(job.variance_note ?? "");
   const [cancelReason, setCancelReason] = useState("");
   const [busy, setBusy] = useState(false);
+  const [confirm, setConfirm] = useState(null);
   const [issuing, setIssuing] = useState(false);
   const requests = useRef(new Map());
   const itemName = (id) =>
@@ -109,20 +105,6 @@ export default function ProductionJobCard({
         Number(entry.unit_cost),
     0,
   );
-  const mismatch =
-    Math.abs(
-      Number(actual) - Number(job.expected_output ?? job.planned_quantity),
-    ) > 0.000001 ||
-    expected.some(
-      (line) =>
-        Math.abs((net.get(line.component_id) ?? 0) - Number(line.quantity)) >
-        0.000001,
-    ) ||
-    [...net].some(
-      ([id, quantity]) =>
-        quantity > 0.000001 &&
-        !expected.some((line) => line.component_id === id),
-    );
   const chosen = items.find((item) => item.id === issue.componentId);
   const eligible = items.filter(
     (item) =>
@@ -200,8 +182,16 @@ export default function ProductionJobCard({
     }));
   }
 
-  async function saveIssue(event) {
+  function askIssue(event) {
     event.preventDefault();
+    if (busy || !validQuantity(issue.quantity) || !issue.warehouseId || issue.note.trim().length < 3 || (!chosen?.infinite_stock && Number(issue.quantity) > available) || (chosen?.track_lots && !issue.lotCode)) {
+      notifyError(new Error("Revisá stock, cantidad, depósito y lote."));
+      return;
+    }
+    setConfirm("issue");
+  }
+
+  async function saveIssue() {
     if (
       busy ||
       !validQuantity(issue.quantity) ||
@@ -243,8 +233,13 @@ export default function ProductionJobCard({
     setAction("return");
   }
 
-  async function saveReturn(event) {
+  function askReturn(event) {
     event.preventDefault();
+    if (!returnEntry || !validQuantity(returnQuantity) || busy) return;
+    setConfirm("return");
+  }
+
+  async function saveReturn() {
     if (!returnEntry || !validQuantity(returnQuantity) || busy) return;
     const returned = events
       .filter((row) => row.kind === "return" && row.issue_id === returnEntry.id)
@@ -272,43 +267,6 @@ export default function ProductionJobCard({
       setAction(null);
       await onUpdated();
       notifySuccess("Insumo devuelto", "Volvió al depósito y lote originales.");
-    } catch (error) {
-      notifyError(error);
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function finish(event) {
-    event.preventDefault();
-    if (
-      !validQuantity(actual) ||
-      busy ||
-      (product?.track_lots && !outputLot.trim()) ||
-      (mismatch && varianceNote.trim().length < 5)
-    )
-      return;
-    setBusy(true);
-    try {
-      const values = {
-        actualQuantity: actual,
-        outputLot,
-        expiresOn,
-        varianceNote,
-      };
-      await finishProductionJob(
-        activeCompanyId,
-        job.id,
-        values,
-        requestFor("finish", JSON.stringify(values)),
-      );
-      requests.current.delete("finish");
-      setAction(null);
-      await onUpdated();
-      notifySuccess(
-        "Fabricación completada",
-        "Ingresó al stock la cantidad real producida.",
-      );
     } catch (error) {
       notifyError(error);
     } finally {
@@ -591,7 +549,7 @@ export default function ProductionJobCard({
         busy={busy}
         onClose={() => setAction(null)}
       >
-        <form onSubmit={saveIssue}>
+        <form onSubmit={askIssue}>
           <label>
             Buscar insumo
             <input
@@ -736,7 +694,7 @@ export default function ProductionJobCard({
         busy={busy}
         onClose={() => setAction(null)}
       >
-        <form onSubmit={saveReturn}>
+        <form onSubmit={askReturn}>
           <p>{returnEntry && itemName(returnEntry.component_id)}</p>
           <label>
             Cantidad a devolver
@@ -777,82 +735,48 @@ export default function ProductionJobCard({
           </div>
         </form>
       </ActionDialog>
-      <ActionDialog
-        open={action === "finish"}
-        title="Terminar fabricación"
-        description="Se ingresará al stock solamente la cantidad real obtenida."
+      {action === "finish" && (
+        <FinishJobDialog
+          job={job}
+          product={product}
+          items={items}
+          warehouses={warehouses}
+          events={events}
+          allocations={allocations}
+          companyId={activeCompanyId}
+          onClose={() => setAction(null)}
+          onFinished={async () => {
+            setAction(null);
+            await onUpdated();
+          }}
+        />
+      )}
+      <ConfirmDeleteDialog
+        open={confirm === "issue"}
+        intent="primary"
+        title="¿Confirmás la entrega del insumo?"
+        description={`Se descontarán ${formatQuantity(issue.quantity || 0)} de ${chosen?.name ?? "insumo"} del stock y quedarán asociados a esta orden.`}
+        confirmLabel="Confirmar y descontar stock"
         busy={busy}
-        onClose={() => setAction(null)}
-      >
-        <form onSubmit={finish}>
-          <label>
-            Cantidad real fabricada
-            <input
-              required
-              type="number"
-              min="0.000001"
-              step="0.000001"
-              value={actual}
-              onChange={(event) => setActual(event.target.value)}
-            />
-          </label>
-          <div className="production-two-columns">
-            <label>
-              Lote del producto{" "}
-              {product?.track_lots ? "(obligatorio)" : "(no aplica)"}
-              <input
-                required={!!product?.track_lots}
-                disabled={!product?.track_lots}
-                maxLength={80}
-                value={outputLot}
-                placeholder="Ej.: FAB-2026-001"
-                onChange={(event) => setOutputLot(event.target.value)}
-              />
-            </label>
-            <label>
-              Vencimiento (opcional)
-              <input
-                type="date"
-                disabled={!product?.track_lots}
-                value={expiresOn}
-                onChange={(event) => setExpiresOn(event.target.value)}
-              />
-            </label>
-          </div>
-          {mismatch && (
-            <label>
-              Motivo de la diferencia frente a la fórmula
-              <textarea
-                required
-                minLength={5}
-                maxLength={400}
-                value={varianceNote}
-                onChange={(event) => setVarianceNote(event.target.value)}
-              />
-            </label>
-          )}
-          <div className="erp-action-dialog-actions">
-            <button
-              type="button"
-              className="button outline"
-              disabled={busy}
-              onClick={() => setAction(null)}
-            >
-              Volver
-            </button>
-            <button
-              className="button primary"
-              disabled={
-                busy ||
-                !validQuantity(actual) ||
-                (mismatch && varianceNote.trim().length < 5)
-              }
-            >
-              Ingresar producto al stock
-            </button>
-          </div>
-        </form>
-      </ActionDialog>
+        onCancel={() => setConfirm(null)}
+        onConfirm={async () => {
+          await saveIssue();
+          setConfirm(null);
+        }}
+      />
+      <ConfirmDeleteDialog
+        open={confirm === "return"}
+        intent="primary"
+        title="¿Confirmás la devolución al stock?"
+        description={`Volverán ${formatQuantity(returnQuantity || 0)} de ${returnEntry ? itemName(returnEntry.component_id) : "insumo"} al depósito y lote de origen.`}
+        confirmLabel="Confirmar y sumar stock"
+        busy={busy}
+        onCancel={() => setConfirm(null)}
+        onConfirm={async () => {
+          await saveReturn();
+          setConfirm(null);
+        }}
+      />
       <ActionDialog
         open={action === "cancel"}
         title="¿Seguro que querés cancelar la orden?"

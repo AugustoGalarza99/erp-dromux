@@ -331,3 +331,76 @@ export async function recalculateProductionReservations(companyId) {
     }),
   );
 }
+
+/*
+ * Terminar la orden con ajustes de insumos y recuento de envases en una sola operación (migración 043).
+ * adjustments: [{ kind: 'issue' | 'return', componentId, warehouseId?, lotCode?, quantity, note }]
+ * packaging: { [id de envasado de la orden]: cantidad real de envases }
+ */
+export async function finishProductionJobAdjusted(
+  companyId,
+  jobId,
+  values,
+  adjustments,
+  packaging,
+  requestId,
+) {
+  return unwrap(
+    await supabase.rpc("finish_production_job_adjusted", {
+      p_company: companyId,
+      p_job: jobId,
+      p_actual_quantity: values.actualQuantity,
+      p_output_lot: values.outputLot.trim() || null,
+      p_expires_on: values.expiresOn || null,
+      p_variance_note: values.varianceNote.trim() || null,
+      p_request_id: requestId,
+      p_adjustments: adjustments.map((entry) => ({
+        kind: entry.kind,
+        component_id: entry.componentId,
+        warehouse_id: entry.warehouseId || null,
+        lot_code: entry.lotCode || null,
+        quantity: entry.quantity,
+        note: entry.note,
+      })),
+      p_packaging: packaging,
+    }),
+  );
+}
+
+const BUENOS_AIRES = "America/Argentina/Buenos_Aires";
+
+/* Producción terminada agrupada por día, semana o mes (sin costos). */
+export async function getProductionOutputSummary(
+  companyId,
+  { from, to, bucket, productId = null },
+) {
+  return unwrap(
+    await supabase.rpc("production_output_summary", {
+      p_company: companyId,
+      p_from: from,
+      p_to: to,
+      p_bucket: bucket,
+      p_product: productId,
+      p_tz: BUENOS_AIRES,
+    }),
+  );
+}
+
+/* Producción terminada por producto, paginada en el servidor (devuelve total_count en cada fila). */
+export async function listProductionOutputByProduct(
+  companyId,
+  { from, to, search = "", page = 0, pageSize = 25 },
+) {
+  const rows = unwrap(
+    await supabase.rpc("production_output_by_product", {
+      p_company: companyId,
+      p_from: from,
+      p_to: to,
+      p_search: search.trim() || null,
+      p_limit: pageSize,
+      p_offset: page * pageSize,
+      p_tz: BUENOS_AIRES,
+    }),
+  );
+  return { rows, count: rows[0]?.total_count ? Number(rows[0].total_count) : 0 };
+}

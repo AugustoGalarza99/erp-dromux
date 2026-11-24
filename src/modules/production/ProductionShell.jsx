@@ -1,4 +1,5 @@
 import {
+  BarChart3,
   CalendarRange,
   ClipboardList,
   Factory,
@@ -20,6 +21,7 @@ const tabs = [
   { to: "/production/availability", label: "¿Alcanza el stock?", icon: PackageCheck, any: ["production"] },
   { to: "/production/replenishment", label: "Reposición", icon: TrendingUp, any: ["production"] },
   { to: "/production/packaging", label: "Envases", icon: PackageOpen, any: ["production"] },
+  { to: "/production/stats", label: "Estadística", icon: BarChart3, any: ["production"] },
 ];
 
 export default function ProductionShell({ title, description, actions, children }) {

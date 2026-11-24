@@ -1,0 +1,16 @@
+.stats-page { display: grid; gap: 16px; min-width: 0; }
+.stats-filter { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin: 0; padding: 10px 14px; border: 1px solid var(--module-accent); border-radius: 11px; background: var(--module-soft); font-size: 14px; }
+.stats-delta { display: inline-flex; align-items: center; gap: 4px; font-weight: 700; }
+.stats-delta.is-up { color: #166534; }
+.stats-delta.is-down { color: #991b1b; }
+.stats-bars { display: flex; align-items: flex-end; gap: 3px; height: 190px; margin: 6px 0 14px; padding: 0 0 22px; list-style: none; border-bottom: 1px solid var(--ui-line); }
+.stats-bars li { position: relative; display: flex; flex: 1 1 0; align-items: flex-end; justify-content: center; min-width: 0; height: 100%; }
+.stats-bar { display: block; width: 100%; max-width: 46px; min-height: 0; border-radius: 4px 4px 0 0; background: var(--module-accent); }
+.stats-bars li:hover .stats-bar { filter: brightness(1.12); }
+.stats-bars small { position: absolute; bottom: -22px; left: 50%; transform: translateX(-50%); color: var(--ui-muted); font-size: 11px; white-space: nowrap; }
+.stats-neg { color: #991b1b; font-weight: 700; }
+.stats-pos { color: #166534; font-weight: 700; }
+@media (max-width: 560px) { .stats-bars { height: 150px; gap: 2px; } }
+.stats-method { padding: 12px 14px; border: 1px solid var(--ui-line); border-radius: 11px; background: #f7fafa; color: var(--ui-ink); font-size: 13px; line-height: 1.6; }
+.stats-method summary { cursor: pointer; color: var(--module-accent); font-weight: 800; }
+.stats-method p { margin: 8px 0 0; color: var(--ui-muted); }

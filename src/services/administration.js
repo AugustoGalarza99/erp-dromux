@@ -53,3 +53,22 @@ export async function updateMember(companyId, userId, roleId, active) {
     p_active: active,
   }));
 }
+
+/* Historial de cambios de roles, permisos y miembros (migración 044). Solo administrador; 25 por página. */
+export async function listAccessAudit(companyId, page = 0) {
+  const rows = unwrap(await supabase.rpc('access_audit_events_list', {
+    p_company: companyId,
+    p_page: page,
+  }));
+  return { rows, count: rows[0]?.total_count ? Number(rows[0].total_count) : 0 };
+}
+
+/* Catálogo de módulos y pantallas (migración 045). Si todavía no existe, devuelve lista vacía y se usa la grilla anterior. */
+export async function listPermissionCatalog() {
+  const { data, error } = await supabase
+    .from('permission_catalog')
+    .select('resource, module, parent, label, help, sort, actions, is_group, admin_only, enforced')
+    .order('sort', { ascending: true });
+  if (error) return [];
+  return data ?? [];
+}

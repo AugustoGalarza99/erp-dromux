@@ -3,12 +3,13 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ShieldCheck, Plus, Save } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { notifyError, notifySuccess, friendlyError } from '../../lib/notifications';
-import { listRoles, listRolePermissions, saveRole } from '../../services/administration';
+import { listRoles, listRolePermissions, listPermissionCatalog, saveRole } from '../../services/administration';
 import PermissionsGrid from './PermissionsGrid';
+import AccessHistory from './AccessHistory';
 import './settings.css';
 
 export default function RolesPage() {
-  const { activeCompanyId, can, user } = useAuth();
+  const { activeCompanyId, role: myRole, user } = useAuth();
   const queryClient = useQueryClient();
   const [selectedId, setSelectedId] = useState(null);
   const [name, setName] = useState('');
@@ -30,10 +31,20 @@ export default function RolesPage() {
     enabled: Boolean(activeCompanyId),
   });
 
+  const catalogQuery = useQuery({
+    queryKey: ['permission-catalog', user?.id],
+    queryFn: listPermissionCatalog,
+    staleTime: 5 * 60_000,
+  });
+  const catalog = catalogQuery.data ?? [];
+  // Los permisos de módulo completo los deriva el servidor: la pantalla solo maneja pantallas.
+  const groups = new Set(catalog.filter((entry) => entry.is_group || entry.admin_only).map((entry) => entry.resource));
+
   const roles = rolesQuery.data ?? [];
   const selected = roles.find((role) => role.id === selectedId);
   const adminSelected = selected?.code === 'admin';
-  const canSave = can('roles', selected ? 'update' : 'insert') && !adminSelected;
+  // Solo el administrador gestiona roles (migración 044); el servidor lo exige igual.
+  const canSave = myRole === 'admin' && !adminSelected;
 
   useEffect(() => {
     if (!selected) return;
@@ -41,11 +52,12 @@ export default function RolesPage() {
     setName(selected.name);
     setCode(selected.code);
     setPermissions((permissionsQuery.data ?? [])
-      .filter((permission) => permission.role_id === selected.id && permission.action !== 'manage')
+      .filter((permission) => permission.role_id === selected.id && permission.action !== 'manage'
+        && !groups.has(permission.resource))
       .map(({ resource, action }) => ({ resource, action })));
     setMessage('');
     setError('');
-  }, [selected, permissionsQuery.data]);
+  }, [selected, permissionsQuery.data, catalog]);
 
   const startNew = () => {
     setSelectedId(null);
@@ -93,7 +105,7 @@ export default function RolesPage() {
           <h1>Roles y permisos</h1>
           <p>Definí qué puede ver y hacer cada equipo dentro de la empresa.</p>
         </div>
-        {can('roles', 'insert') && (
+        {myRole === 'admin' && (
           <button className="button primary" onClick={startNew}>
             <Plus size={17} /> Nuevo rol
           </button>
@@ -161,6 +173,7 @@ export default function RolesPage() {
             permissions={permissions}
             onChange={setPermissions}
             disabled={!canSave}
+            catalog={catalog}
           />
           {error && <p role="alert" className="error">{error}</p>}
           {message && <p role="status" className="success">{message}</p>}
@@ -171,6 +184,7 @@ export default function RolesPage() {
           )}
         </form>
       </div>
+      {myRole === 'admin' && <AccessHistory />}
     </div>
   );
 }

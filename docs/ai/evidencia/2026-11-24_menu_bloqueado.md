@@ -1,0 +1,4 @@
+# Menú con secciones bloqueadas (24/11/2026)
+- Cambio de interfaz (sin base): `AdminLayout.jsx` muestra todos los módulos y pantallas; los que el rol no puede ver quedan en gris con candado, título "Acceso restringido" y texto para lector de pantalla; `PermissionGate` (App.jsx) muestra la pantalla "Acceso restringido" en vez de "Acceso limitado"; estilos en `uiFoundation.css`. Usuarios y Roles (solo admin) también se ven bloqueados para otros roles.
+- Probado en navegador con arnés simulado (borrado): rol con solo Pedidos internos, Stock y Producción → Ventas, Finanzas y Reportes bloqueados; en Compras solo Pedidos internos habilitado y las otras 4 pantallas bloqueadas; abrir una bloqueada muestra el aviso. `npm run build` OK.
+- NO probado: 360 px del menú móvil, búsqueda Ctrl+K (sigue mostrando solo lo permitido), tarjetas de Inicio, roles reales.

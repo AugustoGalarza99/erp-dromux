@@ -64,6 +64,7 @@ export const navGroups = [
           { label: "¿Alcanza el stock para fabricar?", to: "/production/availability", permission: "production", crumb: "¿Alcanza el stock?", keywords: "faltantes disponibilidad tengo stock" },
           { label: "Pronóstico y reposición", to: "/production/replenishment", permission: "production", crumb: "Reposición", keywords: "reponer comprar" },
           { label: "Envases y presentaciones", to: "/production/packaging", permission: "production", crumb: "Envases", keywords: "envasado envase presentación embalaje" },
+          { label: "Estadística de producción", to: "/production/stats", permission: "production", crumb: "Estadística", keywords: "producido mes semana rango cuánto se produjo informe" },
         ],
       },
     ],
@@ -150,8 +151,8 @@ export const navGroups = [
         children: [
           { label: "Documentos de producción", to: "/settings/production-documents", permission: "production", keywords: "pdf hoja" },
           { label: "Archivados", to: "/archivados", permission: "settings" },
-          { label: "Usuarios", to: "/settings/users", permission: "users" },
-          { label: "Roles y permisos", to: "/settings/roles", permission: "roles", keywords: "accesos" },
+          { label: "Usuarios", to: "/settings/users", permission: "users", adminOnly: true },
+          { label: "Roles y permisos", to: "/settings/roles", permission: "roles", keywords: "accesos", adminOnly: true },
           { label: "Unidades", to: "/settings/units", permission: "units" },
           { label: "Categorías", to: "/settings/categories", permission: "categories" },
           { label: "Depósitos", to: "/settings/warehouses", permission: "warehouses", keywords: "almacén" },

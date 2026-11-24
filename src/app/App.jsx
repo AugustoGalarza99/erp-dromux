@@ -1,10 +1,11 @@
 import ArchivesPage from "../modules/settings/ArchivesPage";
 import SupplierAccountsPage from "../modules/purchases/SupplierAccountsPage";
 import PackagingPage from "../modules/production/PackagingPage";
+import ProductionStatsPage from "../modules/production/ProductionStatsPage";
 import ProductionDocumentSettings from "../modules/settings/ProductionDocumentSettings";
 import { useState } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
-import { ArrowRight, Building2, ShieldCheck } from "lucide-react";
+import { ArrowRight, Building2, Lock, ShieldCheck } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import { createCompany } from "../services/core";
 import {
@@ -103,15 +104,18 @@ function SetupCompany() {
   );
 }
 
-function PermissionGate({ resource, anyOf, children }) {
-  const { can } = useAuth();
-  const allowed = (anyOf ?? [resource]).some((entry) => can(entry, "read"));
+function PermissionGate({ resource, anyOf, adminOnly = false, children }) {
+  const { can, role } = useAuth();
+  const allowed = (!adminOnly || role === "admin")
+    && (anyOf ?? [resource]).some((entry) => can(entry, "read"));
 
   if (!allowed) {
     return (
-      <div className="setup">
-        <h1>Acceso limitado</h1>
-        <p>No tenés permiso para ver esta sección.</p>
+      <div className="restricted-screen" role="status">
+        <span className="restricted-icon"><Lock size={26} aria-hidden="true" /></span>
+        <span className="restricted-chip"><Lock size={13} aria-hidden="true" /> Acceso restringido</span>
+        <h1>No tenés acceso a esta sección</h1>
+        <p>Tu rol no incluye esta pantalla. Si la necesitás para tu trabajo, pedile al administrador de tu empresa que te la habilite.</p>
       </div>
     );
   }
@@ -271,7 +275,7 @@ export default function App() {
         <Route
           path="/settings/users"
           element={
-            <PermissionGate resource="users">
+            <PermissionGate resource="users" adminOnly>
               <UsersPage />
             </PermissionGate>
           }
@@ -279,7 +283,7 @@ export default function App() {
         <Route
           path="/settings/roles"
           element={
-            <PermissionGate resource="roles">
+            <PermissionGate resource="roles" adminOnly>
               <RolesPage />
             </PermissionGate>
           }
@@ -510,6 +514,14 @@ export default function App() {
           element={
             <PermissionGate resource="production">
               <PackagingPage />
+            </PermissionGate>
+          }
+        />
+        <Route
+          path="/production/stats"
+          element={
+            <PermissionGate resource="production">
+              <ProductionStatsPage />
             </PermissionGate>
           }
         />

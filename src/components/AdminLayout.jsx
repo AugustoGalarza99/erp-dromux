@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
 import {
   Building2,
+  Lock,
   ChevronDown,
   CircleHelp,
   LogOut,
@@ -142,12 +143,8 @@ export default function AdminLayout() {
 
         <nav aria-label="Menú principal">
           {navGroups.map((group) => {
-            const visible = group.modules.filter((module) =>
-              module.to
-                ? can(module.permission, "read")
-                : allowedChildren(module).length > 0 ||
-                  can(module.permission, "read"),
-            );
+            // Los módulos y pantallas sin permiso se muestran bloqueados (candado), no ocultos: el servidor igual los rechaza.
+            const visible = group.modules;
             if (!visible.length) return null;
 
             return (
@@ -157,6 +154,11 @@ export default function AdminLayout() {
                   const Icon = module.icon;
                   const isActive = activeModuleId === module.id;
 
+                  const moduleLocked = module.to
+                    ? !can(module.permission, "read")
+                    : allowedChildren(module).length === 0 &&
+                      !can(module.permission, "read");
+
                   if (module.to) {
                     return (
                       <div key={module.id} className={`nav-module mod-${module.id}`}>
@@ -164,18 +166,19 @@ export default function AdminLayout() {
                           to={module.to}
                           end
                           className={({ isActive: current }) =>
-                            `nav-item ${current ? "active" : ""}`
+                            `nav-item ${current ? "active" : ""} ${moduleLocked ? "is-locked" : ""}`
                           }
-                          aria-label={module.label}
+                          aria-label={moduleLocked ? `${module.label} (acceso restringido)` : module.label}
+                          title={moduleLocked ? "Acceso restringido" : undefined}
                         >
                           <Icon size={19} aria-hidden="true" />
                           <span>{module.label}</span>
+                          {moduleLocked && <Lock className="nav-lock" size={14} aria-hidden="true" />}
                         </NavLink>
                       </div>
                     );
                   }
 
-                  const children = allowedChildren(module);
                   const expanded = open[module.id] ?? isActive;
                   const panelId = `subnav-${module.id}`;
 
@@ -183,7 +186,8 @@ export default function AdminLayout() {
                     <div key={module.id} className={`nav-module mod-${module.id}`}>
                       <button
                         type="button"
-                        className={`nav-item ${isActive ? "active" : ""}`}
+                        className={`nav-item ${isActive ? "active" : ""} ${moduleLocked ? "is-locked" : ""}`}
+                        title={moduleLocked ? "Acceso restringido" : undefined}
                         aria-expanded={expanded}
                         aria-controls={panelId}
                         onClick={() =>
@@ -195,6 +199,7 @@ export default function AdminLayout() {
                       >
                         <Icon size={19} aria-hidden="true" />
                         <span>{module.label}</span>
+                        {moduleLocked && <Lock className="nav-lock" size={14} aria-hidden="true" />}
                         <ChevronDown
                           className={expanded ? "rotated" : ""}
                           size={16}
@@ -204,7 +209,8 @@ export default function AdminLayout() {
 
                       {expanded && (
                         <div className="subnav" id={panelId}>
-                          {children.map((child) => {
+                          {(module.children ?? []).map((child) => {
+                            const locked = !canSeeChild(child, { can, role });
                             const query = child.to.split("?")[1];
                             // Sin filtro propio, la entrada está activa aunque la URL tenga otros parámetros (búsquedas, fechas).
                             const sameSearch = query
@@ -215,10 +221,11 @@ export default function AdminLayout() {
                                 key={child.to}
                                 to={child.to}
                                 end
+                                title={locked ? "Acceso restringido" : undefined}
                                 className={({ isActive: current }) =>
                                   `subnav-item ${
                                     current && sameSearch ? "selected" : ""
-                                  }`
+                                  } ${locked ? "is-locked" : ""}`
                                 }
                                 aria-current={
                                   pathOf(child.to) === location.pathname &&
@@ -227,7 +234,13 @@ export default function AdminLayout() {
                                     : undefined
                                 }
                               >
-                                {child.label}
+                                <span>{child.label}</span>
+                                {locked && (
+                                  <>
+                                    <Lock className="nav-lock" size={12} aria-hidden="true" />
+                                    <span className="sr-only">(acceso restringido)</span>
+                                  </>
+                                )}
                               </NavLink>
                             );
                           })}

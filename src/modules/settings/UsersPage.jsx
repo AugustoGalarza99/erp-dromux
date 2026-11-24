@@ -18,7 +18,7 @@ export default function UsersPage() {
   const rolesQuery = useQuery({
     queryKey: ['roles', user?.id, activeCompanyId],
     queryFn: () => listRoles(activeCompanyId),
-    enabled: Boolean(activeCompanyId && can('users', 'update')),
+    enabled: Boolean(activeCompanyId && role === 'admin'),
   });
   const members = membersQuery.data ?? [];
   const roles = rolesQuery.data ?? [];
@@ -76,7 +76,7 @@ export default function UsersPage() {
                 <strong>{member.display_name || member.email?.split('@')[0]}</strong>
                 <small>{member.email}</small>
               </div>
-              {can('users', 'update') ? (
+              {role === 'admin' ? (
                 <label className="member-role-control">
                   Rol
                   <select

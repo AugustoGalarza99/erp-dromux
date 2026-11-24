@@ -358,3 +358,31 @@
     flex-direction: column;
   }
 }
+
+/* Permisos por módulo y pantalla (045) */
+.perm-modules { display: grid; gap: 12px; }
+.perm-module { border: 1px solid #dce7e9; border-radius: 13px; background: #fff; overflow: hidden; }
+.perm-module > header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 13px 16px; background: #f7fafa; }
+.perm-module.is-open > header { border-bottom: 1px solid #e3eded; }
+.perm-module h3 { margin: 0 0 2px; font-size: 15px; }
+.perm-module header small { color: #536a76; font-size: 12px; }
+.perm-switch, .perm-access { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 700; cursor: pointer; }
+.perm-switch input, .perm-access input { width: 20px; height: 20px; margin: 0; }
+.perm-bulk { display: flex; flex-wrap: wrap; gap: 8px; padding: 10px 16px 0; }
+.perm-bulk .button { min-height: 38px; padding: 0 12px; font-size: 13px; }
+.perm-screens td small { display: block; margin-top: 2px; color: #536a76; font-weight: 500; line-height: 1.4; }
+.perm-screens td .perm-note { color: #92400e; }
+.perm-screens tr.is-denied td { color: #7b8a95; background: #fafbfc; }
+.perm-screens .perm-access span { display: inline-flex; align-items: center; gap: 5px; }
+.perm-warning { display: flex; align-items: center; gap: 7px; margin: 10px 16px 0; padding: 8px 12px; border-radius: 9px; background: #fff4e5; color: #7a3a07; font-size: 13px; }
+.perm-summary { padding: 14px 16px; border: 1px dashed #c7d9db; border-radius: 13px; background: #fbfdfd; }
+.perm-summary h3 { margin: 0 0 8px; font-size: 14px; }
+.perm-summary p { margin: 0 0 6px; font-size: 13px; line-height: 1.5; }
+.perm-yes { color: #166534; }
+.perm-no { color: #7b8a95; }
+.perm-summary small { color: #536a76; }
+.perm-note-line { margin: 10px 16px 0; padding: 7px 11px; border-radius: 9px; background: #fff7e0; color: #7a5a12; font-size: 12.5px; line-height: 1.45; }
+.perm-screens .perm-access span { white-space: nowrap; }
+.perm-screens td:first-child { min-width: 130px; }
+@media (max-width: 560px) { .perm-screens .perm-access span { display: none; } .perm-screens td small { display: none; } .perm-screens td:first-child small:first-of-type { display: block; } }
+.perm-note-line.is-warn { background: #fde8e8; color: #8a1c1c; font-weight: 700; }

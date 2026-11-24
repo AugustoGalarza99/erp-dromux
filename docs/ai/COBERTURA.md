@@ -32,3 +32,10 @@ Estados: no revisado, inspeccionado, probado, bloqueado. Anotar funciones por fi
 | --- | --- | --- | --- | --- | --- |
 | C-016 | Corrección de costos 035/036 y frontend asociado | Inspeccionado (revisión crítica por subagente + lectura propia); NO aplicado, NO probado | `supabase/035_*.sql`, `036_*.sql`, `services/production.js`, `services/items.js`, `ItemEditor.jsx`, `FormulasPage.jsx`; `npm run build` OK; repo `74786d5` + cambios sin commit | Pendiente: roles admin/compras/operario y dos empresas | Ejecutar según `supabase/reparacion/LEEME.md` |
 | C-017 | Línea base `supabase/linea_base/001_*.sql` | Inspeccionado (conteos coinciden con lo observado); no cargado | 67 tablas, 144 funciones, 74 políticas, 51 triggers; generado desde catálogos remotos en solo lectura | Pendiente: cargar en base vacía y comparar | Elegir entorno de pruebas |
+
+## Filas agregadas 24/11/2026
+| ID | Área/rutas/objetos | Estado | Evidencia y entorno/commit | Prueba negativa o de negocio | Próximo paso |
+| --- | --- | --- | --- | --- | --- |
+| C-018 | RLS/grants/funciones ejecutables y funciones de usuarios, roles y permisos (cuerpos) | Inspeccionado (catálogo y código, solo lectura, 24/11) | `AUDITORIA_FASE2_3_2026-11-24.md` | Pendiente: 2 empresas × 3 roles en este proyecto | H-007: probar escalada con usuario `users:update`; migración 044 |
+| C-019 | Migración 043 (cierre con ajustes, estadística, índices) | Verificado por catálogo y script (validaciones, permisos y aislamiento); sin prueba de cierre con orden real | `evidencia/2026-11-24_produccion_cierre_043.md` | Pendiente: lista a–g en `verificaciones/043_comprobaciones.sql` | Recorrido Fase 1 pasos 12–18 |
+| C-020 | Migraciones 044 y 045 (solo admin, historial, catálogo de permisos) | Probado con script de suplantación: 204 casos PASAN (24/11) | `evidencia/2026-11-24_pruebas_roles_empresas.md` | Pendiente: concurrencia, soporte sin costos, recorrido real | 046 Compras |
