@@ -4,12 +4,14 @@ import { ContactRound, Plus, Search } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { notifyError, notifySuccess, friendlyError } from '../../lib/notifications';
 import { listCustomers, saveCustomer, setCustomerActive } from '../../services/sales';
+import { assignCustomerPriceList, listCustomerPriceLists, listPriceLists } from '../../services/priceLists';
+import SalesShell from './SalesShell';
 import './sales.css';
 
 const empty = { name: '', tax_id: '', email: '', phone: '', address: '', notes: '' };
 
 export default function CustomersPage() {
-  const { activeCompanyId, user, can } = useAuth();
+  const { activeCompanyId, user, can, role } = useAuth();
   const client = useQueryClient();
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState(empty);
@@ -20,6 +22,32 @@ export default function CustomersPage() {
     queryFn: () => listCustomers(activeCompanyId),
     enabled: !!activeCompanyId,
   });
+  // Listas de precios (migración 039): si no existen todavía, la columna simplemente no aparece.
+  const listsQuery = useQuery({
+    queryKey: ['price-lists', user?.id, activeCompanyId],
+    queryFn: () => listPriceLists(activeCompanyId),
+    enabled: !!activeCompanyId, retry: false, staleTime: 60_000,
+  });
+  const assignQuery = useQuery({
+    queryKey: ['customer-price-lists', user?.id, activeCompanyId],
+    queryFn: () => listCustomerPriceLists(activeCompanyId),
+    enabled: !!activeCompanyId && listsQuery.isSuccess, retry: false, staleTime: 60_000,
+  });
+  const priceLists = (listsQuery.data ?? []).filter((list) => !list.archived);
+  const assigned = new Map((assignQuery.data ?? []).map((row) => [row.customer_id, row.price_list_id]));
+  const canAssign = role === 'admin' && can('sales', 'update') && listsQuery.isSuccess;
+  async function assignList(customer, listId) {
+    setBusy(true);
+    try {
+      await assignCustomerPriceList(activeCompanyId, customer.id, listId);
+      await client.invalidateQueries({ queryKey: ['customer-price-lists', user?.id, activeCompanyId] });
+      notifySuccess(listId ? 'Lista asignada' : 'Vuelve a la lista predeterminada', customer.name);
+    } catch (error) {
+      notifyError(error);
+    } finally {
+      setBusy(false);
+    }
+  }
   useEffect(() => {
     setForm(empty);
     setEditing(null);
@@ -70,11 +98,7 @@ export default function CustomersPage() {
   }
 
   return (
-    <section className="sales-page">
-      <div className="sales-heading">
-        <div><span className="eyebrow">VENTAS / CLIENTES</span><h1>Clientes</h1>
-          <p>Una sola ficha por cliente para reutilizarla en todas sus ventas.</p></div>
-      </div>
+    <SalesShell title="Clientes" description="Una sola ficha por cliente para reutilizarla en todas sus ventas.">
       <div className="sales-grid">
         <form className="sales-card" onSubmit={submit}>
           <h2><ContactRound size={19} /> {editing ? 'Editar cliente' : 'Nuevo cliente'}</h2>
@@ -126,6 +150,14 @@ export default function CustomersPage() {
             <div><strong>{customer.name}</strong>
               <small>{customer.tax_id || 'Sin documento'} · {customer.phone || 'Sin teléfono'}</small>
               {!customer.active && <small className="sales-error">Inactivo</small>}
+              {listsQuery.isSuccess && <small>Lista de precios: {priceLists.find((list) => list.id === assigned.get(customer.id))?.name ?? 'predeterminada'}</small>}
+              {canAssign && <label className="sales-assign">Asignar lista
+                <select aria-label={`Lista de precios de ${customer.name}`} disabled={busy}
+                  value={assigned.get(customer.id) ?? ''} onChange={(event) => assignList(customer, event.target.value)}>
+                  <option value="">Predeterminada</option>
+                  {priceLists.map((list) => <option key={list.id} value={list.id}>{list.name} ({list.currency})</option>)}
+                </select>
+              </label>}
             </div>
             <div className="sales-row-actions">
               {can('sales', 'update') && <>
@@ -138,6 +170,6 @@ export default function CustomersPage() {
           </div>)}
         </div>
       </div>
-    </section>
+    </SalesShell>
   );
 }

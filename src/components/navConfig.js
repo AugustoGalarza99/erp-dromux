@@ -79,8 +79,10 @@ export const navGroups = [
         shortcut: "v",
         keywords: "vender clientes",
         children: [
+          { label: "Resumen de ventas", to: "/sales", permission: "sales", crumb: "Resumen", keywords: "panel general" },
+          { label: "Presupuestos", to: "/sales/quotes", permission: "sales", keywords: "cotizacion cotizar presupuestar pdf cliente" },
           { label: "Clientes", to: "/sales/customers", permission: "sales" },
-          { label: "Lista de precios", to: "/sales/lista-precios", permission: "sales", keywords: "precios" },
+          { label: "Listas de precios", to: "/sales/lista-precios", permission: "sales", crumb: "Listas de precios", keywords: "precios margen costo mayorista minorista descuento iva importar" },
           { label: "Registrar venta", to: "/sales/orders", permission: "sales", crumb: "Ventas", keywords: "nueva venta cobrar" },
         ],
       },

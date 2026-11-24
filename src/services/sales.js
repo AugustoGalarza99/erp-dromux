@@ -81,6 +81,7 @@ export async function postSale(companyId, payload, requestId) {
       quantity: line.quantity,
       lot_code: line.lotCode || null,
       expected_unit_price: line.price,
+      ...(Number(line.discount) > 0 ? { discount_percent: Number(line.discount), discount_reason: (line.discountReason || '').trim() || null } : {}),
     })),
   }));
 }
@@ -124,4 +125,22 @@ export async function findSalesByIds(companyId, ids) {
   return unwrap(await supabase.from('sales')
     .select('id, number, customer_name')
     .eq('company_id', companyId).in('id', ids.slice(0, 50)));
+}
+
+/* Indicadores del Resumen de ventas: el servidor omite lo que el rol no puede ver. */
+export async function getSalesSummary(companyId) {
+  return unwrap(await supabase.rpc('erp_operational_dashboard', { p_company: companyId }));
+}
+
+/* Precio neto que corresponde a cada producto para este cliente (lista del cliente → predeterminada → precio del producto). */
+export async function getSalePrices(companyId, customerId, itemIds) {
+  return unwrap(await supabase.rpc('erp_sale_prices', {
+    p_company: companyId, p_customer: customerId, p_items: itemIds,
+  }));
+}
+
+/* Tope de descuento de la empresa y si quien consulta puede superarlo. */
+export async function getDiscountPolicy(companyId) {
+  const rows = unwrap(await supabase.rpc('erp_sale_discount_policy', { p_company: companyId }));
+  return rows?.[0] ?? { max_discount_percent: 0, can_exceed: false };
 }

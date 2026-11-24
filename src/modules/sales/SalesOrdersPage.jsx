@@ -8,9 +8,13 @@ import { formatQuantity } from '../inventory/stockNumber';
 import { lotLabel } from '../../lib/display';
 import { listStockLots } from '../../services/stock';
 import { listProductionBalances, listProductionWarehouses } from '../../services/production';
-import { listCustomers, listSaleProducts, listSales, postSale } from '../../services/sales';
+import {
+  getDiscountPolicy, getSalePrices, listCustomers, listSaleProducts, listSales, postSale,
+} from '../../services/sales';
+import { isMissingFunction } from '../../lib/pricing';
 import { getTreasuryBalances } from '../../services/treasury';
 import SaleAdjustmentPanel from './SaleAdjustmentPanel';
+import SalesShell from './SalesShell';
 import './sales.css';
 
 const money = (value) => Number(value).toLocaleString('es-AR', {
@@ -19,9 +23,32 @@ const money = (value) => Number(value).toLocaleString('es-AR', {
 });
 const methods = { cash: 'Efectivo', transfer: 'Transferencia', card: 'Tarjeta',
   check: 'Cheque', other: 'Otro' };
-const newLine = () => ({ key: crypto.randomUUID(), itemId: '', warehouseId: '', lotCode: '', quantity: '1' });
+const newLine = () => ({
+  key: crypto.randomUUID(), itemId: '', warehouseId: '', lotCode: '', quantity: '1',
+  discount: '', discountReason: '',
+});
+// Aritmética en enteros (centavos y millonésimas) para coincidir exacto con el redondeo del servidor
+// (round half up sobre decimales exactos). Con coma flotante, 10,05 con 50 % daría 5,02 y el servidor 5,03.
+const toCents = (value) => BigInt(Math.round(Number(value) * 100));
+const fromCents = (cents) => Number(cents) / 100;
+const discountOf = (line) => {
+  const value = Number(line.discount);
+  return Number.isFinite(value) && value > 0 ? value : 0;
+};
+/* Precio final de una unidad: el de la lista menos el descuento, redondeado a 2 decimales (igual que el servidor). */
+const finalPrice = (base, line) => {
+  if (base == null) return null;
+  const permille = BigInt(10000 - Math.round(discountOf(line) * 100)); // descuento con hasta 2 decimales
+  return fromCents((toCents(base) * permille + 5000n) / 10000n);
+};
+/* Total de una línea: round(cantidad × precio unitario, 2), cantidad con hasta 6 decimales. */
+const lineTotal = (quantity, unit) => {
+  if (unit == null) return 0;
+  const micro = BigInt(Math.round(Number(quantity) * 1e6));
+  return fromCents((micro * toCents(unit) + 500000n) / 1000000n);
+};
 
-function SaleLine({ line, item, warehouses, companyId, balance, onChange, onRemove, disabledRemove }) {
+function SaleLine({ line, item, base, listName, tax, policy, warehouses, companyId, balance, onChange, onRemove, disabledRemove }) {
   const lotsQuery = useQuery({
     queryKey: ['sale-lots', companyId, line.itemId, line.warehouseId],
     queryFn: () => listStockLots(companyId, line.itemId, line.warehouseId),
@@ -33,6 +60,10 @@ function SaleLine({ line, item, warehouses, companyId, balance, onChange, onRemo
     : Number(balance ?? 0);
   const required = Number(line.quantity);
   const enough = line.warehouseId && available >= required && required > 0;
+  const discount = discountOf(line);
+  const overCap = discount > Number(policy.max_discount_percent ?? 0);
+  const canDiscount = Number(policy.max_discount_percent ?? 0) > 0 || policy.can_exceed;
+  const unit = finalPrice(base, line);
   return <div className="sales-line">
     <div className="sales-line-heading"><strong>{item?.name || 'Producto por seleccionar'}</strong>
       <button type="button" className="sales-icon" disabled={disabledRemove}
@@ -65,13 +96,30 @@ function SaleLine({ line, item, warehouses, companyId, balance, onChange, onRemo
           </option>)}
         </select>
       </label>}
+      {item && base != null && canDiscount && <label>Descuento (%)
+        <input type="number" min="0" max="99.99" step="0.01" inputMode="decimal" value={line.discount}
+          aria-label="Descuento de la línea" placeholder="0"
+          onChange={(event) => onChange({ discount: event.target.value })} />
+        <small className={overCap && !policy.can_exceed ? 'sales-error' : 'sales-muted'}>
+          {policy.can_exceed ? `Hasta ${policy.max_discount_percent} % sin motivo` : `Máximo ${policy.max_discount_percent} %`}
+        </small>
+      </label>}
+      {item && overCap && policy.can_exceed && <label>Motivo del descuento
+        <input required minLength={3} maxLength={200} value={line.discountReason}
+          onChange={(event) => onChange({ discountReason: event.target.value })} />
+      </label>}
     </div>
+    {item && base != null && <small className="sales-muted">
+      {listName ? `Lista ${listName}` : 'Precio del producto'} · $ {money(base)} por {item.units?.symbol ?? 'unidad'}
+      {discount > 0 ? ` − ${discount} % = $ ${money(unit)}` : ''}
+      {tax != null ? ` · IVA ${tax} % (informativo, no se suma al total)` : ''}
+    </small>}
     <div className="sales-line-footer">
       <small className={line.warehouseId ? enough ? 'sales-ok' : 'sales-error' : 'sales-muted'}>
         {line.warehouseId ? item?.infinite_stock ? 'Stock infinito ✓' : `${formatQuantity(available.toFixed(6))} disponibles ${enough ? '✓' : '· Stock insuficiente'}` : 'Elegí un depósito'}
       </small>
-      {item?.sale_unit_price != null && <strong>
-        $ {money(Number(line.quantity) * Number(item.sale_unit_price))}
+      {unit != null && <strong>
+        $ {money(lineTotal(line.quantity, unit))}
       </strong>}
     </div>
   </div>;
@@ -124,10 +172,33 @@ export default function SalesOrdersPage() {
   const balances = balancesQuery.data ?? [];
   const products = (productsQuery.data ?? []).filter((item) => item.active);
   const byId = Object.fromEntries(products.map((item) => [item.id, item]));
+  // Precio por cliente (lista del cliente → predeterminada → precio del producto). Si la base todavía no tiene
+  // las listas (migración 040), se usa el precio único del producto como antes.
+  const pricesQuery = useQuery({
+    queryKey: ['sale-prices', user?.id, activeCompanyId, customerId, [...itemIds].sort().join(',')],
+    queryFn: () => getSalePrices(activeCompanyId, customerId, itemIds),
+    enabled: !!(activeCompanyId && customerId && itemIds.length),
+    retry: false,
+  });
+  const policyQuery = useQuery({
+    queryKey: ['sale-discount-policy', user?.id, activeCompanyId],
+    queryFn: () => getDiscountPolicy(activeCompanyId),
+    enabled: !!activeCompanyId, retry: false, staleTime: 60_000,
+  });
+  const policy = policyQuery.data ?? { max_discount_percent: 0, can_exceed: false };
+  const legacyPrices = isMissingFunction(pricesQuery.error);
+  const pricesById = Object.fromEntries((pricesQuery.data ?? []).map((row) => [row.item_id, row]));
+  const pricesReady = legacyPrices || (pricesQuery.isSuccess && !pricesQuery.isFetching);
+  const baseOf = (itemId) => {
+    if (legacyPrices) return byId[itemId]?.sale_unit_price ?? null;
+    return pricesReady ? pricesById[itemId]?.net_price ?? null : null;
+  };
+  const discountOk = (line) => discountOf(line) <= Number(policy.max_discount_percent ?? 0)
+    || (policy.can_exceed && line.discountReason.trim().length >= 3);
   const total = lines.reduce((sum, line) => {
-    const price = byId[line.itemId]?.sale_unit_price;
-    return sum + (price == null ? 0 : Math.round(Number(line.quantity) * Number(price) * 100) / 100);
-  }, 0);
+    const unit = finalPrice(baseOf(line.itemId), line);
+    return sum + Number(toCents(lineTotal(line.quantity, unit)));
+  }, 0) / 100;
   const totalCents = Math.round(total * 100);
   const enteredCents = /^\d+(?:\.\d{1,2})?$/.test(paymentAmount)
     ? Math.round(Number(paymentAmount) * 100) : 0;
@@ -143,7 +214,7 @@ export default function SalesOrdersPage() {
       const item = byId[line.itemId];
       const available = Number(balances.find((entry) =>
         entry.item_id === line.itemId && entry.warehouse_id === line.warehouseId)?.quantity ?? 0);
-      return item?.sale_unit_price != null && line.warehouseId &&
+      return baseOf(line.itemId) != null && discountOk(line) && line.warehouseId &&
         /^\d{1,12}(\.\d{1,6})?$/.test(line.quantity) && Number(line.quantity) > 0 &&
         (item.infinite_stock || available >= Number(line.quantity)) &&
         (!item.track_lots || (!!line.lotCode && Number(line.lotAvailable) >= Number(line.quantity)));
@@ -176,7 +247,7 @@ export default function SalesOrdersPage() {
       notifyError(new Error('Cada producto puede figurar una sola vez por venta.'));
       return;
     }
-    if (lines.some((line) => byId[line.itemId]?.sale_unit_price == null)) {
+    if (lines.some((line) => baseOf(line.itemId) == null)) {
       notifyError(new Error('Todos los productos necesitan un precio de venta.'));
       return;
     }
@@ -188,7 +259,7 @@ export default function SalesOrdersPage() {
         paymentRequestId,
         lines: lines.map((line) => ({
           ...line,
-          price: byId[line.itemId].sale_unit_price,
+          price: finalPrice(baseOf(line.itemId), line),
         })),
       }, requestId);
       setRequestId(crypto.randomUUID());
@@ -224,11 +295,8 @@ export default function SalesOrdersPage() {
     }
   }
 
-  return <section className="sales-page">
-    <div className="sales-heading"><div>
-      <span className="eyebrow">VENTAS / OPERACIÓN</span><h1>Registrar venta</h1>
-      <p>Vendé productos terminados y descontá su stock al confirmar.</p>
-    </div><Link className="button" to="/sales/lista-precios">Consultar precios</Link></div>
+  return <SalesShell title="Registrar venta" description="Vendé productos terminados y descontá su stock al confirmar."
+    actions={<Link className="button outline" to="/sales/lista-precios">Consultar precios</Link>}>
     <div className="sales-grid">
       <form className="sales-card" onSubmit={submit}>
         <h2><ShoppingBag size={19} /> Nueva venta</h2>
@@ -253,11 +321,13 @@ export default function SalesOrdersPage() {
             })}>
               <option value="">Seleccionar producto…</option>
               {products.map((item) => <option key={item.id} value={item.id}>
-                {item.code} · {item.name}{item.sale_unit_price == null ? ' · Sin precio' : ` · $ ${money(item.sale_unit_price)}`}
+                {item.code} · {item.name}
               </option>)}
             </select>
           </label>
-          {line.itemId && <SaleLine line={line} item={byId[line.itemId]}
+          {line.itemId && <SaleLine line={line} item={byId[line.itemId]} policy={policy}
+            base={baseOf(line.itemId)} listName={pricesById[line.itemId]?.list_name}
+            tax={pricesById[line.itemId]?.tax_percent}
             warehouses={warehousesQuery.data ?? []} companyId={activeCompanyId}
             balance={balances.find((balance) => balance.item_id === line.itemId &&
               balance.warehouse_id === line.warehouseId)?.quantity ?? 0}
@@ -393,5 +463,5 @@ export default function SalesOrdersPage() {
         </div>)}
       </aside>
     </div>
-  </section>;
+  </SalesShell>;
 }

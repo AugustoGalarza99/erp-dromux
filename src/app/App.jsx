@@ -35,7 +35,9 @@ import ProductionPlanningPage from "../modules/production/ProductionPlanningPage
 import ManufacturingAvailabilityPage from "../modules/production/ManufacturingAvailabilityPage";
 import ReplenishmentPage from "../modules/production/ReplenishmentPage";
 import CustomersPage from "../modules/sales/CustomersPage";
-import PriceListPage from "../modules/sales/PriceListPage";
+import PriceListsPage from "../modules/sales/PriceListsPage";
+import SalesOverview from "../modules/sales/SalesOverview";
+import QuotesPage from "../modules/sales/QuotesPage";
 import SalesOrdersPage from "../modules/sales/SalesOrdersPage";
 import ReceivablesPage from "../modules/finance/ReceivablesPage";
 import TreasuryPage from "../modules/finance/TreasuryPage";
@@ -436,6 +438,22 @@ export default function App() {
           }
         />
         <Route
+          path="/sales"
+          element={
+            <PermissionGate resource="sales">
+              <SalesOverview />
+            </PermissionGate>
+          }
+        />
+        <Route
+          path="/sales/quotes"
+          element={
+            <PermissionGate resource="sales">
+              <QuotesPage />
+            </PermissionGate>
+          }
+        />
+        <Route
           path="/sales/customers"
           element={
             <PermissionGate resource="sales">
@@ -451,7 +469,7 @@ export default function App() {
           path="/sales/lista-precios"
           element={
             <PermissionGate resource="sales">
-              <PriceListPage />
+              <PriceListsPage />
             </PermissionGate>
           }
         />

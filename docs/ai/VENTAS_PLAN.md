@@ -1,6 +1,6 @@
 # Plan del módulo Ventas (L5) — para trabajar el 24/11/2026
 
-Estado: BORRADOR. Parte de lo que hay hoy en el código y de lo que necesita un dueño de pyme para competir. Falta contrastarlo con el Excel de costos del propietario ("Costos AGOSTO 26 nuevoultimo", enlace de OneDrive): el visor no se pudo leer desde el navegador integrado. Ver "Excel" al final.
+Estado: BORRADOR AJUSTADO (24/11/2026) con la lectura del Excel de costos del propietario (sección 6). IVA: decisión pendiente del propietario antes de modelarlo.
 
 ## 1. Lo que existe hoy (verificado 23/11/2026)
 - Un solo precio de venta por ítem: `items.sale_unit_price` (RPC `erp_set_finished_product_price`, lectura pública `erp_public_price_list` = id, código, nombre, unidad, precio).
@@ -33,13 +33,14 @@ D. Interfaz (misma forma de trabajo)
  14. `SalesShell` + Resumen de ventas (ventas del período, por cobrar, productos con margen bajo, presupuestos por vencer), tema verde, pestañas: Resumen, Ventas, Clientes, Listas de precios, Presupuestos.
  15. Tablas compactas, paginación, tarjetas en móvil, confirmaciones, Sonner, ayuda corta.
 
-## 4. Diseño de datos propuesto (migración 039, PREPARAR y REVISAR; NO aplicar sin autorización)
-- `price_lists(id, company_id, name, currency, valid_from, valid_to, is_default, archived, note, created_at)`.
-- `price_list_items(company_id, price_list_id, item_id, pricing_method, margin_percent|markup_percent|fixed_price, tax_percent, rounding, unit_price, pack_price, updated_at, updated_by)` con precio calculado guardado + historial `price_list_item_history`.
-- `customers.price_list_id` (opcional). `sale_lines` guarda lista y precio base usados.
-- Costos y márgenes SOLO por RPC con `admin` + `finance:read` (patrón D-004); el vendedor recibe precio final y nada más.
-- Funciones SECURITY DEFINER con `search_path` vacío, idempotencia donde haya dinero, RLS por empresa, revoke a `public,anon,authenticated`, deshacer y comprobaciones. Revisión crítica con `erp-revisor-critico` (u Opus con `/model`) antes de aplicar.
-- Impuestos: confirmar con el propietario el tratamiento de IVA (precio con/sin IVA, alícuotas) antes de modelarlo; no adivinar.
+## 4. Diseño de datos — migración 039 (PREPARADA 24/11, revisada, NO aplicada)
+Archivos: `supabase/039_listas_precios.sql`, `reparacion/0_deshacer_039.sql`, `verificaciones/039_comprobaciones.sql`.
+- Decisión del propietario (IVA): todo se guarda SIN IVA; alícuota por producto (`item_sale_settings.tax_percent`) o general de la empresa (`price_settings.default_tax_percent`, 21); el precio con IVA se calcula al leer.
+- Tablas: `price_lists` (moneda, vigencia, predeterminada, lista base + descuento %, redondeo), `price_list_items` (solo precio neto: lo único legible con sales:read), `price_list_item_pricing` (método margen/recargo/fijo y costo al fijar), `price_list_item_history` (inmutable), `price_settings` (IVA, margen mínimo, comisión, estructura), `price_change_requests` (idempotencia), `item_sale_settings` (IVA y contenido por unidad), `customer_price_lists`. Las 4 con datos de costo/margen no tienen permisos de tabla: solo por funciones de administrador con finance:read.
+- 13 funciones SECURITY DEFINER (search_path vacío). Costos por `private.price_costs` (por ids, sin el tope de 100 de `erp_product_costs`).
+- Revisión crítica (erp-revisor-critico): sin fugas ni huecos multiempresa; 4 P1 (tope de 100 costos, desborde de method_value, guarda del deshacer, moneda en resolve) y varios P2 CORREGIDOS en el archivo. Sin ejecutar: la revisión fue de lectura y la migración no se probó contra una base.
+- Fuera de 039: `post_sale_with_payment` no se toca (sigue usando `items.sale_unit_price`); `erp_resolve_sale_price` solo consulta. Descuentos, presupuestos, ofertas y kits quedan para 040.
+- Decisión abierta: una lista derivada sigue usando la base aunque la base esté vencida por fechas.
 
 ## 5. Reglas que siguen vigentes
 - Multirrubro (D-006): sin vocabulario de un solo rubro; presentaciones, unidades e impuestos configurables.
@@ -47,7 +48,34 @@ D. Interfaz (misma forma de trabajo)
 - Costos nunca al operario/vendedor (API, PDF, exportaciones). No tocar `post_sale` ni dinero sin revisión.
 - Probar con arnés (360/768/1024/1440) y `npm run build`; documentar evidencia.
 
-## 6. Excel de costos del propietario — pendiente de lectura
-- Archivo: "Costos AGOSTO 26 nuevoultimo.xlsx" (OneDrive). El visor web no se renderiza en el navegador integrado, así que su contenido NO se leyó ni se asume.
-- Para analizarlo: copiarlo a `docs/ai/referencias/` (ver `LEEME.md` ahí) o pegar las columnas y 5 filas de ejemplo. Qué extraer: columnas de costo, margen, recargos, IVA, precio por unidad/presentación, listas por tipo de cliente, fórmulas usadas, redondeos, moneda, y cómo agrupa productos. Con eso, ajustar las secciones 3 y 4 antes de diseñar la migración.
-- Sanitizar: no copiar a Git datos de clientes ni costos reales sin acordarlo; la carpeta de referencias debe quedar fuera de commits (`.gitignore`) si contiene datos reales.
+## 6. Excel de costos del propietario — LEÍDO el 24/11/2026 (verificado: estructura y valores; hipótesis: reglas de cálculo)
+Archivo local `docs/ai/referencias/Costos AGOSTO 26 nuevoultimo.xlsx` (fuera de Git). 16 hojas, **todas con valores pegados, sin fórmulas**: las reglas hay que inferirlas y confirmarlas con el propietario.
+
+| Hoja | Qué contiene |
+|---|---|
+| Parametros | Descuento a Distribuidor 43 %, Mayoristas 40 %, Reventa 36 %; dólar 1540; kilos mensuales; sueldos de producción; comisión vendedores 7 %; estructura 20 % |
+| Formulas / Listas | ~2300 filas fórmula→materia prima→cantidad→precio→costo; materias primas con costo, precio ref. USD y proveedor; envases con costo y USD; tiempos de envasado y factores; marca, unidad de negocio, tipos de oferta (unidades a facturar vs a dar) |
+| Articulos | ~880 productos: código, producto base, envase, kilos que entran, costo, $/kg, mano de obra, factor, costo de envase, orden interno |
+| Rentabilidades | por producto: costo (materia prima + mano de obra + recargo 20 %), precio lista sin IVA, precio sugerido (margen 25 %), precio y ganancia para distribuidor y revendedor tras comisiones, margen (sobre precio) y rentabilidad (sobre costo), precio por kilo nominal, dólar anterior/hoy y variación |
+| Tabla_sistema_nueva | ~950 filas: código, costo sin IVA, precio sin IVA y 5 listas (Ofertas, Norte, Reventa, Mayorista, Distribuidor) |
+| Lista_Colorear / _xls | lista imprimible para clientes (precio y "mi precio" con descuento) |
+| Armado_Ofertas_* (Común, Norte, Distribuidor, Combinadas) | ofertas por cantidad (ej. 20 unidades = medio pallet, 10+2 bonificadas): precio unitario de oferta, costo total, ganancia y margen de la oferta, descuento vs lista, comisión 7 % |
+| Ofertas_Extraordinarias_Norte, Kits, Formulas_Kit | ofertas puntuales y kits (producto compuesto con costo) |
+
+Relaciones numéricas VERIFICADAS en los datos: precio Reventa = 64 %, Mayorista = 60 %, Distribuidor = 57 % del precio de lista (= 1 − descuento de Parametros). Margen se mide sobre el precio de venta y rentabilidad sobre el costo (dos medidas distintas). HIPÓTESIS sin confirmar: relación entre "Precio lista" de Rentabilidades y "Precio sin IVA" de Tabla_sistema_nueva (cociente 0,685), y cómo se llega a precios de lista (no hay fórmula).
+
+### Lo que necesita el dueño para competir (ajusta las secciones 3 y 4)
+1. **Listas por tipo de cliente derivadas de una lista base** por descuento % (Distribuidor, Mayorista, Reventa, Norte/zona, Ofertas), editables producto por producto y con vigencia. El modelo debe permitir "lista = base − X %" **y** precio fijo por producto.
+2. **Costo compuesto** (materia prima + mano de obra + recargo %), por presentación; hoy el ERP solo tiene `reference_unit_cost` y el costo de producción: la lista usa el costo vigente que ya calcula el sistema (admin), sin duplicarlo.
+3. **Comisión de vendedor y estructura (%)** como parámetros por empresa que bajan el margen real ("ganancia pagando comisiones").
+4. **Dos medidas**: margen sobre precio y rentabilidad/recargo sobre costo, siempre juntas.
+5. **Precio por unidad base y por presentación** (precio por kilo nominal vs por envase) y **precio por kilo** para comparar.
+6. **Ofertas por cantidad** (pack de N unidades a precio especial, "10 + 2 bonificadas", medio pallet/pallet) con ganancia y margen de la oferta y alerta si es negativa (hay ofertas con margen −22 % en el Excel).
+7. **Moneda/dólar**: costos de insumos en USD con tipo de cambio "ayer vs hoy" y variación; ya existen `exchange_rates` y `exchange_rate_types` (reutilizar).
+8. **Aumento general** (% sobre toda la lista) con vista previa y variación.
+9. **Kits/combos** (producto compuesto con costo) y **ofertas combinadas** de varios productos.
+10. **Lista imprimible para clientes** sin costos ("Lista_Colorear"), con descuento del cliente.
+Fuera de alcance de esta fase (documentar, no construir): fórmulas de producción (ya están en el módulo Producción), tiempos de envasado, órdenes internas.
+
+### Datos reales
+Contiene costos y listas reales: no copiar a Git ni a la memoria. La carpeta `referencias/` está en `.gitignore` (pendiente de confirmar que ese cambio esté commiteado).

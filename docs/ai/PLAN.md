@@ -49,12 +49,10 @@ Plazo: 15 días de pruebas del cliente + 15 de mejoras. Orden: un lote por módu
 - Terminado: recepción idempotente verificada.
 
 ## L5 — Ventas
-- PLAN DETALLADO en `docs/ai/VENTAS_PLAN.md` (listas de precios múltiples, costo/margen/ganancia/precio por unidad y presentación, IVA, descuentos, presupuestos, importación Excel, historial, alertas). Pendiente de contrastar con el Excel del propietario. Prompt de arranque en `docs/ai/PROMPT_PROXIMA_SESION.md`.
-- UX: registrar venta con cliente, lista de precios y cobro en una pantalla.
-- Doble carga: cobro al confirmar vs. Cuentas por cobrar.
-- Faltantes: presupuestos; devoluciones desde la venta.
-- Ayuda: advertencia de no cargar el cobro dos veces.
-- Terminado: sin doble descuento de stock ni doble cobro.
+- HECHO 24/11 (L5a–L5c): SalesShell + Resumen; Clientes con lista asignada; Listas de precios (039: múltiples listas con vigencia, derivadas por descuento, historial, cambio masivo e importación con vista previa, simulador, IVA por producto); Registrar venta con precio por cliente y descuento por línea con tope (040); Presupuestos con numeración, estados con historial, datos de la empresa y PDF profesional con vista previa (041); presupuesto con IVA sumado sin discriminar para consumidor final (042). Evidencia: `evidencia/2026-11-24_ventas_*.md`. Migraciones 039–042 aplicadas y verificadas por catálogo.
+- PENDIENTE: presupuesto aceptado → venta con un clic (toca stock y dinero: migración propia con revisión crítica); ofertas por cantidad y kits (Excel del propietario); lista imprimible para clientes sin costos; duplicar presupuesto; presupuestos por vencer en el Resumen; importar .xlsx nativo; costo compuesto con comisión/estructura y dólar "ayer vs hoy"; descuento de documento y condición de pago; pruebas de comportamiento (2 empresas × 3 roles) de 039–042.
+- UX: registrar venta con cliente, lista de precios y cobro en una pantalla (hecho); Doble carga: cobro al confirmar vs. Cuentas por cobrar (sin cambios).
+- Terminado cuando: sin doble descuento de stock ni doble cobro (verificar con pruebas reales).
 
 ## L6 — Tesorería / Finanzas
 - UX: saldos por cuenta, cobros y pagos con comprobante, rentabilidad solo admin.
