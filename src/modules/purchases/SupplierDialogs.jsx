@@ -77,7 +77,7 @@ export function SupplierEditDialog({ supplier, onClose, onSaved }) {
         {error && <p className="error" role="alert">{error}</p>}
         <div className="erp-action-dialog-actions">
           <button type="button" className="button outline" disabled={busy} onClick={onClose}>Cancelar</button>
-          <button className="button primary" disabled={busy || !can('purchases', supplier ? 'update' : 'insert')}>
+          <button className="button primary" disabled={busy || !can('purchases_suppliers', supplier ? 'update' : 'insert')}>
             {busy ? 'Guardando…' : 'Guardar proveedor'}
           </button>
         </div>
@@ -196,7 +196,7 @@ export function SupplierQuoteDialog({ supplier, quote, exchangeTypes, onClose, o
         {error && <p className="error" role="alert">{error}</p>}
         <div className="erp-action-dialog-actions">
           <button type="button" className="button outline" disabled={busy} onClick={onClose}>Cancelar</button>
-          <button className="button primary" disabled={busy || !selected || !can('purchases', 'update')}>
+          <button className="button primary" disabled={busy || !selected || !can('purchases_suppliers', 'update')}>
             {busy ? 'Guardando…' : quote ? 'Guardar precio' : 'Agregar ítem'}
           </button>
         </div>

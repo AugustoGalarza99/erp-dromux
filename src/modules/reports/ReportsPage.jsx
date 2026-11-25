@@ -30,9 +30,9 @@ export default function ReportsPage() {
   const cards = [
     { name: 'Ventas registradas', value: data.sales, permission: 'sales' },
     { name: 'Importe neto vendido', value: data.revenue == null ? null : money(data.revenue), permission: 'sales' },
-    { name: 'Fabricaciones terminadas', value: data.finished_jobs, permission: 'production' },
-    { name: 'Órdenes en cola o en proceso', value: data.jobs_in_progress, permission: 'production' },
-    { name: 'Órdenes de compra creadas', value: data.purchase_orders, permission: 'purchases' },
+    { name: 'Fabricaciones terminadas', value: data.finished_jobs, permission: 'production_overview' },
+    { name: 'Órdenes en cola o en proceso', value: data.jobs_in_progress, permission: 'production_overview' },
+    { name: 'Órdenes de compra creadas', value: data.purchase_orders, permission: 'purchases_overview' },
   ].filter((entry) => can(entry.permission, 'read') && entry.value != null);
 
   return (

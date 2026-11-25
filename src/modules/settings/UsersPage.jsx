@@ -1,15 +1,22 @@
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { UserRound, UsersRound } from 'lucide-react';
+import { Search, UsersRound } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { friendlyError, notifyError, notifySuccess } from '../../lib/notifications';
 import { listMembers, listRoles, updateMember } from '../../services/administration';
 import './settings.css';
 
+const PAGE = 25;
+
 export default function UsersPage() {
-  const { activeCompanyId, user, can, role } = useAuth();
+  const { activeCompanyId, user, role } = useAuth();
   const client = useQueryClient();
   const [saving, setSaving] = useState(null);
+  const [search, setSearch] = useState('');
+  const [roleFilter, setRoleFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
+  const [limit, setLimit] = useState(PAGE);
+
   const membersQuery = useQuery({
     queryKey: ['members', user?.id, activeCompanyId],
     queryFn: () => listMembers(activeCompanyId),
@@ -24,7 +31,9 @@ export default function UsersPage() {
   const roles = rolesQuery.data ?? [];
 
   async function changeRole(member, roleId) {
-    if (roleId === member.role_id) return;
+    if (roleId === member.role_id || saving) return;
+    const target = roles.find((entry) => entry.id === roleId);
+    if (!window.confirm(`¿Cambiar el rol de ${member.display_name || member.email} a "${target?.name ?? ''}"? Sus permisos cambian de inmediato.`)) return;
     setSaving(member.user_id);
     try {
       await updateMember(activeCompanyId, member.user_id, roleId, member.active);
@@ -33,7 +42,7 @@ export default function UsersPage() {
         client.invalidateQueries({ queryKey: ['memberships'] }),
         client.invalidateQueries({ queryKey: ['permissions'] }),
       ]);
-      notifySuccess('Rol actualizado', 'Los permisos del usuario se actualizaron.');
+      notifySuccess('Rol actualizado', 'Los permisos de la persona se actualizaron.');
     } catch (error) {
       notifyError(error);
     } finally {
@@ -41,15 +50,25 @@ export default function UsersPage() {
     }
   }
 
+  const initials = (member) => (member.display_name || member.email || '?').trim().slice(0, 2).toUpperCase();
+  const term = search.trim().toLowerCase();
+  const visible = members.filter((member) => (
+    (!term || `${member.display_name ?? ''} ${member.email ?? ''}`.toLowerCase().includes(term))
+    && (!roleFilter || member.role_id === roleFilter)
+    && (!statusFilter || (statusFilter === 'active') === Boolean(member.active))
+  ));
+  const shown = visible.slice(0, limit);
+  const suspended = members.filter((member) => !member.active).length;
+  const reset = (setter) => (event) => { setter(event.target.value); setLimit(PAGE); };
+
   return (
     <div className="settings-page">
       <div className="page-head">
         <div>
-          <span className="eyebrow">CONFIGURACIÓN / EQUIPO</span>
+          <span className="eyebrow">AJUSTES / EQUIPO</span>
           <h1>Usuarios</h1>
-          <p>Consultá las personas de la empresa y administrá sus roles.</p>
+          <p>Las personas de tu empresa y el rol de cada una. El rol define qué pantallas ve y qué puede hacer.</p>
         </div>
-        <span className="date-pill">{members.length} USUARIOS</span>
       </div>
       {(membersQuery.error || rolesQuery.error) && (
         <p role="alert" className="error page-feedback">
@@ -57,37 +76,47 @@ export default function UsersPage() {
         </p>
       )}
       <section className="settings-card member-card">
-        <div className="settings-card-heading">
-          <span className="role-icon"><UsersRound size={20} /></span>
-          <div>
-            <h2>Equipo de la empresa</h2>
-            <p>El administrador puede asignar un rol a cada integrante.</p>
-          </div>
+        <div className="users-summary" aria-label="Resumen del equipo">
+          <span className="chip"><UsersRound size={14} aria-hidden="true" /> {members.length} {members.length === 1 ? 'persona' : 'personas'}</span>
+          <span className="chip">{members.length - suspended} activas</span>
+          {suspended > 0 && <span className="chip warn">{suspended} suspendidas</span>}
         </div>
-        {membersQuery.isPending && <p>Cargando usuarios…</p>}
-        {!membersQuery.isPending && !membersQuery.error && !members.length && (
-          <p>Aún no hay usuarios asignados.</p>
+        <div className="users-toolbar">
+          <label className="roles-search">
+            <Search size={16} aria-hidden="true" />
+            <span className="sr-only">Buscar persona</span>
+            <input type="search" placeholder="Buscar por nombre o correo…" value={search} onChange={reset(setSearch)} />
+          </label>
+          {role === 'admin' && (
+            <select aria-label="Filtrar por rol" value={roleFilter} onChange={reset(setRoleFilter)}>
+              <option value="">Todos los roles</option>
+              {roles.map((entry) => <option key={entry.id} value={entry.id}>{entry.name}</option>)}
+            </select>
+          )}
+          <select aria-label="Filtrar por estado" value={statusFilter} onChange={reset(setStatusFilter)}>
+            <option value="">Cualquier estado</option>
+            <option value="active">Activas</option>
+            <option value="suspended">Suspendidas</option>
+          </select>
+        </div>
+        {membersQuery.isPending && <p className="muted">Cargando usuarios…</p>}
+        {!membersQuery.isPending && !membersQuery.error && !visible.length && (
+          <p className="muted">{members.length ? 'Ninguna persona coincide con la búsqueda.' : 'Todavía no hay personas en el equipo.'}</p>
         )}
         <div className="member-list">
-          {members.map((member) => (
-            <div className="member-row" key={member.user_id}>
-              <span className="member-avatar"><UserRound size={19} /></span>
+          {shown.map((member) => (
+            <div className="member-row v2" key={member.user_id}>
+              <span className="member-avatar" aria-hidden="true">{initials(member)}</span>
               <div className="member-identity">
                 <strong>{member.display_name || member.email?.split('@')[0]}</strong>
                 <small>{member.email}</small>
               </div>
               {role === 'admin' ? (
                 <label className="member-role-control">
-                  Rol
-                  <select
-                    value={member.role_id}
-                    disabled={saving === member.user_id || rolesQuery.isPending}
-                    onChange={(event) => changeRole(member, event.target.value)}
-                  >
-                    {roles.filter((entry) => role === 'admin' || entry.code !== 'admin'
-                      || entry.id === member.role_id).map((entry) => (
-                      <option key={entry.id} value={entry.id}>{entry.name}</option>
-                    ))}
+                  <span className="sr-only">Rol de {member.display_name || member.email}</span>
+                  <select value={member.role_id} disabled={saving === member.user_id || rolesQuery.isPending}
+                    onChange={(event) => changeRole(member, event.target.value)}>
+                    {roles.map((entry) => <option key={entry.id} value={entry.id}>{entry.name}</option>)}
                   </select>
                 </label>
               ) : <span className="member-status">{member.role_name}</span>}
@@ -97,6 +126,13 @@ export default function UsersPage() {
             </div>
           ))}
         </div>
+        {visible.length > shown.length && (
+          <div className="users-more">
+            <button type="button" className="button outline" onClick={() => setLimit(limit + PAGE)}>
+              Mostrar más ({visible.length - shown.length} restantes)
+            </button>
+          </div>
+        )}
       </section>
     </div>
   );

@@ -764,3 +764,9 @@
 .production-shell .production-job-buttons { justify-content: flex-start; }
 .production-shell .production-job-buttons .cleanup-action { order: 99; margin-left: auto; }
 @media (max-width: 760px) { .production-shell .production-job { padding: 16px; } .production-shell .production-job-buttons .button { flex: 1 1 150px; } }
+
+/* Agregar componente: en columnas angostas el buscador no se comprime (D7, Fase 1) */
+.formula-add { display: flex; flex-wrap: wrap; align-items: flex-end; }
+.formula-add-search { flex: 1 1 260px; min-width: 220px; }
+.formula-add > label { flex: 0 1 150px; }
+.formula-add > .button { flex: 0 0 auto; }

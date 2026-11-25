@@ -183,9 +183,12 @@ export default function ManufacturingAvailabilityPage() {
               {lineFilter === 'missing' && !lineSearch
                 ? 'No falta ningún componente: hay stock libre suficiente.'
                 : 'No hay componentes con ese filtro.'}
+              {lineFilter === 'missing' && !lineSearch && lines.length > 0 && (
+                <> <button type="button" className="button outline" onClick={() => setLineFilter('all')}>Ver el detalle de los {lines.length} componentes</button></>
+              )}
             </p>
           )}
-          <div className="manufacturing-table-wrap">
+          {filteredLines.length > 0 && <div className="manufacturing-table-wrap">
             <table>
               <thead><tr><th>Componente y ubicación</th><th>Necesario</th><th>Físico</th>
                 <th>Utilizable</th><th>Reservado</th><th>Libre</th><th>Faltante</th></tr></thead>
@@ -212,7 +215,7 @@ export default function ManufacturingAvailabilityPage() {
                 </tr>;
               })}</tbody>
             </table>
-          </div>
+          </div>}
           <ListPager pager={linesPager} noun="componentes" sizes={[25, 50, 100]} />
           <p className="manufacturing-note">Esta simulación no aparta stock: la reserva por depósito y
             lote se asigna al confirmar la orden, priorizando lotes próximos a vencer.

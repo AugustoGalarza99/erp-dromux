@@ -154,6 +154,8 @@ function LineEditor({ companyId, line, index, items, warehouses, onUpdate, onRem
         >
           {item.infinite_stock
             ? 'Stock infinito'
+            : (balanceQuery.isPending || lotsQuery.isFetching)
+              ? 'Calculando disponible…'
             : Number(line.quantity) > available
               ? `Stock insuficiente: pedís ${formatQuantity(String(line.quantity))} y hay ${formatQuantity(available.toFixed(6))} ${item.units?.symbol ?? ''}`
               : `Disponible: ${formatQuantity(available.toFixed(6))} ${item.units?.symbol ?? ''}`}
@@ -641,7 +643,7 @@ export default function DeliveryNoteComposer({
           disabled={
             busy ||
             !can('stock', 'insert') ||
-            (kind === 'production' && !can('production', 'insert')) ||
+            (kind === 'production' && !can('production_orders', 'insert')) ||
             (kind === 'sale' && !can('sales', 'read'))
           }
         >

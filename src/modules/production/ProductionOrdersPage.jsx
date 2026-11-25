@@ -224,7 +224,7 @@ export default function ProductionOrdersPage() {
   const [inputs, setInputs] = useState([]);
   const [busy, setBusy] = useState(false);
   const [createOpen, setCreateOpen] = useState(
-    Boolean(planId) || (params.get("new") === "1" && can("production", "insert")),
+    Boolean(planId) || (params.get("new") === "1" && can("production_orders", "insert")),
   );
   const [requestId, setRequestId] = useState(() => crypto.randomUUID());
   const [finishRequestId, setFinishRequestId] = useState(() =>
@@ -398,7 +398,7 @@ export default function ProductionOrdersPage() {
       !formula ||
       !validQuantity(quantity) ||
       !warehouseId ||
-      !can("production", "insert") ||
+      !can("production_orders", "insert") ||
       (mode === "complete" && !can("stock", "insert")) ||
       (planId &&
         (plan?.status !== "planned" ||
@@ -529,7 +529,7 @@ export default function ProductionOrdersPage() {
 
   const planTaken = jobs.some((job) => job.plan_id === planId);
   const canSubmit =
-    can("production", "insert") &&
+    can("production_orders", "insert") &&
     (mode === "queue" || can("stock", "insert")) &&
     !busy &&
     !!formula &&
@@ -563,7 +563,7 @@ export default function ProductionOrdersPage() {
               <Truck size={17} aria-hidden="true" /> Remitos
             </Link>
           )}
-          {can("production", "insert") && (
+          {can("production_orders", "insert") && (
             <button
               type="button"
               className="button primary"
@@ -947,7 +947,7 @@ export default function ProductionOrdersPage() {
                 {formatQuantity(run.quantity)} ·{" "}
                 {new Date(run.created_at).toLocaleString("es-AR")}
               </span>
-              {role === "admin" && can("finance", "read") && (
+              {(role === "admin" || can("costs_production", "read")) && (
                 <small>
                   Costo registrado: ${" "}
                   {Number(run.estimated_cost).toLocaleString("es-AR")}

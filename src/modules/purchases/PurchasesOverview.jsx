@@ -37,9 +37,10 @@ export function receivedLines(order) {
 export default function PurchasesOverview() {
   const { activeCompanyId, user, can } = useAuth();
   const scope = [user?.id, activeCompanyId];
-  const enabled = Boolean(activeCompanyId) && can("purchases", "read");
-  const canForecast = enabled && can("stock", "read") && can("production", "read");
-  const canFinance = enabled && can("finance", "read");
+  const enabled = Boolean(activeCompanyId) && can("purchases_overview", "read");
+  // El pronóstico lo exige el servidor con el módulo completo de Compras (pasa a Producción en 047).
+  const canForecast = enabled && can("production_replenishment", "read") && can("stock", "read");
+  const canFinance = enabled && can("finance", "read") && can("purchases_accounts", "read");
 
   const open = useQuery({
     queryKey: ["purchase-orders", ...scope, "overview", "open"],
@@ -70,7 +71,7 @@ export default function PurchasesOverview() {
   const requests = useQuery({
     queryKey: ["purchase-requests", ...scope, "overview"],
     queryFn: () => listPurchaseRequests(activeCompanyId, { page: 0, status: "pending" }),
-    enabled,
+    enabled: enabled && can("purchase_requests", "read"),
     retry: false,
     staleTime: 30_000,
   });
@@ -164,7 +165,7 @@ export default function PurchasesOverview() {
     <PurchasesShell
       title="Resumen de compras"
       description="Qué esperás recibir, qué conviene reponer y qué pagos esperan confirmación. Desde acá llegás a cada pantalla del módulo."
-      actions={can("purchases", "insert") && (
+      actions={can("purchases_orders", "insert") && (
         <Link className="button primary" to="/purchases/orders?new=1">
           <Plus size={17} aria-hidden="true" /> Nueva orden de compra
         </Link>

@@ -58,6 +58,33 @@ begin
 end
 $f$;
 
+-- Ayudantes del grupo 11 (permisos de Compras por pantalla).
+-- Prepara (como postgres, dentro del punto de guardado que se revierte) los permisos de Compras del rol: lista "recurso:acción,...".
+create or replace function pg_temp.setrole(p_company uuid, p_role uuid, p_list text) returns text language sql as $f$
+  select format($q$delete from public.role_permissions where role_id=%L and (resource like 'purchase%%' or resource like 'costs\_%%');
+    insert into public.role_permissions(company_id,role_id,resource,action)
+    select %L,%L,split_part(x,':',1),split_part(x,':',2) from unnest(string_to_array(%L,',')) x on conflict do nothing$q$,
+    p_role, p_company, p_role, p_list)
+$f$;
+-- Bloque que PASA si la llamada se rechaza con 42501 (permiso); cualquier otro resultado (incluso un error de validación) FALLA.
+create or replace function pg_temp.denegado(p_call text) returns text language sql as $f$
+  select 'do $b$ begin begin perform (select count(*) from ' || p_call
+    || '); exception when insufficient_privilege then return; end; raise exception ''NO fue denegado''; end $b$'
+$f$;
+-- Bloque que PASA si la llamada NO se rechaza por permiso (un error de validación posterior es aceptable: el permiso se evalúa primero).
+create or replace function pg_temp.permitido(p_call text) returns text language sql as $f$
+  select 'do $b$ begin begin perform (select count(*) from ' || p_call
+    || '); exception when insufficient_privilege then raise exception ''DENEGADO 42501: %'', sqlerrm; when others then null; end; end $b$'
+$f$;
+
+-- Ayudante del grupo 12: permisos de Producción y costos del rol (lista "recurso:acción,...").
+create or replace function pg_temp.setrole_prod(p_company uuid, p_role uuid, p_list text) returns text language sql as $f$
+  select format($q$delete from public.role_permissions where role_id=%L and (resource like 'production%%' or resource = 'costs_production');
+    insert into public.role_permissions(company_id,role_id,resource,action)
+    select %L,%L,split_part(x,':',1),split_part(x,':',2) from unnest(string_to_array(%L,',')) x on conflict do nothing$q$,
+    p_role, p_company, p_role, p_list)
+$f$;
+
 do $do$
 declare
   -- Usuarios de prueba
@@ -78,6 +105,16 @@ declare
     'delivery_notes','roles','role_permissions','company_users','company_profile'];
   todos text := '[{"resource":"finance","action":"read"},{"resource":"users","action":"update"},{"resource":"roles","action":"update"},{"resource":"purchases","action":"manage"}]';
   pre_delegado text;
+  -- Grupo 11: roles de Compras de prueba (se aplican al rol del Vendedor DENTRO del punto de guardado, se revierten)
+  pre_pedidos text; pre_resumen text; pre_ordenes text; pre_ordenes_nc text; pre_ordenes_w text; pre_prov text; pre_sin_manage text; pre_encargado text;
+  c_mat text; c_dir text; c_cat text; c_rate text; c_acc text; c_stat text; c_pay text; c_cpay text; c_corder text; c_rec text;
+  c_cancel text; c_rej text; c_conv text; c_ropt text; c_itemcost text; c_save text; c_adj text; c_pref text; c_addrate text;
+  tp text;
+  p_ov text; p_ord text; p_ordr text; p_stats text; p_plan text; p_form text; p_pack text; p_avail text; p_costs text;
+  q_dash text; q_jobs text; q_runs text; q_plans text; q_can text; q_stats text; q_prod text; q_cjob text; q_start text; q_cxl text; q_ret text;
+  q_cplan text; q_form text; q_pkg text; q_fcost text; q_repl text;
+  tablas_compras text[] := array['purchase_orders','purchase_order_lines','purchase_receipts','purchase_receipt_lines','suppliers',
+    'supplier_items','exchange_rates','exchange_rate_types','supplier_payment_orders','supplier_price_adjustments'];
 begin
   ----------------------------------------------------------------------------------------------------
   -- 1) Controles positivos: lo permitido funciona (si esto falla, el resto no es confiable).
@@ -250,6 +287,234 @@ begin
   perform pg_temp.t('10 Tras 045','Admin A edita un rol: quita pantallas y el módulo deja de estar completo',adm,'authenticated',null,
     format($q$do $b$ declare r uuid; begin r:=public.create_company_role(%L,'Edit','edit_t','[{"resource":"purchases","action":"read"}]'::jsonb); perform public.update_company_role(%L,r,'Edit','[{"resource":"purchases_overview","action":"read"}]'::jsonb); if exists(select 1 from public.role_permissions where role_id=r and resource in ('purchases','purchases_orders')) then raise exception 'quedó abierto'; end if; end $b$$q$,ca,ca),'x','sin_error');
   perform pg_temp.t('10 Tras 045','Vendedor no puede crear roles (sigue siendo solo admin)',ven,'authenticated',null,format($q$select public.create_company_role(%L,'X','x_t','[]'::jsonb)$q$,ca),'x','error');
+
+  ----------------------------------------------------------------------------------------------------
+  -- 11) TRAS LA MIGRACIÓN 046 (antes de aplicarla, estos casos dan FALLA: es lo esperado).
+  --     Compras por pantalla. Se reemplazan los permisos de Compras del rol del Vendedor DENTRO del punto de guardado
+  --     (se revierte) y se comprueba, con el servidor, qué pantallas responden y cuáles dan 42501.
+  --     "Denegado" = el servidor responde 42501 (permiso). "Permitido" = no hay 42501 (un error de validación posterior vale).
+  ----------------------------------------------------------------------------------------------------
+  pre_pedidos     := pg_temp.setrole(ca, rol_ven_a, 'purchase_requests:read,purchase_requests:insert');
+  pre_resumen     := pg_temp.setrole(ca, rol_ven_a, 'purchases_overview:read');
+  pre_ordenes     := pg_temp.setrole(ca, rol_ven_a, 'purchases_orders:read,costs_materials:read');
+  pre_ordenes_nc  := pg_temp.setrole(ca, rol_ven_a, 'purchases_orders:read');
+  pre_ordenes_w   := pg_temp.setrole(ca, rol_ven_a, 'purchases_orders:read,purchases_orders:insert,purchases_orders:update');
+  pre_prov        := pg_temp.setrole(ca, rol_ven_a, 'purchases_suppliers:read');
+  pre_sin_manage  := pg_temp.setrole(ca, rol_ven_a, 'purchase_requests:read,purchase_requests:insert,purchase_requests:update,purchases_orders:read,purchases_orders:insert');
+  pre_encargado   := pg_temp.setrole(ca, rol_ven_a,
+    'purchases_overview:read,purchase_requests:read,purchase_requests:insert,purchase_requests:update,purchase_requests:manage,'
+    || 'purchases_orders:read,purchases_orders:insert,purchases_orders:update,purchases_suppliers:read,purchases_suppliers:insert,'
+    || 'purchases_suppliers:update,purchases_accounts:read,purchases_accounts:insert,costs_materials:read,finance:read,finance:insert');
+
+  c_mat      := format('public.purchase_material_options(%L,%L,null)', ca, '');
+  c_dir      := format('public.supplier_directory(%L,%L,0)', ca, '');
+  c_cat      := format('public.supplier_quote_catalog(%L,gen_random_uuid(),null,%L,0)', ca, '');
+  c_rate     := format('public.exchange_rate_overview(%L)', ca);
+  c_acc      := format('public.supplier_account(%L,gen_random_uuid(),%L::date,%L::date,0)', ca, '2026-01-01', '2026-12-31');
+  c_stat     := format('public.supplier_purchase_statistics(%L,%L::date,%L::date)', ca, '2026-01-01', '2026-12-31');
+  c_pay      := format('public.supplier_payable_orders(%L,gen_random_uuid(),0)', ca);
+  c_cpay     := format('public.create_supplier_payment_order(%L,gen_random_uuid(),null,current_date,%L,%L,%L::jsonb,gen_random_uuid())', ca, 'x', 'x', '[]');
+  -- create_purchase_order (sin _once) no tiene EXECUTE para la API (correcto): se prueba la que usa la app.
+  c_corder   := format('public.create_purchase_order_once(%L,gen_random_uuid(),%L,%L::jsonb,gen_random_uuid())', ca, 'x', '[]');
+  c_rec      := format('public.receive_purchase_order(%L,gen_random_uuid(),gen_random_uuid(),%L,%L::jsonb)', ca, 'x', '[]');
+  c_cancel   := format('public.cancel_purchase_order(%L,gen_random_uuid())', ca);
+  c_rej      := format('public.reject_purchase_request(%L,gen_random_uuid(),%L)', ca, 'x');
+  c_conv     := format('public.convert_purchase_request(%L,gen_random_uuid(),gen_random_uuid(),%L,%L::jsonb,gen_random_uuid())', ca, 'x', '[]');
+  c_ropt     := format('public.purchase_request_item_options(%L,%L)', ca, '');
+  c_itemcost := format('public.item_cost_context(%L,gen_random_uuid())', ca);
+  c_save     := format('public.save_supplier_quote(%L,gen_random_uuid(),gen_random_uuid(),1,%L,%L,null,null,null,false)', ca, '', 'ARS');
+  c_adj      := format('public.supplier_adjustment_preview(%L,gen_random_uuid(),null,5)', ca);
+  c_pref     := format('public.set_preferred_supplier(%L,gen_random_uuid(),gen_random_uuid())', ca);
+  c_addrate  := format('public.add_exchange_rate(%L,gen_random_uuid(),1,current_date)', ca);
+
+  -- 11a) Rol con SOLO Pedidos internos: entra a esa pantalla y todo lo demás da 42501 / 0 filas.
+  perform pg_temp.t('11 Tras 046','Solo pedidos: opciones de ítems para pedir',ven,'authenticated',pre_pedidos,pg_temp.permitido(c_ropt),'x','sin_error');
+  perform pg_temp.t('11 Tras 046','Solo pedidos: lista sus pedidos',ven,'authenticated',pre_pedidos,format('select 1 from public.purchase_requests where company_id=%L',ca),'q','sin_error');
+  perform pg_temp.t('11 Tras 046','Solo pedidos: materiales para órdenes de compra (denegado)',ven,'authenticated',pre_pedidos,pg_temp.denegado(c_mat),'x','sin_error');
+  perform pg_temp.t('11 Tras 046','Solo pedidos: directorio de proveedores (denegado)',ven,'authenticated',pre_pedidos,pg_temp.denegado(c_dir),'x','sin_error');
+  perform pg_temp.t('11 Tras 046','Solo pedidos: catálogo de cotizaciones (denegado)',ven,'authenticated',pre_pedidos,pg_temp.denegado(c_cat),'x','sin_error');
+  perform pg_temp.t('11 Tras 046','Solo pedidos: tipos de cambio (denegado)',ven,'authenticated',pre_pedidos,pg_temp.denegado(c_rate),'x','sin_error');
+  perform pg_temp.t('11 Tras 046','Solo pedidos: cuenta con proveedor (denegado)',ven,'authenticated',pre_pedidos,pg_temp.denegado(c_acc),'x','sin_error');
+  perform pg_temp.t('11 Tras 046','Solo pedidos: estadística de compras (denegado)',ven,'authenticated',pre_pedidos,pg_temp.denegado(c_stat),'x','sin_error');
+  perform pg_temp.t('11 Tras 046','Solo pedidos: órdenes por pagar (denegado)',ven,'authenticated',pre_pedidos,pg_temp.denegado(c_pay),'x','sin_error');
+  perform pg_temp.t('11 Tras 046','Solo pedidos: crear orden de pago (denegado)',ven,'authenticated',pre_pedidos,pg_temp.denegado(c_cpay),'x','sin_error');
+  perform pg_temp.t('11 Tras 046','Solo pedidos: crear orden de compra (denegado)',ven,'authenticated',pre_pedidos,pg_temp.denegado(c_corder),'x','sin_error');
+  perform pg_temp.t('11 Tras 046','Solo pedidos: recibir mercadería (denegado)',ven,'authenticated',pre_pedidos,pg_temp.denegado(c_rec),'x','sin_error');
+  perform pg_temp.t('11 Tras 046','Solo pedidos: cancelar orden de compra (denegado)',ven,'authenticated',pre_pedidos,pg_temp.denegado(c_cancel),'x','sin_error');
+  perform pg_temp.t('11 Tras 046','Solo pedidos: rechazar pedido ajeno (denegado)',ven,'authenticated',pre_pedidos,pg_temp.denegado(c_rej),'x','sin_error');
+  perform pg_temp.t('11 Tras 046','Solo pedidos: convertir pedido en orden (denegado)',ven,'authenticated',pre_pedidos,pg_temp.denegado(c_conv),'x','sin_error');
+  perform pg_temp.t('11 Tras 046','Solo pedidos: guardar cotización de proveedor (denegado)',ven,'authenticated',pre_pedidos,pg_temp.denegado(c_save),'x','sin_error');
+  perform pg_temp.t('11 Tras 046','Solo pedidos: costo de proveedor en la ficha del ítem (denegado)',ven,'authenticated',pre_pedidos,pg_temp.denegado(c_itemcost),'x','sin_error');
+  foreach tp in array tablas_compras loop
+    perform pg_temp.t('11 Tras 046','Solo pedidos: lee '||tp||' (sin filas o error)',ven,'authenticated',pre_pedidos,format('select 1 from public.%I where company_id=%L',tp,ca),'q','negado');
+  end loop;
+
+  -- 11b) Una sola pantalla a la vez: cada una abre lo suyo y nada más.
+  perform pg_temp.t('11 Tras 046','Solo resumen: lee órdenes (el resumen las lista)',ven,'authenticated',pre_resumen,format('select 1 from public.purchase_orders where company_id=%L',ca),'q','sin_error');
+  perform pg_temp.t('11 Tras 046','Solo resumen: materiales para órdenes (denegado)',ven,'authenticated',pre_resumen,pg_temp.denegado(c_mat),'x','sin_error');
+  perform pg_temp.t('11 Tras 046','Solo resumen: directorio de proveedores (denegado)',ven,'authenticated',pre_resumen,pg_temp.denegado(c_dir),'x','sin_error');
+  perform pg_temp.t('11 Tras 046','Solo resumen: cuenta con proveedor (denegado)',ven,'authenticated',pre_resumen,pg_temp.denegado(c_acc),'x','sin_error');
+  perform pg_temp.t('11 Tras 046','Solo resumen: lee cotizaciones de proveedores (sin filas o error)',ven,'authenticated',pre_resumen,format('select 1 from public.supplier_items where company_id=%L',ca),'q','negado');
+  perform pg_temp.t('11 Tras 046','Solo órdenes (ver) CON costs_materials: materiales para órdenes (permitido)',ven,'authenticated',pre_ordenes,pg_temp.permitido(c_mat),'x','sin_error');
+  perform pg_temp.t('11 Tras 046','046b: Solo órdenes (ver) SIN costs_materials: materiales con precios (denegado)',ven,'authenticated',pre_ordenes_nc,pg_temp.denegado(c_mat),'x','sin_error');
+  perform pg_temp.t('11 Tras 046','Solo órdenes (ver): directorio de proveedores (denegado)',ven,'authenticated',pre_ordenes,pg_temp.denegado(c_dir),'x','sin_error');
+  perform pg_temp.t('11 Tras 046','Solo órdenes (ver): crear orden (denegado: falta crear)',ven,'authenticated',pre_ordenes,pg_temp.denegado(c_corder),'x','sin_error');
+  perform pg_temp.t('11 Tras 046','Solo órdenes (ver): recibir (denegado: falta crear)',ven,'authenticated',pre_ordenes,pg_temp.denegado(c_rec),'x','sin_error');
+  perform pg_temp.t('11 Tras 046','Solo órdenes (ver): cancelar (denegado: falta editar)',ven,'authenticated',pre_ordenes,pg_temp.denegado(c_cancel),'x','sin_error');
+  perform pg_temp.t('11 Tras 046','Solo órdenes (ver): cuenta con proveedor (denegado)',ven,'authenticated',pre_ordenes,pg_temp.denegado(c_acc),'x','sin_error');
+  perform pg_temp.t('11 Tras 046','Órdenes con crear/editar: crear orden (permitido)',ven,'authenticated',pre_ordenes_w,pg_temp.permitido(c_corder),'x','sin_error');
+  perform pg_temp.t('11 Tras 046','Órdenes con crear/editar: cancelar (permitido)',ven,'authenticated',pre_ordenes_w,pg_temp.permitido(c_cancel),'x','sin_error');
+  perform pg_temp.t('11 Tras 046','Órdenes con crear/editar: rechazar pedido (denegado)',ven,'authenticated',pre_ordenes_w,pg_temp.denegado(c_rej),'x','sin_error');
+  perform pg_temp.t('11 Tras 046','Órdenes con crear/editar: convertir pedido (denegado: falta Gestionar)',ven,'authenticated',pre_ordenes_w,pg_temp.denegado(c_conv),'x','sin_error');
+  perform pg_temp.t('11 Tras 046','Solo proveedores (ver): directorio y catálogo (permitido)',ven,'authenticated',pre_prov,pg_temp.permitido(c_dir),'x','sin_error');
+  perform pg_temp.t('11 Tras 046','Solo proveedores (ver): tipos de cambio (permitido)',ven,'authenticated',pre_prov,pg_temp.permitido(c_rate),'x','sin_error');
+  perform pg_temp.t('11 Tras 046','Solo proveedores (ver): guardar cotización (denegado: falta editar)',ven,'authenticated',pre_prov,pg_temp.denegado(c_save),'x','sin_error');
+  perform pg_temp.t('11 Tras 046','Solo proveedores (ver): ajustar precios (denegado)',ven,'authenticated',pre_prov,pg_temp.denegado(c_adj),'x','sin_error');
+  perform pg_temp.t('11 Tras 046','Solo proveedores (ver): proveedor preferido (denegado)',ven,'authenticated',pre_prov,pg_temp.denegado(c_pref),'x','sin_error');
+  perform pg_temp.t('11 Tras 046','Solo proveedores (ver): cargar tipo de cambio (denegado)',ven,'authenticated',pre_prov,pg_temp.denegado(c_addrate),'x','sin_error');
+  perform pg_temp.t('11 Tras 046','Solo proveedores (ver): lee órdenes (sin filas o error)',ven,'authenticated',pre_prov,format('select 1 from public.purchase_orders where company_id=%L',ca),'q','negado');
+  perform pg_temp.t('11 Tras 046','Solo proveedores (ver): crear orden (denegado)',ven,'authenticated',pre_prov,pg_temp.denegado(c_corder),'x','sin_error');
+
+  -- 11c) Gestionar pedidos ('manage'): sin Gestionar no se rechaza ni se convierte, aunque pueda editar.
+  perform pg_temp.t('11 Tras 046','Editar pedidos sin Gestionar: rechazar (denegado)',ven,'authenticated',pre_sin_manage,pg_temp.denegado(c_rej),'x','sin_error');
+  perform pg_temp.t('11 Tras 046','Editar pedidos sin Gestionar: convertir (denegado)',ven,'authenticated',pre_sin_manage,pg_temp.denegado(c_conv),'x','sin_error');
+
+  -- 11d) Costos de materiales (H-011): solo con costs_materials.
+  perform pg_temp.t('11 Tras 046','Vendedor (compras completo, sin costs_materials): costo del proveedor en la ficha (denegado)',ven,'authenticated',null,pg_temp.denegado(c_itemcost),'x','sin_error');
+  perform pg_temp.t('11 Tras 046','Vendedor sin costs_materials: JSON de ítems sin valores de costo de referencia (H-011)',ven,'authenticated',null,format($q$select 1 where public.list_production_items(%L,true)::text ~ '"reference_unit_cost": [^n]'$q$,ca),'q','negado');
+  perform pg_temp.t('11 Tras 046','Vendedor conserva convertir pedidos (tiene Gestionar y crear órdenes)',ven,'authenticated',null,pg_temp.permitido(c_conv),'x','sin_error');
+  perform pg_temp.t('11 Tras 046','Vendedor sigue sin poder rechazar (no tiene editar en pedidos)',ven,'authenticated',null,pg_temp.denegado(c_rej),'x','sin_error');
+  perform pg_temp.t('11 Tras 046','Vendedor conserva tipos de cambio (Proveedores)',ven,'authenticated',null,pg_temp.permitido(c_rate),'x','sin_error');
+  perform pg_temp.t('11 Tras 046','Encargado de compras con costs_materials: costo del proveedor en la ficha (permitido)',ven,'authenticated',pre_encargado,pg_temp.permitido(c_itemcost),'x','sin_error');
+  perform pg_temp.t('11 Tras 046','Encargado de compras: JSON de ítems (INFO: puede traer costos de referencia)',ven,'authenticated',pre_encargado,format($q$select 1 where public.list_production_items(%L,true)::text ~ '"reference_unit_cost": [^n]'$q$,ca),'q','info');
+  perform pg_temp.t('11 Tras 046','Encargado: materiales para órdenes',ven,'authenticated',pre_encargado,pg_temp.permitido(c_mat),'x','sin_error');
+  perform pg_temp.t('11 Tras 046','Encargado: directorio de proveedores',ven,'authenticated',pre_encargado,pg_temp.permitido(c_dir),'x','sin_error');
+  perform pg_temp.t('11 Tras 046','Encargado: cuenta con proveedor (compras + finanzas)',ven,'authenticated',pre_encargado,pg_temp.permitido(c_acc),'x','sin_error');
+  perform pg_temp.t('11 Tras 046','Encargado: rechazar pedido (Gestionar + editar)',ven,'authenticated',pre_encargado,pg_temp.permitido(c_rej),'x','sin_error');
+  perform pg_temp.t('11 Tras 046','Encargado: convertir pedido en orden',ven,'authenticated',pre_encargado,pg_temp.permitido(c_conv),'x','sin_error');
+  perform pg_temp.t('11 Tras 046','Encargado: guardar cotización',ven,'authenticated',pre_encargado,pg_temp.permitido(c_save),'x','sin_error');
+
+  -- 11d2) H-011 (ABIERTO, decide el propietario): precios de proveedor por tabla, aunque falte costs_materials.
+  perform pg_temp.t('11 Tras 046','H-011 INFO: Vendedor sin costs_materials lee precios en supplier_items (si da filas, el precio de proveedor sigue visible)',ven,'authenticated',null,format('select unit_price from public.supplier_items where company_id=%L',ca),'q','info');
+  perform pg_temp.t('11 Tras 046','Pedidos: la lectura de purchase_requests no falla para quien solo pide (control del P0 de la revisión)',ven,'authenticated',pre_pedidos,format('select 1 from public.purchase_requests where company_id=%L',ca),'q','sin_error');
+
+  -- 11e) Administrador, otras empresas y anónimo.
+  perform pg_temp.t('11 Tras 046','Admin A: materiales, costo en la ficha y cuenta con proveedor (permitidos)',adm,'authenticated',null,pg_temp.permitido(c_mat),'x','sin_error');
+  perform pg_temp.t('11 Tras 046','Admin A: costo del proveedor en la ficha',adm,'authenticated',null,pg_temp.permitido(c_itemcost),'x','sin_error');
+  perform pg_temp.t('11 Tras 046','Admin A: cuenta con proveedor',adm,'authenticated',null,pg_temp.permitido(c_acc),'x','sin_error');
+  perform pg_temp.t('11 Tras 046','Admin B (otra empresa): materiales de A (denegado)',dem,'authenticated',null,pg_temp.denegado(c_mat),'x','sin_error');
+  perform pg_temp.t('11 Tras 046','Admin B: costo en la ficha de A (denegado)',dem,'authenticated',null,pg_temp.denegado(c_itemcost),'x','sin_error');
+  perform pg_temp.t('11 Tras 046','Vendedor (solo A): materiales de B (denegado)',ven,'authenticated',null,pg_temp.denegado(format('public.purchase_material_options(%L,%L,null)',cb,'')),'x','sin_error');
+  perform pg_temp.t('11 Tras 046','Anónimo: materiales de A',null,'anon',null,'select * from '||c_mat,'q','error');
+  perform pg_temp.t('11 Tras 046','Anónimo: costo en la ficha de A',null,'anon',null,'select * from '||c_itemcost,'q','error');
+
+  -- 11f) Catálogo: "Gestionar" solo en Pedidos internos; los costos solo admiten ver.
+  perform pg_temp.t('11 Tras 046','Catálogo: solo purchase_requests admite manage',ven,'authenticated',null,
+    $q$select 1 where (select array_agg(resource) from public.permission_catalog where 'manage' = any (actions)) = array['purchase_requests']$q$,'q','datos');
+  perform pg_temp.t('11 Tras 046','Catálogo: las 5 pantallas de Compras y costs_materials figuran como exigidas',ven,'authenticated',null,
+    $q$select 1 where (select count(*) from public.permission_catalog where enforced and resource in ('purchases','purchases_overview','purchase_requests','purchases_orders','purchases_suppliers','purchases_accounts','costs_materials'))=7$q$,'q','datos');
+  perform pg_temp.t('11 Tras 046','Admin A: rol con Gestionar en Pedidos internos se guarda',adm,'authenticated',null,
+    format($q$select public.create_company_role(%L,'Encargado t','encargado_t','[{"resource":"purchase_requests","action":"read"},{"resource":"purchase_requests","action":"manage"}]'::jsonb)$q$,ca),'x','sin_error');
+  perform pg_temp.t('11 Tras 046','Admin A: Gestionar en Órdenes de compra se rechaza (no existe)',adm,'authenticated',null,
+    format($q$select public.create_company_role(%L,'Raro t','raro2_t','[{"resource":"purchases_orders","action":"manage"}]'::jsonb)$q$,ca),'x','error');
+
+  ----------------------------------------------------------------------------------------------------
+  -- 12) TRAS LA MIGRACIÓN 047 (antes de aplicarla, estos casos dan FALLA: es lo esperado).
+  --     Producción por pantalla + costs_production. Se reemplazan los permisos de Producción del rol del Vendedor DENTRO del punto de
+  --     guardado (se revierte). "Denegado" = 42501; "Permitido" = no hay 42501 (un error de validación posterior vale).
+  ----------------------------------------------------------------------------------------------------
+  p_ov    := pg_temp.setrole_prod(ca, rol_ven_a, 'production_overview:read');
+  p_ord   := pg_temp.setrole_prod(ca, rol_ven_a, 'production_orders:read,production_orders:insert,production_orders:update');
+  p_ordr  := pg_temp.setrole_prod(ca, rol_ven_a, 'production_orders:read');
+  p_stats := pg_temp.setrole_prod(ca, rol_ven_a, 'production_stats:read');
+  p_plan  := pg_temp.setrole_prod(ca, rol_ven_a, 'production_planning:read,production_planning:insert,production_planning:update');
+  p_form  := pg_temp.setrole_prod(ca, rol_ven_a, 'production_formulas:read,production_formulas:update');
+  p_pack  := pg_temp.setrole_prod(ca, rol_ven_a, 'production_packaging:read,production_packaging:update');
+  p_avail := pg_temp.setrole_prod(ca, rol_ven_a, 'production_availability:read');
+  p_costs := pg_temp.setrole_prod(ca, rol_ven_a, 'production_orders:read,costs_production:read');
+
+  q_dash  := format('public.erp_production_dashboard(%L)', ca);
+  q_jobs  := format('public.list_production_jobs(%L)', ca);
+  q_runs  := format('public.list_production_runs(%L)', ca);
+  q_plans := format('public.list_production_plans(%L)', ca);
+  q_can   := format('public.erp_can_manufacture(%L,gen_random_uuid(),1)', ca);
+  q_stats := format('public.production_output_summary(%L,%L::date,%L::date,%L,null,%L)', ca, '2026-01-01', '2026-12-31', 'month', 'America/Argentina/Buenos_Aires');
+  q_prod  := format('public.production_output_by_product(%L,%L::date,%L::date,%L,25,0,%L)', ca, '2026-01-01', '2026-12-31', '', 'America/Argentina/Buenos_Aires');
+  q_cjob  := format('public.create_production_job(%L,gen_random_uuid(),1,gen_random_uuid(),null,%L,gen_random_uuid(),null)', ca, 'x');
+  q_start := format('public.start_production_job(%L,gen_random_uuid())', ca);
+  q_cxl   := format('public.cancel_production_job(%L,gen_random_uuid(),%L)', ca, 'prueba');
+  q_ret   := format('public.return_production_material(%L,gen_random_uuid(),gen_random_uuid(),1,%L,gen_random_uuid())', ca, 'prueba');
+  q_cplan := format('public.create_production_plan(%L,gen_random_uuid(),1,gen_random_uuid(),null,%L,gen_random_uuid())', ca, 'x');
+  q_form  := format('public.save_production_formula(%L,gen_random_uuid(),1,%L::jsonb)', ca, '[]');
+  q_pkg   := format('public.save_production_packaging_type(%L,null,%L,1,gen_random_uuid(),true)', ca, 'Prueba');
+  q_fcost := format('public.production_formula_cost(%L,gen_random_uuid())', ca);
+  q_repl  := format('public.erp_replenishment_forecast(%L)', ca);
+
+  -- 12a) Solo Resumen: ve el tablero y las listas de órdenes, nada más.
+  perform pg_temp.t('12 Tras 047','Solo resumen: tablero de producción (permitido)',ven,'authenticated',p_ov,pg_temp.permitido(q_dash),'x','sin_error');
+  perform pg_temp.t('12 Tras 047','Solo resumen: lista de órdenes (permitido)',ven,'authenticated',p_ov,format($q$select 1 where jsonb_array_length(%s)>0$q$,q_jobs),'q','datos');
+  perform pg_temp.t('12 Tras 047','Solo resumen: crear orden (denegado)',ven,'authenticated',p_ov,pg_temp.denegado(q_cjob),'x','sin_error');
+  perform pg_temp.t('12 Tras 047','Solo resumen: planes (denegado)',ven,'authenticated',p_ov,format($q$select 1 where jsonb_array_length(%s)>0$q$,q_plans),'q','negado');
+  perform pg_temp.t('12 Tras 047','Solo resumen: estadística (denegado)',ven,'authenticated',p_ov,pg_temp.denegado(q_stats),'x','sin_error');
+  perform pg_temp.t('12 Tras 047','Solo resumen: ¿alcanza el stock? (denegado)',ven,'authenticated',p_ov,pg_temp.denegado(q_can),'x','sin_error');
+  perform pg_temp.t('12 Tras 047','Solo resumen: guardar fórmula (denegado)',ven,'authenticated',p_ov,pg_temp.denegado(q_form),'x','sin_error');
+  perform pg_temp.t('12 Tras 047','Solo resumen: lee fórmulas (sin filas o error)',ven,'authenticated',p_ov,format('select 1 from public.production_formulas where company_id=%L',ca),'q','negado');
+  perform pg_temp.t('12 Tras 047','Solo resumen: lee planes (sin filas o error)',ven,'authenticated',p_ov,format('select 1 from public.production_plans where company_id=%L',ca),'q','negado');
+  perform pg_temp.t('12 Tras 047','Solo resumen: lee eventos de órdenes (sin filas o error)',ven,'authenticated',p_ov,format('select 1 from public.production_job_events where company_id=%L',ca),'q','negado');
+
+  -- 12b) Solo Órdenes: opera órdenes; no ve planes, estadística, tablero ni reposición.
+  perform pg_temp.t('12 Tras 047','Solo órdenes (ver): lista de órdenes y corridas (permitido)',ven,'authenticated',p_ordr,format($q$select 1 where jsonb_array_length(%s)>0$q$,q_jobs),'q','datos');
+  perform pg_temp.t('12 Tras 047','Solo órdenes (ver): crear orden (denegado: falta crear)',ven,'authenticated',p_ordr,pg_temp.denegado(q_cjob),'x','sin_error');
+  perform pg_temp.t('12 Tras 047','Solo órdenes (ver): iniciar (denegado: falta editar)',ven,'authenticated',p_ordr,pg_temp.denegado(q_start),'x','sin_error');
+  perform pg_temp.t('12 Tras 047','Órdenes con crear/editar: crear, iniciar, cancelar y devolver (permitidos)',ven,'authenticated',p_ord,pg_temp.permitido(q_cjob),'x','sin_error');
+  perform pg_temp.t('12 Tras 047','Órdenes con crear/editar: iniciar',ven,'authenticated',p_ord,pg_temp.permitido(q_start),'x','sin_error');
+  perform pg_temp.t('12 Tras 047','Órdenes con crear/editar: cancelar',ven,'authenticated',p_ord,pg_temp.permitido(q_cxl),'x','sin_error');
+  perform pg_temp.t('12 Tras 047','Órdenes con crear/editar: devolver insumo (exige stock:insert, el vendedor lo tiene)',ven,'authenticated',p_ord,pg_temp.permitido(q_ret),'x','sin_error');
+  perform pg_temp.t('12 Tras 047','Órdenes con crear/editar: tablero de producción (denegado)',ven,'authenticated',p_ord,pg_temp.denegado(q_dash),'x','sin_error');
+  perform pg_temp.t('12 Tras 047','Órdenes con crear/editar: crear plan (denegado)',ven,'authenticated',p_ord,pg_temp.denegado(q_cplan),'x','sin_error');
+  perform pg_temp.t('12 Tras 047','Órdenes con crear/editar: guardar fórmula (denegado)',ven,'authenticated',p_ord,pg_temp.denegado(q_form),'x','sin_error');
+  perform pg_temp.t('12 Tras 047','Órdenes con crear/editar: guardar presentación (denegado)',ven,'authenticated',p_ord,pg_temp.denegado(q_pkg),'x','sin_error');
+  perform pg_temp.t('12 Tras 047','Órdenes con crear/editar: estadística (denegado)',ven,'authenticated',p_ord,pg_temp.denegado(q_stats),'x','sin_error');
+  perform pg_temp.t('12 Tras 047','Órdenes: lee fórmulas y presentaciones (necesarias para crear la orden)',ven,'authenticated',p_ord,format('select 1 from public.production_formulas where company_id=%L',ca),'q','datos');
+  perform pg_temp.t('12 Tras 047','Órdenes: lee presentaciones',ven,'authenticated',p_ord,format('select 1 from public.production_packaging_types where company_id=%L',ca),'q','info');
+  perform pg_temp.t('12 Tras 047','Órdenes: NO lee planes (sin filas o error)',ven,'authenticated',p_ord,format('select 1 from public.production_plans where company_id=%L',ca),'q','negado');
+
+  -- 12c) Una pantalla por rol: estadística, planificación, fórmulas, envases, alcanza.
+  perform pg_temp.t('12 Tras 047','Solo estadística: resumen y por producto (permitido)',ven,'authenticated',p_stats,pg_temp.permitido(q_stats),'x','sin_error');
+  perform pg_temp.t('12 Tras 047','Solo estadística: por producto',ven,'authenticated',p_stats,pg_temp.permitido(q_prod),'x','sin_error');
+  perform pg_temp.t('12 Tras 047','Solo estadística: lista de órdenes (denegado)',ven,'authenticated',p_stats,format($q$select 1 where jsonb_array_length(%s)>0$q$,q_jobs),'q','negado');
+  perform pg_temp.t('12 Tras 047','Solo estadística: tablero (denegado)',ven,'authenticated',p_stats,pg_temp.denegado(q_dash),'x','sin_error');
+  perform pg_temp.t('12 Tras 047','Solo planificación: lista y crear plan (permitido)',ven,'authenticated',p_plan,format($q$select 1 where jsonb_array_length(%s)>0$q$,q_plans),'q','info');
+  perform pg_temp.t('12 Tras 047','Solo planificación: completar un plan exige Órdenes (denegado)',ven,'authenticated',p_plan,pg_temp.denegado(format('public.complete_production_plan(%L,gen_random_uuid(),gen_random_uuid(),%L::jsonb,%L,null)',ca,'[]','x')),'x','sin_error');
+  perform pg_temp.t('12 Tras 047','Solo planificación: crear plan',ven,'authenticated',p_plan,pg_temp.permitido(q_cplan),'x','sin_error');
+  perform pg_temp.t('12 Tras 047','Solo planificación: crear orden (denegado)',ven,'authenticated',p_plan,pg_temp.denegado(q_cjob),'x','sin_error');
+  perform pg_temp.t('12 Tras 047','Solo fórmulas: guardar fórmula (permitido)',ven,'authenticated',p_form,pg_temp.permitido(q_form),'x','sin_error');
+  perform pg_temp.t('12 Tras 047','Solo fórmulas: crear orden (denegado)',ven,'authenticated',p_form,pg_temp.denegado(q_cjob),'x','sin_error');
+  perform pg_temp.t('12 Tras 047','Solo fórmulas: lee fórmulas',ven,'authenticated',p_form,format('select 1 from public.production_formulas where company_id=%L',ca),'q','datos');
+  perform pg_temp.t('12 Tras 047','Solo envases: guardar presentación (permitido)',ven,'authenticated',p_pack,pg_temp.permitido(q_pkg),'x','sin_error');
+  perform pg_temp.t('12 Tras 047','Solo envases: guardar fórmula (denegado)',ven,'authenticated',p_pack,pg_temp.denegado(q_form),'x','sin_error');
+  perform pg_temp.t('12 Tras 047','Solo "¿alcanza?": simulador (permitido)',ven,'authenticated',p_avail,pg_temp.permitido(q_can),'x','sin_error');
+  perform pg_temp.t('12 Tras 047','Solo "¿alcanza?": lista de planes (denegado)',ven,'authenticated',p_avail,format($q$select 1 where jsonb_array_length(%s)>0$q$,q_plans),'q','negado');
+
+  -- 12d) Costos de producción: solo administrador o costs_production.
+  perform pg_temp.t('12 Tras 047','Sin costs_production: costo de la fórmula (denegado)',ven,'authenticated',p_ord,pg_temp.denegado(q_fcost),'x','sin_error');
+  perform pg_temp.t('12 Tras 047','Con costs_production (no admin): costo de la fórmula (permitido)',ven,'authenticated',p_costs,pg_temp.permitido(q_fcost),'x','sin_error');
+  perform pg_temp.t('12 Tras 047','Con costs_production: sus órdenes traen costos (INFO)',ven,'authenticated',p_costs,format($q$select 1 where public.list_production_jobs(%L)::text ~ '"unit_cost": [^n]'$q$,ca),'q','info');
+  perform pg_temp.t('12 Tras 047','Control: con el rol de prueba la lista de órdenes NO está vacía (si no, los casos de costos no prueban nada)',ven,'authenticated',p_costs,format($q$select 1 where jsonb_array_length(%s)>0$q$,q_jobs),'q','datos');
+  perform pg_temp.t('12 Tras 047','Sin costs_production: JSON de órdenes sin valores de costo',ven,'authenticated',p_ord,format($q$select 1 where public.list_production_jobs(%L)::text ~ '"unit_cost": [^n]'$q$,ca),'q','negado');
+  perform pg_temp.t('12 Tras 047','Sin costs_production: JSON de corridas sin valores de costo',ven,'authenticated',p_ord,format($q$select 1 where public.list_production_runs(%L)::text ~ '"(unit_cost|estimated_cost)": [^n]'$q$,ca),'q','negado');
+  perform pg_temp.t('12 Tras 047','Vendedor actual (sin costs_production): costo de la fórmula (denegado)',ven,'authenticated',null,pg_temp.denegado(q_fcost),'x','sin_error');
+  perform pg_temp.t('12 Tras 047','Admin A: costo de la fórmula (permitido)',adm,'authenticated',null,pg_temp.permitido(q_fcost),'x','sin_error');
+
+  -- 12e) Reposición, otras empresas y anónimo.
+  perform pg_temp.t('12 Tras 047','Reposición solo con producción:reposición + stock (INFO: filas que devuelve)',ven,'authenticated',pg_temp.setrole_prod(ca, rol_ven_a, 'production_replenishment:read,stock:read'),'select * from '||q_repl,'q','info');
+  perform pg_temp.t('12 Tras 047','Sin la pantalla de reposición: pronóstico vacío (negado)',ven,'authenticated',p_ord,'select * from '||q_repl,'q','negado');
+  perform pg_temp.t('12 Tras 047','Admin B (otra empresa): crear orden en A (denegado)',dem,'authenticated',null,pg_temp.denegado(q_cjob),'x','sin_error');
+  perform pg_temp.t('12 Tras 047','Admin B: costo de fórmula de A (denegado)',dem,'authenticated',null,pg_temp.denegado(q_fcost),'x','sin_error');
+  perform pg_temp.t('12 Tras 047','Anónimo: estadística de A',null,'anon',null,'select * from '||q_stats,'q','error');
+  perform pg_temp.t('12 Tras 047','Catálogo: pantallas de Producción y costs_production exigidas (11)',ven,'authenticated',null,
+    $q$select 1 where (select count(*) from public.permission_catalog where enforced and (module='production' or resource='costs_production'))=11$q$,'q','datos');
+
 end
 $do$;
 
@@ -261,6 +526,6 @@ order by case resultado when 'FALLA' then 0 when 'INFO' then 1 else 2 end, n;
 -- NOTAS PARA INTERPRETAR
 -- * "negado" pasa con error o con 0 filas. Un 0 puede ser trivial si la tabla está vacía en esa empresa: los controles del
 --   grupo 1 muestran que A tiene datos en items, producción y depósitos; el resto se confirma en el recorrido de la app.
--- * Grupo 5: el vendedor tiene purchases:read, por eso la referencia de costo de ítems es visible (diseño D-004: admin o
+-- * Grupo 5 (HISTÓRICO, antes de 046): el vendedor tenía purchases:read y por eso veía el costo de referencia (D-004: admin o
 --   compras). Si el vendedor NO debe ver costos de materiales, hay que quitarle purchases del rol (o separar permisos: Fase 4).
 -- * H-007 (grupo 6, INFO): si "sin error", la escalada está confirmada con pruebas; tras la migración 044 debe dar ERROR.

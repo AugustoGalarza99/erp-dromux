@@ -57,14 +57,14 @@ export const navGroups = [
         shortcut: "p",
         keywords: "fabricación",
         children: [
-          { label: "Resumen de producción", to: "/production", permission: "production", crumb: "Resumen", keywords: "panel general" },
-          { label: "Órdenes de fabricación", to: "/production/orders", permission: "production", keywords: "orden produccion fabricar" },
-          { label: "Fórmulas", to: "/production/formulas", permission: "production", keywords: "receta" },
-          { label: "Planificación", to: "/production/planning", permission: "production", keywords: "plan" },
-          { label: "¿Alcanza el stock para fabricar?", to: "/production/availability", permission: "production", crumb: "¿Alcanza el stock?", keywords: "faltantes disponibilidad tengo stock" },
-          { label: "Pronóstico y reposición", to: "/production/replenishment", permission: "production", crumb: "Reposición", keywords: "reponer comprar" },
-          { label: "Envases y presentaciones", to: "/production/packaging", permission: "production", crumb: "Envases", keywords: "envasado envase presentación embalaje" },
-          { label: "Estadística de producción", to: "/production/stats", permission: "production", crumb: "Estadística", keywords: "producido mes semana rango cuánto se produjo informe" },
+          { label: "Resumen de producción", to: "/production", permission: "production_overview", crumb: "Resumen", keywords: "panel general" },
+          { label: "Órdenes de fabricación", to: "/production/orders", permission: "production_orders", keywords: "orden produccion fabricar" },
+          { label: "Fórmulas", to: "/production/formulas", permission: "production_formulas", keywords: "receta" },
+          { label: "Planificación", to: "/production/planning", permission: "production_planning", keywords: "plan" },
+          { label: "¿Alcanza el stock para fabricar?", to: "/production/availability", permission: "production_availability", crumb: "¿Alcanza el stock?", keywords: "faltantes disponibilidad tengo stock" },
+          { label: "Pronóstico y reposición", to: "/production/replenishment", permission: "production_replenishment", crumb: "Reposición", keywords: "reponer comprar" },
+          { label: "Envases y presentaciones", to: "/production/packaging", permission: "production_packaging", crumb: "Envases", keywords: "envasado envase presentación embalaje" },
+          { label: "Estadística de producción", to: "/production/stats", permission: "production_stats", crumb: "Estadística", keywords: "producido mes semana rango cuánto se produjo informe" },
         ],
       },
     ],
@@ -95,11 +95,11 @@ export const navGroups = [
         shortcut: "c",
         keywords: "proveedores comprar",
         children: [
-          { label: "Resumen de compras", to: "/purchases", permission: "purchases", crumb: "Resumen", keywords: "panel general" },
-          { label: "Pedidos internos", to: "/purchases/requests", any: ["purchases", "purchase_requests"], crumb: "Pedidos internos", keywords: "solicitud pedir necesito falta material operario" },
-          { label: "Órdenes de compra", to: "/purchases/orders", permission: "purchases", keywords: "recepción recibir comprar pedido" },
-          { label: "Proveedores", to: "/purchases/suppliers", permission: "purchases", keywords: "cotización precios" },
-          { label: "Compras y cuentas", to: "/purchases/accounts", permission: "purchases", crumb: "Compras y cuentas", keywords: "deuda pagos proveedor estadísticas" },
+          { label: "Resumen de compras", to: "/purchases", permission: "purchases_overview", crumb: "Resumen", keywords: "panel general" },
+          { label: "Pedidos internos", to: "/purchases/requests", permission: "purchase_requests", crumb: "Pedidos internos", keywords: "solicitud pedir necesito falta material operario" },
+          { label: "Órdenes de compra", to: "/purchases/orders", permission: "purchases_orders", keywords: "recepción recibir comprar pedido" },
+          { label: "Proveedores", to: "/purchases/suppliers", permission: "purchases_suppliers", keywords: "cotización precios" },
+          { label: "Compras y cuentas", to: "/purchases/accounts", permission: "purchases_accounts", crumb: "Compras y cuentas", keywords: "deuda pagos proveedor estadísticas" },
         ],
       },
     ],
@@ -149,7 +149,7 @@ export const navGroups = [
         shortcut: "a",
         keywords: "configuración",
         children: [
-          { label: "Documentos de producción", to: "/settings/production-documents", permission: "production", keywords: "pdf hoja" },
+          { label: "Documentos de producción", to: "/settings/production-documents", permission: "production_documents", keywords: "pdf hoja" },
           { label: "Archivados", to: "/archivados", permission: "settings" },
           { label: "Usuarios", to: "/settings/users", permission: "users", adminOnly: true },
           { label: "Roles y permisos", to: "/settings/roles", permission: "roles", keywords: "accesos", adminOnly: true },
@@ -211,7 +211,7 @@ export function canSeeChild(child, { can, role }) {
   return resources.some((resource) => can(resource, "read"));
 }
 
-/* Entradas planas para la búsqueda global, filtradas por permiso. */
+/* Entradas planas para la búsqueda global. Lo que el rol no puede abrir se lista igual, bloqueado (`locked`), y va después. */
 export function searchEntries({ can, role }) {
   const entries = [];
   for (const group of navGroups) {
@@ -219,8 +219,9 @@ export function searchEntries({ can, role }) {
       const allowedChildren = (module.children ?? []).filter(
         (child) => canSeeChild(child, { can, role }),
       );
-      if (module.to && can(module.permission, "read")) {
+      if (module.to) {
         entries.push({
+          locked: !can(module.permission, "read"),
           label: module.label,
           to: module.to,
           module: module.id,
@@ -230,8 +231,10 @@ export function searchEntries({ can, role }) {
           keywords: module.keywords ?? "",
         });
       }
-      allowedChildren.forEach((child, index) =>
+      (module.children ?? []).forEach((child) => {
+        const index = allowedChildren.indexOf(child);
         entries.push({
+          locked: index < 0,
           label: child.label,
           to: child.to,
           module: module.id,
@@ -240,8 +243,8 @@ export function searchEntries({ can, role }) {
           // El atajo "g + letra" abre la primera pantalla permitida del módulo.
           shortcut: index === 0 ? module.shortcut : undefined,
           keywords: `${module.label} ${module.keywords ?? ""} ${child.keywords ?? ""}`,
-        }),
-      );
+        });
+      });
     }
   }
   for (const page of extraPages) {
@@ -253,5 +256,6 @@ export function searchEntries({ can, role }) {
       keywords: page.keywords ?? "",
     });
   }
-  return entries;
+  // Lo permitido primero; el orden del menú se conserva dentro de cada grupo.
+  return [...entries.filter((entry) => !entry.locked), ...entries.filter((entry) => entry.locked)];
 }

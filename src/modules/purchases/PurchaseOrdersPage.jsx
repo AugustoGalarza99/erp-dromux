@@ -94,8 +94,9 @@ export default function PurchaseOrdersPage() {
   const suggestedSupplier = params.get('supplier');
   const suggestedQuantity = params.get('quantity');
   const loadedSuggestion = useRef('');
-  const mayBuy = can('purchases', 'insert');
-  const canForecast = can('stock', 'read') && can('production', 'read');
+  const mayBuy = can('purchases_orders', 'insert');
+  // El pronóstico lo exige el servidor con el módulo completo de Compras (pasa a Producción en 047).
+  const canForecast = can('production_replenishment', 'read') && can('stock', 'read');
   const [createOpen, setCreateOpen] = useState(false);
   const [orderSearch, setOrderSearch] = useState(params.get('order') ?? '');
   const [orderStatus, setOrderStatus] = useState(params.get('status') ?? '');
@@ -514,7 +515,7 @@ export default function PurchaseOrdersPage() {
                 >
                   <Download size={15} aria-hidden="true" /> PDF
                 </button>
-                {active && can('purchases', 'update') && (
+                {active && can('purchases_orders', 'update') && (
                   <button className="button outline po-cancel" type="button" onClick={() => setCancelTarget(order)}>
                     Cancelar pendiente
                   </button>

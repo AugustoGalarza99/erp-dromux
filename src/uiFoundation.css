@@ -439,3 +439,17 @@
 .restricted-screen h1 { margin: 0; font-size: 22px; }
 .restricted-screen p { margin: 0; color: #536a76; line-height: 1.6; }
 .restricted-chip { display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border: 1px solid #e3c98a; border-radius: 20px; background: #fff7e0; color: #7a5a12; font-size: 12px; font-weight: 800; }
+
+/* Ver como rol: barra fija inferior (solo interfaz) */
+.view-as-bar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 90; display: flex; align-items: center; gap: 14px; padding: 10px 18px; background: #1f2d3d; color: #fff; border-top: 3px solid #f5b83d; box-shadow: 0 -6px 20px rgba(15, 30, 45, .22); }
+.view-as-bar .view-as-icon { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: #f5b83d; color: #1f2d3d; flex: none; }
+.view-as-bar .view-as-text { display: grid; gap: 2px; min-width: 0; flex: 1; }
+.view-as-bar strong { font-size: 15px; }
+.view-as-bar small { color: #d5dde5; font-size: 12.5px; line-height: 1.35; }
+.view-as-bar .button { flex: none; background: #fff; color: #1f2d3d; border-color: #fff; font-weight: 600; min-height: 40px; }
+.has-view-as .app-shell, .has-view-as .setup { padding-bottom: 76px; }
+@media (max-width: 640px) { .view-as-bar { flex-wrap: wrap; padding: 10px 12px; } .view-as-bar .button { width: 100%; justify-content: center; } .has-view-as .app-shell { padding-bottom: 150px; } }
+
+.cmdk-item.is-locked { color: var(--ui-muted); }
+.cmdk-item.is-locked .cmdk-dot { background: #eef0f2; color: #8a97a3; }
+.cmdk-item.is-locked strong { font-weight: 500; }

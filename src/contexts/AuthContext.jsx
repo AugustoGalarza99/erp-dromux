@@ -21,6 +21,8 @@ export function AuthProvider({ children }) {
   const [activeId, setActiveId] = useState(null);
   const [supportSession, setSupportSession] = useState(null);
   const [clock, setClock] = useState(Date.now());
+  // "Ver como rol": solo interfaz, en memoria. No cambia la sesión ni escribe nada; el servidor sigue respondiendo con los permisos reales.
+  const [viewAs, setViewAs] = useState(null);
   const previousUserId = useRef(null);
 
   useEffect(() => {
@@ -46,6 +48,7 @@ export function AuthProvider({ children }) {
         previousUserId.current = nextUserId;
         setActiveId(null);
         setSupportSession(null);
+        setViewAs(null);
         queryClient.clear();
       }
     });
@@ -93,16 +96,42 @@ export function AuthProvider({ children }) {
     refetchOnWindowFocus: true,
   });
 
-  const permissions = permissionsQuery.data ?? [];
+  const realPermissions = permissionsQuery.data ?? [];
+  const realRole = membership?.roles?.code ?? null;
+  const companyId = membership?.company_id ?? null;
+
+  // Solo un administrador real puede mirar como otro rol, y solo dentro de la empresa donde empezó.
+  const viewAsActive = Boolean(viewAs && realRole === 'admin' && viewAs.companyId === companyId);
+  const viewAsQuery = useQuery({
+    queryKey: ['view-as-permissions', user?.id, companyId, viewAs?.id],
+    queryFn: () => getPermissions(viewAs.id, false),
+    enabled: viewAsActive,
+    staleTime: 15_000,
+  });
+  const viewingAs = viewAsActive ? { id: viewAs.id, code: viewAs.code, name: viewAs.name, loading: viewAsQuery.isPending } : null;
+  const permissions = viewAsActive ? (viewAsQuery.data ?? []) : realPermissions;
 
   const can = (resource, action = 'read') => permissions.some(
     (permission) => permission.resource === resource && permission.action === action,
   );
 
+  const startViewAs = (target) => {
+    if (realRole !== 'admin' || !target?.id || !companyId) return;
+    setViewAs({ id: target.id, code: target.code, name: target.name, companyId });
+    // Lo ya cargado con los permisos reales no debe quedar a la vista: se vuelve a pedir lo que la vista permita.
+    queryClient.removeQueries({ predicate: (query) => query.queryKey[0] !== 'memberships' && query.queryKey[0] !== 'permissions' });
+  };
+
+  const stopViewAs = () => {
+    setViewAs(null);
+    queryClient.removeQueries({ predicate: (query) => query.queryKey[0] !== 'memberships' && query.queryKey[0] !== 'permissions' });
+  };
+
   const setActiveCompanyId = (id) => {
     const target = memberships.find((item) => item.company_id === id);
     if (!target || target.roles?.code === 'support') return;
 
+    setViewAs(null);
     setActiveId(id);
     localStorage.setItem(storageKey, id);
   };
@@ -124,6 +153,7 @@ export function AuthProvider({ children }) {
     if (error) throw error;
     queryClient.clear();
     setSupportSession(null);
+    setViewAs(null);
     if (storageKey) localStorage.removeItem(storageKey);
   };
 
@@ -138,7 +168,11 @@ export function AuthProvider({ children }) {
     suspendedCompanies,
     activeCompany: membership?.companies ?? null,
     activeCompanyId: membership?.company_id ?? null,
-    role: membership?.roles?.code ?? null,
+    role: viewingAs ? viewingAs.code : realRole,
+    realRole,
+    viewingAs,
+    startViewAs,
+    stopViewAs,
     supportNeedsAccess: support && !supportActive,
     supportActive,
     permissions,
@@ -157,6 +191,8 @@ export function AuthProvider({ children }) {
     permissionsQuery.status,
     permissionsQuery.error,
     permissions,
+    viewAs,
+    viewAsQuery.status,
     membership,
     activeId,
     supportSession,

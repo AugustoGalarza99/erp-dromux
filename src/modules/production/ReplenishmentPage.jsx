@@ -23,8 +23,7 @@ export default function ReplenishmentPage() {
   const [level, setLevel] = useState('attention');
   const [supplier, setSupplier] = useState('');
   const [search, setSearch] = useState('');
-  const allowed = can('stock', 'read') && can('purchases', 'read')
-    && can('production', 'read');
+  const allowed = can('stock', 'read') && can('production_replenishment', 'read');
   const query = useQuery({
     queryKey: ['replenishment-forecast', user?.id, activeCompanyId],
     queryFn: () => getReplenishmentForecast(activeCompanyId),
@@ -211,7 +210,7 @@ export default function ReplenishmentPage() {
                           </span>
                         </td>
                         <td data-label="">
-                          {buy && can('purchases', 'insert') && (
+                          {buy && can('purchases_orders', 'insert') && (
                             <Link className="button primary replenishment-buy" to={`/purchases/orders?${params}`}>
                               <ShoppingCart size={15} aria-hidden="true" /> Preparar orden <ArrowUpRight size={14} aria-hidden="true" />
                             </Link>

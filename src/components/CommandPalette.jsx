@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { CornerDownLeft, Search } from "lucide-react";
+import { CornerDownLeft, Lock, Search } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import { searchEntries } from "./navConfig";
 
@@ -157,7 +157,7 @@ export default function CommandPalette({ open, onOpenChange }) {
                 id={`cmdk-${index}`}
                 role="option"
                 aria-selected={index === active}
-                className={`cmdk-item mod-${entry.module}`}
+                className={`cmdk-item mod-${entry.module} ${entry.locked ? "is-locked" : ""}`}
                 onMouseMove={() => setActive(index)}
                 onClick={() => choose(entry)}
               >
@@ -166,8 +166,9 @@ export default function CommandPalette({ open, onOpenChange }) {
                 </span>
                 <span className="cmdk-text">
                   <strong>{entry.label}</strong>
-                  <small>{entry.area}</small>
+                  <small>{entry.locked ? `${entry.area} · Acceso restringido` : entry.area}</small>
                 </span>
+                {entry.locked && <Lock size={14} aria-label="Acceso restringido" />}
                 {entry.shortcut && (
                   <kbd aria-label={`Atajo: g y ${entry.shortcut}`}>g {entry.shortcut}</kbd>
                 )}

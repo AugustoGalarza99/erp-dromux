@@ -4,7 +4,7 @@ Actualizar al cerrar cada sesión. Si es la primera lectura de la sesión: leer 
 
 | Fase | Estado | Evidencia | Próxima tarea |
 | --- | --- | --- | --- |
-| 1. Recorrido completo (1 empresa) | EN CURSO — guía lista, falta que el propietario ejecute los 19 pasos | `FASE1_GUIA_RECORRIDO.md` | Propietario: preparar cuentas/roles de prueba y recorrer A–H; pasar resultados |
+| 1. Recorrido completo (1 empresa) | EN CURSO: Claude recorrió pasos 1–12 y parte del 14 en Espacio Demo (ver evidencia/2026-11-24_flujo_completo_fase1.md): 1 defecto funcional (H-E1) y 11 de UX | `FASE1_GUIA_RECORRIDO.md` | Propietario: preparar cuentas/roles de prueba y recorrer A–H; pasar resultados |
 | 2a. Auditoría de base (solo lectura) | HECHA parcial 24/11 (RLS, grants, funciones, roles) | `AUDITORIA_FASE2_3_2026-11-24.md` | Falta leer a fondo `post_stock_operation`, funciones de dinero, PDF/exportaciones sin costos (C-013) |
 | 2b/2c. Pruebas con 2 empresas y roles | HECHA 2 rondas (24/11): aislamiento entre empresas y costos OK, H-007 cerrado en funciones; faltan concurrencia, PDF/exportaciones sin costos | `evidencia/2026-11-24_pruebas_roles_empresas.md` | Re-correr script tras corregir 179/185; luego Fase 1 con usuarios reales |
 | 3. Auditoría de Ajustes | HECHA parcial 24/11 (funciones de usuarios/roles, rutas) | idem | Probar en la app Usuarios/Roles con los usuarios de prueba; revisar pantalla Usuarios (alta) |
@@ -33,3 +33,29 @@ H-007 (P1, escalada por delegación en roles/usuarios; confirmado con prueba, co
 - ¿Permiso explícito "ver costos" para roles no admin (H-010)?
 - Cómo se da de alta un empleado (HI-003): invitación por email o alta manual.
 - Si la estadística debe incluir órdenes archivadas (hoy sí).
+
+## Sesión 24/11 (2): 046 Compras preparada + ver como rol
+- 4b: 046 PREPARADA, revisada (P0 corregido; H-011 abierto en precios de proveedor), NO aplicada. Siguiente: propietario decide H-011, aplica 046, corre 046_comprobaciones y grupo 11.
+- 5: "Ver como rol" implementado en interfaz (botón en Roles, barra fija inferior, candados en Ctrl+K e Inicio); build OK, sin prueba visual en arnés.
+- Paso 0 (recorrido del propietario) no recibido en esta sesión. Paso 3 (047) no iniciado.
+
+## Sesión 24/11 (3)
+- 046 aplicada por el propietario (resultados de 046_comprobaciones y grupo 11: pendientes de pegar).
+- Decisión: el precio de proveedor ES costo -> 046b PREPARADA (supabase/046b_precio_proveedor_es_costo.sql + reparacion/0_deshacer_046b.sql): 5 funciones y 2 políticas exigen además costs_materials. Sin revisión crítica ni aplicar. Abierto H-011b: purchase_order_lines/receipt_lines/purchase_receivable_lines.
+- UX/UI de Ajustes: Roles (lista con búsqueda y personas por rol, plantillas, barra de guardado con cambios sin guardar, descartar) y Usuarios (búsqueda, filtros, mostrar más, confirmación al cambiar rol) rediseñados. Build OK; SIN prueba visual en navegador (pendiente 360/768/1024/1440).
+- Pendiente UX: Unidades, Categorías, Depósitos, Archivados, Perfil, Documentos de producción, Historial de accesos.
+- 24/11 (4): 046b aplicada. UX de Ajustes rediseñada y probada en arnés simulado (1440 y 360, sin desborde): Roles, Usuarios, Archivados, Documentos de producción (con vista previa). Unidades/Categorías/Depósitos ya eran correctas (CatalogPage). Arnés borrado.
+
+## Sesión 24/11 (5): Fase 1 con Claude + correcciones
+- 046/046b aplicadas; script de pruebas: 2 FALLA (ver evidencia), resto PASA; H-011 cerrado también en supplier_items (fila 270: 0 filas).
+- Fase 1: recorrido de Claude en Espacio Demo: pasos 1–12, 13, 14–15, 18, 19 (cancelar, devolver, archivar y recuperar) y envasado OK; H-E1 cerrado. Pendiente: PDF, orden grande, reintento con corte de red, operario/vendedor.
+- 046c (H-E1) preparada y revisada: veredicto "aplicar" (sin P0/P1). Cierre de la OF 1 y estadística OK en pantalla. Defectos de interfaz D1–D9 corregidos en código (build OK, sin verificar en pantalla).
+
+## Sesión 24/11 (6): 047 Producción preparada
+- 047 PREPARADA y revisada (aplicar tras las correcciones ya hechas; no aplicada): 36 funciones + 14 políticas + costs_production; deshacer, comprobaciones y grupo 12 (52 casos). Frontend por pantalla, build OK. Falta: que el propietario la aplique, corra 047_comprobaciones.sql y el script completo.
+- Pendiente 048 Stock/Ajustes; lote de Ventas (precios/márgenes con costs_production); cleanup_target por pantalla.
+
+## Cierre de sesión 24/11/2026 (final)
+- 047 APLICADA por el propietario; comprobación 8 = 0 filas; consulta 9 muestra que solo los administradores ven costos de producción (Vendedor no). Pendiente de pegar: el resto de 047_comprobaciones.sql y el script completo con grupo 12.
+- Fase 1: pasos 1–15, 18, 19 y envasado OK por pantalla; pendientes los que necesitan al propietario (PDF, operario/vendedor, red, stock insuficiente, 200 insumos).
+- Siguiente: ver PROMPT_PROXIMA_SESION.md.

@@ -316,7 +316,7 @@ export default function App() {
         <Route
           path="/purchases/requests"
           element={
-            <PermissionGate anyOf={["purchases", "purchase_requests"]}>
+            <PermissionGate resource="purchase_requests">
               <PurchaseRequestsPage />
             </PermissionGate>
           }
@@ -324,7 +324,7 @@ export default function App() {
         <Route
           path="/purchases"
           element={
-            <PermissionGate resource="purchases">
+            <PermissionGate resource="purchases_overview">
               <PurchasesOverview />
             </PermissionGate>
           }
@@ -332,7 +332,7 @@ export default function App() {
         <Route
           path="/production"
           element={
-            <PermissionGate resource="production">
+            <PermissionGate resource="production_overview">
               <ProductionOverview />
             </PermissionGate>
           }
@@ -388,7 +388,7 @@ export default function App() {
         <Route
           path="/purchases/suppliers"
           element={
-            <PermissionGate resource="purchases">
+            <PermissionGate resource="purchases_suppliers">
               <SuppliersPage />
             </PermissionGate>
           }
@@ -396,7 +396,7 @@ export default function App() {
         <Route
           path="/purchases/orders"
           element={
-            <PermissionGate resource="purchases">
+            <PermissionGate resource="purchases_orders">
               <PurchaseOrdersPage />
             </PermissionGate>
           }
@@ -404,7 +404,7 @@ export default function App() {
         <Route
           path="/production/formulas"
           element={
-            <PermissionGate resource="production">
+            <PermissionGate resource="production_formulas">
               <FormulasPage />
             </PermissionGate>
           }
@@ -412,7 +412,7 @@ export default function App() {
         <Route
           path="/production/orders"
           element={
-            <PermissionGate resource="production">
+            <PermissionGate resource="production_orders">
               <ProductionOrdersPage />
             </PermissionGate>
           }
@@ -420,7 +420,7 @@ export default function App() {
         <Route
           path="/production/planning"
           element={
-            <PermissionGate resource="production">
+            <PermissionGate resource="production_planning">
               <ProductionPlanningPage />
             </PermissionGate>
           }
@@ -428,7 +428,7 @@ export default function App() {
         <Route
           path="/production/availability"
           element={
-            <PermissionGate resource="production">
+            <PermissionGate resource="production_availability">
               <ManufacturingAvailabilityPage />
             </PermissionGate>
           }
@@ -436,7 +436,7 @@ export default function App() {
         <Route
           path="/production/replenishment"
           element={
-            <PermissionGate resource="production">
+            <PermissionGate resource="production_replenishment">
               <ReplenishmentPage />
             </PermissionGate>
           }
@@ -504,7 +504,7 @@ export default function App() {
         <Route
           path="/purchases/accounts"
           element={
-            <PermissionGate resource="purchases">
+            <PermissionGate resource="purchases_accounts">
               <SupplierAccountsPage />
             </PermissionGate>
           }
@@ -512,7 +512,7 @@ export default function App() {
         <Route
           path="/production/packaging"
           element={
-            <PermissionGate resource="production">
+            <PermissionGate resource="production_packaging">
               <PackagingPage />
             </PermissionGate>
           }
@@ -520,7 +520,7 @@ export default function App() {
         <Route
           path="/production/stats"
           element={
-            <PermissionGate resource="production">
+            <PermissionGate resource="production_stats">
               <ProductionStatsPage />
             </PermissionGate>
           }
@@ -528,7 +528,7 @@ export default function App() {
         <Route
           path="/settings/production-documents"
           element={
-            <PermissionGate resource="production">
+            <PermissionGate resource="production_documents">
               <ProductionDocumentSettings />
             </PermissionGate>
           }

@@ -87,7 +87,7 @@ export default function SuppliersPage() {
       actions={(
         <>
           <Link to="/purchases/orders" className="button outline">Órdenes de compra</Link>
-          {can('purchases', 'insert') && <button type="button" className="button primary"
+          {can('purchases_suppliers', 'insert') && <button type="button" className="button primary"
             onClick={() => openAction('supplier', null)}><Plus size={17} aria-hidden="true" /> Nuevo proveedor</button>}
         </>
       )}
@@ -128,10 +128,10 @@ export default function SuppliersPage() {
               </span>
               <ChevronDown className={openId === supplier.id ? 'supplier-chevron open' : 'supplier-chevron'} size={19} />
             </button>
-            {can('purchases', 'update') && <div className="supplier-header-actions">
+            {can('purchases_suppliers', 'update') && <div className="supplier-header-actions">
               <button type="button" className="button outline" disabled={busy}
                 onClick={() => openAction('supplier', supplier)}>Editar datos</button>
-              {supplier.active && can('purchases', 'insert') && (
+              {supplier.active && can('purchases_suppliers', 'insert') && (
                 <Link className="button outline" to={`/purchases/orders?new=1&supplier=${supplier.id}`}>
                   Nueva orden
                 </Link>

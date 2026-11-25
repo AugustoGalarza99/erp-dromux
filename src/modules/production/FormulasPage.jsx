@@ -55,8 +55,8 @@ export default function FormulasPage() {
   const [busy, setBusy] = useState(false);
   const [cost, setCost] = useState(null);
   const [formError, setFormError] = useState("");
-  const canSeeCost = role === "admin" && can("finance", "read");
-  const canEdit = can("production", "update");
+  const canSeeCost = (role === "admin" || can("costs_production", "read"));
+  const canEdit = can("production_formulas", "update");
 
   const itemsQuery = useQuery({
     queryKey: ["production-items", user?.id, activeCompanyId],

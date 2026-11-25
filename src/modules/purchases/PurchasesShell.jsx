@@ -4,14 +4,14 @@ import "./purchasesModule.css";
 
 /*
  * Pantallas de Compras. Vocabulario neutro: sirve a cualquier rubro que compre materiales.
- * "Pedidos internos" también la ve quien solo puede pedir (sin permiso de Compras).
+ * Cada pantalla se habilita por separado (permisos por pantalla, migración 046).
  */
 const tabs = [
-  { to: "/purchases", label: "Resumen", icon: LayoutGrid, end: true, any: ["purchases"] },
-  { to: "/purchases/requests", label: "Pedidos internos", icon: ClipboardList, any: ["purchases", "purchase_requests"] },
-  { to: "/purchases/orders", label: "Órdenes de compra", icon: ShoppingCart, any: ["purchases"] },
-  { to: "/purchases/suppliers", label: "Proveedores", icon: Store, any: ["purchases"] },
-  { to: "/purchases/accounts", label: "Compras y cuentas", icon: Wallet, any: ["purchases"] },
+  { to: "/purchases", label: "Resumen", icon: LayoutGrid, end: true, any: ["purchases_overview"] },
+  { to: "/purchases/requests", label: "Pedidos internos", icon: ClipboardList, any: ["purchase_requests"] },
+  { to: "/purchases/orders", label: "Órdenes de compra", icon: ShoppingCart, any: ["purchases_orders"] },
+  { to: "/purchases/suppliers", label: "Proveedores", icon: Store, any: ["purchases_suppliers"] },
+  { to: "/purchases/accounts", label: "Compras y cuentas", icon: Wallet, any: ["purchases_accounts"] },
 ];
 
 export default function PurchasesShell({ title, description, actions, children }) {

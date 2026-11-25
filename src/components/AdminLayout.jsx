@@ -18,6 +18,7 @@ import ModuleHelp from "../modules/help/ModuleHelp";
 import NotificationCenter from "../modules/operations/NotificationCenter";
 import ActionDialog from "./ActionDialog";
 import CommandPalette from "./CommandPalette";
+import ViewAsBar from "./ViewAsBar";
 import { canSeeChild, locate, navGroups, pathOf } from "./navConfig";
 
 export default function AdminLayout() {
@@ -27,6 +28,7 @@ export default function AdminLayout() {
     setActiveCompanyId,
     can,
     role,
+    viewingAs,
     user,
     signOut,
     openSupportCompany,
@@ -78,7 +80,7 @@ export default function AdminLayout() {
   const pageTitle = crumbLast ?? crumbModule?.label ?? "Espacio de trabajo";
 
   return (
-    <div className={`app-shell mod-${activeModuleId}`}>
+    <div className={`app-shell mod-${activeModuleId} ${viewingAs ? "has-view-as" : ""}`}>
       <aside className={`sidebar ${menuOpen ? "mobile-open" : ""}`}>
         <div className="sidebar-top">
           <div className="brand">
@@ -402,6 +404,7 @@ export default function AdminLayout() {
         <main className="content">
           <Outlet />
         </main>
+        <ViewAsBar />
         <footer className="footer">
           ERP Dromux <span>·</span> Gestión de tu empresa
         </footer>

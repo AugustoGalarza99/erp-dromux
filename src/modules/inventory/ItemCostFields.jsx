@@ -21,8 +21,8 @@ export default function ItemCostFields({ form, cost, onCostChange, onPesosChange
   const [supplierSearch, setSupplierSearch] = useState('');
   const [exchangeSearch, setExchangeSearch] = useState('');
   const term = useDebouncedValue(supplierSearch);
-  const canReadPurchases = can('purchases', 'read');
-  const canAssociate = canReadPurchases && can('purchases', 'update');
+  const canReadPurchases = can('costs_materials', 'read');
+  const canAssociate = canReadPurchases && can('purchases_suppliers', 'update');
   const suppliers = useQuery({
     queryKey: ['item-supplier-options', user?.id, activeCompanyId, term],
     queryFn: () => searchActiveSuppliers(activeCompanyId, term),

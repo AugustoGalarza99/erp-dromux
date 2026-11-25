@@ -66,7 +66,7 @@ export default function SupplierExchangePanel({ types }) {
             valor las veces que necesites.
           </p>
         </div>
-        {can("purchases", "update") && (
+        {can("purchases_suppliers", "update") && (
           <button
             type="button"
             className="button outline"
@@ -102,7 +102,7 @@ export default function SupplierExchangePanel({ types }) {
                 ? `Vigente desde ${type.effective_on.split("-").reverse().join("/")}`
                 : "Cargá el valor de un dólar en pesos"}
             </small>
-            {type.active && can("purchases", "update") && (
+            {type.active && can("purchases_suppliers", "update") && (
               <button
                 type="button"
                 className="button outline"

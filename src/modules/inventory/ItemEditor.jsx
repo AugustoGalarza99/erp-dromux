@@ -102,9 +102,9 @@ export default function ItemEditor() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { user, activeCompanyId, can, role } = useAuth();
-  // El costo de referencia es solo para administración y compras. El servidor lo
+  // El costo de referencia lo ve el administrador o quien tenga el permiso "Ver costos de materiales". El servidor lo
   // vuelve a validar: aquí solo evitamos mostrar un campo vacío que parecería editable.
-  const canSeeCost = role === "admin" || can("purchases", "read");
+  const canSeeCost = role === "admin" || can("costs_materials", "read");
   const [form, setForm] = useState(emptyForm);
   const [purchaseCost, setPurchaseCost] = useState(emptyPurchaseCost);
   const [categorySearch, setCategorySearch] = useState("");
@@ -124,7 +124,7 @@ export default function ItemEditor() {
   const costContext = useQuery({
     queryKey: ["item-cost-context", user?.id, activeCompanyId, itemId],
     queryFn: () => getItemCostContext(activeCompanyId, itemId),
-    enabled: Boolean(activeCompanyId && itemId && can("purchases", "read")),
+    enabled: Boolean(activeCompanyId && itemId && can("costs_materials", "read")),
   });
 
   const categoryQuery = useQuery({
@@ -298,6 +298,8 @@ export default function ItemEditor() {
             `Los lotes se activaron, pero no se guardaron los otros cambios: ${err.message}. Reabrí la ficha y guardá nuevamente.`,
           )
         : err;
+      // El alta de un solo ítem usa el mismo servidor que la importación: se oculta el "Fila N" que no tiene sentido acá.
+      if (finalError?.message) finalError.message = finalError.message.replace(/Fila d+(, [^:]+)?:s*/g, "");
       setError(notifyError(finalError));
       if (!itemId && savedId)
         navigate(`/inventory/items/${savedId}`, { replace: true });
@@ -364,7 +366,7 @@ export default function ItemEditor() {
     unitQuery.isPending ||
     categoryQuery.isPending ||
     (!isNew && !dirty) ||
-    Boolean(itemId && can("purchases", "read") && costContext.isPending);
+    Boolean(itemId && can("costs_materials", "read") && costContext.isPending);
 
   return (
     <StockShell
@@ -444,7 +446,7 @@ export default function ItemEditor() {
                   <input
                     required
                     maxLength={160}
-                    placeholder="Ej.: Dióxido de titanio rutilo"
+                    placeholder="Ej.: Material A, lote de 25 kg"
                     value={form.name}
                     onChange={(event) => setField("name", event.target.value)}
                   />

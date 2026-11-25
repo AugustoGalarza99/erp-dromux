@@ -233,3 +233,5 @@
     flex-basis: calc(100% - 50px);
   }
 }
+
+.field-hint { display: block; margin-top: 4px; color: #5c6b78; font-size: 12px; font-weight: 400; }

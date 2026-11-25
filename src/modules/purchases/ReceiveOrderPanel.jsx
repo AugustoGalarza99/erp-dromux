@@ -224,7 +224,7 @@ export default function ReceiveOrderPanel({ order, onClose, onBusyChange }) {
     }
   };
 
-  const canReceive = can('purchases', 'insert') && can('stock', 'insert')
+  const canReceive = can('purchases_orders', 'insert') && can('stock', 'insert')
     && can('stock', 'read') && ['open', 'partial'].includes(order.status);
 
   return (

@@ -129,7 +129,7 @@ export default function CostsPage() {
             value={search}
             onChange={(event) => setSearch(event.target.value)}
           />
-          {can('production', 'read') && <Link to="/production/formulas">Ver fórmulas</Link>}
+          {can('production_formulas', 'read') && <Link to="/production/formulas">Ver fórmulas</Link>}
         </div>
         {query.isPending && <p>Calculando costos…</p>}
         {query.error && <p role="alert" className="error">{friendlyError(query.error)}</p>}

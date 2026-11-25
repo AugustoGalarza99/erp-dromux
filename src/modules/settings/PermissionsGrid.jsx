@@ -27,6 +27,9 @@ const ACTIONS = [
   ['delete', 'Eliminar'],
 ];
 
+// "Gestionar" solo existe donde el catálogo lo declara (hoy: Pedidos internos → rechazar y convertir pedidos ajenos).
+const SCREEN_ACTIONS = [...ACTIONS, ["manage", "Gestionar"]];
+
 const LEGACY_RESOURCES = [
   ['dashboard', 'Panel'], ['inventory', 'Inventario'], ['production', 'Producción'], ['purchases', 'Compras'],
   ['purchase_requests', 'Pedidos de compra internos'], ['sales', 'Ventas'], ['finance', 'Finanzas'],
@@ -83,7 +86,7 @@ export default function PermissionsGrid({ permissions, onChange, disabled = fals
 
   if (!catalog.length) return <LegacyGrid permissions={permissions} onChange={onChange} disabled={disabled} />;
 
-  const userActions = (screen) => ACTIONS.map(([a]) => a).filter((a) => screen.actions.includes(a));
+  const userActions = (screen) => SCREEN_ACTIONS.map(([a]) => a).filter((a) => screen.actions.includes(a));
   const without = (resources) => permissions.filter((p) => !resources.includes(p.resource));
   const setScreen = (screen, actions) => onChange([
     ...without([screen.resource]),
@@ -97,6 +100,8 @@ export default function PermissionsGrid({ permissions, onChange, disabled = fals
       setScreen(screen, current.includes(action) ? current.filter((a) => a !== action) : [...new Set([...current, 'read', action])]);
     }
   };
+  const columnsOf = (rows) => SCREEN_ACTIONS.slice(1)
+    .filter(([action]) => action !== "manage" || rows.some((screen) => screen.actions.includes("manage")));
   const setModule = (rows, mode) => onChange([
     ...without(rows.map((screen) => screen.resource)),
     ...(mode === 'none' ? [] : rows.flatMap((screen) => (mode === 'all' ? userActions(screen) : ['read'])
@@ -157,7 +162,7 @@ export default function PermissionsGrid({ permissions, onChange, disabled = fals
                       <tr>
                         <th>{sensitive ? 'Dato' : 'Pantalla'}</th>
                         <th>Acceso</th>
-                        {!sensitive && ACTIONS.slice(1).map(([key, label]) => <th key={key}>{label}</th>)}
+                        {!sensitive && columnsOf(rows).map(([key, label]) => <th key={key}>{label}</th>)}
                       </tr>
                     </thead>
                     <tbody>
@@ -176,7 +181,7 @@ export default function PermissionsGrid({ permissions, onChange, disabled = fals
                                 <span>{access ? 'Acceso' : <><Lock size={12} aria-hidden="true" /> Sin acceso</>}</span>
                               </label>
                             </td>
-                            {!sensitive && ACTIONS.slice(1).map(([action, label]) => (
+                            {!sensitive && columnsOf(rows).map(([action, label]) => (
                               <td key={action}>
                                 <input type="checkbox" aria-label={`${screen.label}: ${label}`}
                                   checked={has(screen.resource, action)} disabled={disabled || !access || !screen.actions.includes(action)}

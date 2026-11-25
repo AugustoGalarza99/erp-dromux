@@ -14,14 +14,14 @@ import "./production.css";
 
 /* Pantallas de Producción. Los nombres son neutros: sirven a cualquier rubro que fabrique. */
 const tabs = [
-  { to: "/production", label: "Resumen", icon: LayoutGrid, end: true, any: ["production"] },
-  { to: "/production/orders", label: "Órdenes", icon: ClipboardList, any: ["production"] },
-  { to: "/production/formulas", label: "Fórmulas", icon: FlaskConical, any: ["production"] },
-  { to: "/production/planning", label: "Planificación", icon: CalendarRange, any: ["production"] },
-  { to: "/production/availability", label: "¿Alcanza el stock?", icon: PackageCheck, any: ["production"] },
-  { to: "/production/replenishment", label: "Reposición", icon: TrendingUp, any: ["production"] },
-  { to: "/production/packaging", label: "Envases", icon: PackageOpen, any: ["production"] },
-  { to: "/production/stats", label: "Estadística", icon: BarChart3, any: ["production"] },
+  { to: "/production", label: "Resumen", icon: LayoutGrid, end: true, any: ["production_overview"] },
+  { to: "/production/orders", label: "Órdenes", icon: ClipboardList, any: ["production_orders"] },
+  { to: "/production/formulas", label: "Fórmulas", icon: FlaskConical, any: ["production_formulas"] },
+  { to: "/production/planning", label: "Planificación", icon: CalendarRange, any: ["production_planning"] },
+  { to: "/production/availability", label: "¿Alcanza el stock?", icon: PackageCheck, any: ["production_availability"] },
+  { to: "/production/replenishment", label: "Reposición", icon: TrendingUp, any: ["production_replenishment"] },
+  { to: "/production/packaging", label: "Envases", icon: PackageOpen, any: ["production_packaging"] },
+  { to: "/production/stats", label: "Estadística", icon: BarChart3, any: ["production_stats"] },
 ];
 
 export default function ProductionShell({ title, description, actions, children }) {

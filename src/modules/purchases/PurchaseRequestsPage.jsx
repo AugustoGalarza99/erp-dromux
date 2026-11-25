@@ -77,10 +77,10 @@ export default function PurchaseRequestsPage() {
   const client = useQueryClient();
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
-  const manager = can('purchases', 'read');
-  const canRequest = can('purchase_requests', 'insert') || can('purchases', 'insert');
-  const canConvert = can('purchases', 'insert');
-  const canReject = can('purchases', 'update');
+  const manager = can('purchase_requests', 'manage');
+  const canRequest = can('purchase_requests', 'insert');
+  const canConvert = manager && can('purchases_orders', 'insert');
+  const canReject = manager && can('purchase_requests', 'update');
   const [status, setStatus] = useState(manager ? 'pending' : '');
   const [search, setSearch] = useState('');
   const term = useDebouncedValue(search);

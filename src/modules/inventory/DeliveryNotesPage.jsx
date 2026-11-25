@@ -71,13 +71,13 @@ export default function DeliveryNotesPage() {
   const jobsQuery = useQuery({
     queryKey: ["production-jobs", user?.id, activeCompanyId],
     queryFn: () => listProductionJobs(activeCompanyId),
-    enabled: Boolean(activeCompanyId && can("production", "read")),
+    enabled: Boolean(activeCompanyId && can("production_orders", "read")),
   });
   const allocationsQuery = useQuery({
     queryKey: ["production-reservation-locations", user?.id, activeCompanyId],
     queryFn: () => listProductionReservationLocations(activeCompanyId),
     enabled: Boolean(
-      activeCompanyId && can("production", "read") && can("stock", "read"),
+      activeCompanyId && can("production_orders", "read") && can("stock", "read"),
     ),
   });
   const items = itemsQuery.data ?? [];
@@ -282,7 +282,7 @@ export default function DeliveryNotesPage() {
                 {note.sale?.customer_name ?? note.recipient}
               </p>
             )}
-            {note.job_id && can("production", "read") && (
+            {note.job_id && can("production_orders", "read") && (
               <Link to={`/production/orders?job=${note.job_id}`}>
                 Ver orden de fabricación
               </Link>

@@ -48,6 +48,7 @@ const configurations = {
     title: 'Depósitos',
     description: 'Prepará las ubicaciones que usarán tus movimientos de stock.',
     singular: 'depósito',
+    newLabel: 'Nuevo depósito',
     fields: [
       { key: 'code', label: 'Código', placeholder: 'ej: central', required: true },
       { key: 'name', label: 'Nombre', placeholder: 'ej: Depósito central', required: true },
@@ -165,7 +166,7 @@ export default function CatalogPage({ resource }) {
         </div>
         {can(resource, 'insert') && (
           <button className="button primary" onClick={startNew}>
-            <Plus size={17} /> Nueva {config.singular}
+            <Plus size={17} /> {config.newLabel ?? `Nueva ${config.singular}`}
           </button>
         )}
       </div>
@@ -261,6 +262,7 @@ export default function CatalogPage({ resource }) {
                   {field.options ? (
                     <select
                       required={field.required}
+                      disabled={busy}
                       value={form[field.key]}
                       onChange={(event) => setForm((current) => ({
                         ...current, [field.key]: event.target.value,
@@ -278,14 +280,19 @@ export default function CatalogPage({ resource }) {
                         : field.key === 'location' ? 250
                           : field.key === 'symbol' ? 12 : 100}
                       pattern={field.key === 'code' ? '[a-z][a-z0-9_]*' : undefined}
+                      title={field.key === 'code' ? 'Empezá con una letra minúscula; después solo minúsculas, números y guion bajo (ej.: kg, caja_x6).' : undefined}
+                      disabled={busy}
                       value={form[field.key]}
                       onChange={(event) => setForm((current) => ({
                         ...current,
-                        [field.key]: event.target.value,
+                        [field.key]: field.key === 'code'
+                          ? event.target.value.toLowerCase().replace(/s+/g, '_')
+                          : event.target.value,
                       }))}
                       placeholder={field.placeholder}
                     />
                   )}
+                  {field.key === 'code' && <small className="field-hint">Minúsculas, números y guion bajo. Se completa solo en minúsculas.</small>}
                 </label>
               ))}
               <button className="button primary" disabled={busy}>

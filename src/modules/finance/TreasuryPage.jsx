@@ -48,7 +48,7 @@ export default function TreasuryPage() {
   const orders = useQuery({
     queryKey: ['treasury-orders', user?.id, activeCompanyId],
     queryFn: () => listPurchaseOrders(activeCompanyId),
-    enabled: !!activeCompanyId && can('purchases', 'read'),
+    enabled: !!activeCompanyId && can('purchases_orders', 'read'),
   });
   useEffect(() => {
     setEntry({ kind: 'expense', accountId: '', targetId: '', orderId: '',

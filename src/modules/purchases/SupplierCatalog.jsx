@@ -29,7 +29,7 @@ export function SupplierQuoteRows({ rows, comparison = false, onAction, onPrefer
     <div className="supplier-quote-list">
       {rows.map((quote) => {
         const supplier = { id: quote.supplier_id, name: quote.supplier_name, active: quote.supplier_active };
-        const editable = can('purchases', 'update') && quote.supplier_active && quote.item_active;
+        const editable = can('purchases_suppliers', 'update') && quote.supplier_active && quote.item_active;
         return <article className="supplier-quote" key={`${quote.supplier_id}:${quote.item_id}`}>
           <div className="supplier-quote-title">
             <strong>{comparison ? quote.supplier_name : quote.item_name}</strong>
@@ -59,10 +59,10 @@ export function SupplierQuoteRows({ rows, comparison = false, onAction, onPrefer
               onClick={() => onAction('compare', supplier, quote)}>Comparar proveedores</button>}
             {editable && !quote.preferred && <button type="button" className="button outline"
               disabled={quote.unit_cost_ars == null} onClick={() => onPreferred(quote)}>Elegir principal</button>}
-            {can('purchases', 'insert') && quote.supplier_active && quote.item_active &&
+            {can('purchases_suppliers', 'insert') && quote.supplier_active && quote.item_active &&
               quote.unit_cost_ars != null && <Link className="button outline"
                 to={`/purchases/orders?supplier=${quote.supplier_id}&item=${quote.item_id}`}>Comprar</Link>}
-            {can('purchases', 'update') && <button type="button" className="supplier-remove"
+            {can('purchases_suppliers', 'update') && <button type="button" className="supplier-remove"
               disabled={quote.preferred} title={quote.preferred ? 'Elegí otro proveedor principal antes de quitar este ítem' : ''}
               onClick={() => onAction('remove', supplier, quote)}>Quitar relación</button>}
           </div>
@@ -91,7 +91,7 @@ export function SupplierCatalog({ supplier, onAction, onPreferred }) {
           <small>Precios por unidad de inventario · sin impuestos ni flete</small>
         </div>
         <div className="supplier-header-actions">
-          {supplier.active && can('purchases', 'update') && <>
+          {supplier.active && can('purchases_suppliers', 'update') && <>
             <button type="button" className="button outline" onClick={() => onAction('adjust', supplier)}>
               <TrendingUp size={16} /> Ajustar todos los precios
             </button>

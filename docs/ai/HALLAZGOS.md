@@ -102,3 +102,7 @@ Base observada: proyecto `drcexqsewiwfhiowrgtv`, conexión de solo lectura, 20/1
 - Riesgo residual / reversión / próximo paso:
 
 P0: fuga entre empresas, escalada de privilegios, corrupción monetaria/stock o pérdida de datos. P1: confiabilidad, rendimiento o usabilidad que impide un flujo. P2: mejora no bloqueante. No inventar vulnerabilidades para completar una cuota; no cerrar por cambio de código sin verificar el comportamiento.
+- H-011 (24/11, 046 preparada): can_see_reference_cost/item_cost_context pasan a costs_materials, pero supplier_items y precios de líneas de orden siguen visibles con acceso a las pantallas de Compras. ABIERTO hasta decidir si el precio de proveedor es costo.
+- H-E1 (24/11, Fase 1): entrega de insumo reservado por la propia orden en un lote 100% reservado falla con 'Stock libre insuficiente' aunque la pantalla muestra disponibles. Pendiente revisar issue_delivery_note.
+- H-E1 (24/11) CERRADO: 046c aplicada y verificada en pantalla (entrega del lote 100% reservado por la propia orden y sin duplicar).
+- H-011 y H-011b (24/11): precio de proveedor cerrado por tabla y funciones (046b); queda abierto el precio dentro de purchase_order_lines/receipt_lines (se ven con acceso a Órdenes).

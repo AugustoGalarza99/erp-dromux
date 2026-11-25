@@ -22,3 +22,6 @@ Problema: una fábrica grande puede tener fórmulas de 200 componentes o 200+ í
 
 ## D-004 — 20/11/2026 — Costos servidos solo por RPC con permiso
 Problema: costos de producción y de referencia legibles por API con permisos no financieros (H-001). Decisión: costo de referencia del ítem para admin o `purchases:read`; costos de producción solo admin + `finance:read`; lecturas por RPC (`list_production_*`, `get_item_detail`) y revocación de SELECT por columna en `036`. Consecuencia: orden de despliegue 035 → frontend → 036; sin acceso a costos no se crean materias primas; toda tabla o columna con costos nueva debe seguir este patrón.
+
+## 24/11/2026 — Alta de empleados, cuentas y empresas (HI-003 / HI-002)
+Decisión del propietario: hasta el lanzamiento comercial el alta de empleados, cuentas y empresas se hace manualmente. La automatización (alta de cuentas, creación de empresas, invitaciones de empleados, cuota de `create_company`) se hará junto con la publicación de la página web y la integración de Stripe (pagos y suscripciones). Mientras tanto HI-002 y HI-003 quedan ACEPTADOS como riesgo conocido (proceso manual del propietario) y diferidos a esa etapa.

@@ -30,7 +30,7 @@ const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
 export default function ProductionOverview() {
   const { activeCompanyId, user, can } = useAuth();
   const scope = [user?.id, activeCompanyId];
-  const enabled = Boolean(activeCompanyId) && can("production", "read");
+  const enabled = Boolean(activeCompanyId) && can("production_overview", "read");
 
   const jobs = useQuery({
     queryKey: ["production-dashboard", ...scope],
@@ -110,7 +110,7 @@ export default function ProductionOverview() {
     <ProductionShell
       title="Resumen de producción"
       description="Qué se está fabricando, qué falta y qué necesita tu decisión hoy. Desde acá llegás a cada pantalla del módulo."
-      actions={can("production", "insert") && (
+      actions={can("production_orders", "insert") && (
         <Link className="button primary" to="/production/orders?new=1">
           <Plus size={17} aria-hidden="true" /> Nueva orden
         </Link>

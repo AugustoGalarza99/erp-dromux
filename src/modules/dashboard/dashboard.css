@@ -93,3 +93,9 @@
 @media (prefers-reduced-motion: reduce) {
   .home .spin { animation: none; }
 }
+
+.home-shortcuts .is-locked { display: inline-flex; align-items: center; gap: 8px; min-height: 42px; padding: 0 14px; border: 1px dashed var(--ui-line); border-radius: 10px; color: #8a97a3; font-size: 13px; font-weight: 600; background: #f6f8f9; cursor: not-allowed; }
+.home-kpi.is-locked { background: #f6f8f9; color: #8a97a3; border-style: dashed; cursor: not-allowed; }
+.home-kpi.is-locked strong { display: inline-flex; align-items: center; gap: 6px; font-size: 15px; color: #6d7d89; }
+.home-panel.is-locked { background: #f6f8f9; border-style: dashed; color: #6d7d89; }
+.home-panel.is-locked h2 { display: inline-flex; align-items: center; gap: 8px; }

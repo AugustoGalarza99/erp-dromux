@@ -147,7 +147,7 @@ export default function ProductionJobCard({
             (balance) => balance.warehouse_id === issue.warehouseId,
           )?.quantity ?? 0,
         );
-  const canDeliver = can("production", "insert") && can("stock", "insert");
+  const canDeliver = can("production_orders", "insert") && can("stock", "insert");
 
   function requestFor(key, fingerprint) {
     const previous = requests.current.get(key);
@@ -365,7 +365,7 @@ export default function ProductionJobCard({
             {remaining} de {expected.length}
           </strong>
         </span>
-        {role === "admin" && can("finance", "read") && (
+        {(role === "admin" || can("costs_production", "read")) && (
           <span>
             Costo consumido <strong>$ {money(actualCost)}</strong>
           </span>
@@ -409,7 +409,7 @@ export default function ProductionJobCard({
           label={`OF ${job.number} · ${product?.name ?? "Producto"}`}
           onRemoved={onUpdated}
         />
-        {job.status !== "cancelled" && can("production", "update") && (
+        {job.status !== "cancelled" && can("production_orders", "update") && (
           <button
             type="button"
             className="button outline"
@@ -425,7 +425,7 @@ export default function ProductionJobCard({
         >
           <Download size={16} /> PDF del proceso
         </button>
-        {job.status === "queued" && can("production", "update") && (
+        {job.status === "queued" && can("production_orders", "update") && (
           <button
             type="button"
             className="button outline"
@@ -454,7 +454,7 @@ export default function ProductionJobCard({
           </>
         )}
         {job.status === "in_progress" &&
-          can("production", "insert") &&
+          can("production_orders", "insert") &&
           can("stock", "insert") && (
             <button
               type="button"
@@ -464,7 +464,7 @@ export default function ProductionJobCard({
               <CheckCircle2 size={16} /> Terminar fabricación
             </button>
           )}
-        {active && can("production", "update") && (
+        {active && can("production_orders", "update") && (
           <button
             type="button"
             className="button outline"
@@ -498,7 +498,7 @@ export default function ProductionJobCard({
               </small>
               {open > 0.000001 &&
                 job.status === "in_progress" &&
-                can("production", "update") &&
+                can("production_orders", "update") &&
                 can("stock", "insert") && (
                   <button
                     type="button"

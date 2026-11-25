@@ -305,7 +305,7 @@ export default function ProductionPlanningPage() {
             <span>Guardar el plan no modifica existencias.</span>
             <button
               className="button primary"
-              disabled={busy || !can("production", "insert")}
+              disabled={busy || !can("production_planning", "insert")}
             >
               <Plus size={17} /> {busy ? "Guardando…" : "Crear plan"}
             </button>
@@ -354,7 +354,7 @@ export default function ProductionPlanningPage() {
                 </span>
                 <small>
                   Fórmula v{plan.formula_version}
-                  {role === "admin" && can("finance", "read")
+                  {(role === "admin" || can("costs_production", "read"))
                     ? ` · Costo previsto $ ${money(plan.estimated_cost)}`
                     : ""}
                 </small>
@@ -391,7 +391,7 @@ export default function ProductionPlanningPage() {
                         Crear orden de fabricación
                       </Link>
                     )}
-                    {!job && can("production", "update") && (
+                    {!job && can("production_planning", "update") && (
                       <button
                         type="button"
                         className="production-link"

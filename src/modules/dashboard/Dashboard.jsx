@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import {
   AlertOctagon, AlertTriangle, ArrowUpRight, Banknote, CalendarClock,
   CheckCircle2, Clock3, Factory, HandCoins, PackageCheck, Play, RefreshCw,
-  ShoppingBag, TrendingUp, Truck, Wallet,
+  Lock, ShoppingBag, TrendingUp, Truck, Wallet,
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
@@ -34,7 +34,7 @@ async function rpc(name, companyId) {
    significa "este rol no la ve", no cero. */
 export default function Dashboard() {
   const { activeCompany, activeCompanyId, user, can, role } = useAuth();
-  const hasProduction = can('production', 'read');
+  const hasProduction = can('production_overview', 'read') || can('production_orders', 'read');
   const hasFinance = can('finance', 'read');
   const enabled = Boolean(activeCompanyId);
   const scope = [user?.id, activeCompanyId];
@@ -150,9 +150,13 @@ export default function Dashboard() {
     { key: 'profit', label: 'Ganancia bruta, 30 días', icon: TrendingUp,
       value: isAdmin && data.profit_30d != null ? money(data.profit_30d) : null,
       note: 'Sin impuestos ni gastos indirectos', to: '/finance/costs' },
-  ].filter((entry) => entry.value != null || (
-    entry.key === 'revenue' && can('sales', 'read')
-  ) || (entry.key === 'cash' && hasFinance && balances.isPending));
+  ].map((entry) => ({
+    ...entry,
+    // Lo que el rol no puede ver se muestra bloqueado (candado), no se esconde.
+    locked: entry.key === 'revenue' ? !can('sales', 'read')
+      : entry.key === 'profit' ? !isAdmin : !hasFinance,
+  })).filter((entry) => entry.locked || entry.value != null || entry.key === 'revenue'
+    || (entry.key === 'cash' && balances.isPending));
 
   const production = [
     { label: 'En fabricación', value: jobsQuery.data?.in_progress, icon: Play },
@@ -163,13 +167,14 @@ export default function Dashboard() {
 
   const shortcuts = [
     { label: 'Registrar venta', to: '/sales/orders', resource: 'sales', action: 'insert' },
-    { label: 'Nueva orden de fabricación', to: '/production/orders', resource: 'production', action: 'insert' },
-    { label: '¿Tengo stock para fabricar?', to: '/production/availability', resource: 'production', action: 'read' },
+    { label: 'Nueva orden de fabricación', to: '/production/orders', resource: 'production_orders', action: 'insert' },
+    { label: '¿Tengo stock para fabricar?', to: '/production/availability', resource: 'production_availability', action: 'read' },
     { label: 'Emitir remito', to: '/inventory/delivery-notes', resource: 'stock', action: 'insert', icon: Truck },
     { label: 'Consultar stock', to: '/inventory/stock', resource: 'stock', action: 'read' },
-    { label: 'Órdenes de compra', to: '/purchases/orders', resource: 'purchases', action: 'read' },
+    { label: 'Órdenes de compra', to: '/purchases/orders', resource: 'purchases_orders', action: 'read' },
     { label: 'Cobrar a un cliente', to: '/finance/receivables', resource: 'finance', action: 'read', icon: Banknote },
-  ].filter((entry) => can(entry.resource, entry.action));
+  ].map((entry) => ({ ...entry, locked: !can(entry.resource, entry.action) }))
+    .sort((a, b) => Number(a.locked) - Number(b.locked));
 
   const firstError = summary.error || jobsQuery.error || alertsError
     || forecast.error || balances.error;
@@ -241,7 +246,16 @@ export default function Dashboard() {
       {kpis.length > 0 && (
         <section aria-label="Resumen del negocio">
           <div className="home-kpis">
-            {kpis.map(({ key, label, icon: Icon, value, note, to }) => (
+            {kpis.map(({ key, label, icon: Icon, value, note, to, locked }) => (locked ? (
+              <div className="home-kpi is-locked" key={key} aria-label={`${label}: acceso restringido`}>
+                <span className="home-kpi-top">
+                  <span className="home-kpi-icon"><Icon size={18} aria-hidden="true" /></span>
+                  <span>{label}</span>
+                </span>
+                <strong><Lock size={16} aria-hidden="true" /> Acceso restringido</strong>
+                <small>Tu rol no incluye este dato.</small>
+              </div>
+            ) : (
               <Link to={to} className="home-kpi" key={key}>
                 <span className="home-kpi-top">
                   <span className="home-kpi-icon"><Icon size={18} aria-hidden="true" /></span>
@@ -250,12 +264,18 @@ export default function Dashboard() {
                 <strong>{value ?? '…'}</strong>
                 {note && <small>{note}</small>}
               </Link>
-            ))}
+            )))}
           </div>
         </section>
       )}
 
       <div className="home-columns">
+        {!hasProduction && (
+          <section className="home-panel is-locked" aria-label="Producción: acceso restringido">
+            <div className="home-panel-head"><h2><Lock size={16} aria-hidden="true" /> Producción</h2></div>
+            <p className="home-empty">Acceso restringido: tu rol no incluye Producción.</p>
+          </section>
+        )}
         {hasProduction && (
           <section className="home-panel" aria-labelledby="home-prod-title">
             <div className="home-panel-head">
@@ -327,7 +347,11 @@ export default function Dashboard() {
           <div>
             {shortcuts.map((entry) => {
               const Icon = entry.icon ?? ArrowUpRight;
-              return (
+              return entry.locked ? (
+                <span key={entry.to + entry.label} className="is-locked" aria-label={`${entry.label}: acceso restringido`}>
+                  {entry.label} <Lock size={15} aria-hidden="true" />
+                </span>
+              ) : (
                 <Link key={entry.to + entry.label} to={entry.to}>
                   {entry.label} <Icon size={16} aria-hidden="true" />
                 </Link>
