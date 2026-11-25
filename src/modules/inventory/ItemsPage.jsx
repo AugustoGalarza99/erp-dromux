@@ -193,7 +193,7 @@ export default function ItemsPage() {
                     <Pencil size={15} aria-hidden="true" /> <span>Editar</span>
                   </Link>
                 )}
-                {can("stock", "read") && !item.infinite_stock && (
+                {can("stock_levels", "read") && !item.infinite_stock && (
                   <>
                     <Link className="button outline"
                       to={`/inventory/stock?q=${encodeURIComponent(item.code)}`}

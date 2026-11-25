@@ -85,6 +85,14 @@ create or replace function pg_temp.setrole_prod(p_company uuid, p_role uuid, p_l
     p_role, p_company, p_role, p_list)
 $f$;
 
+-- Ayudante del grupo 13: REEMPLAZA todos los permisos del rol por la lista "recurso:acción,..." (se revierte dentro del caso).
+create or replace function pg_temp.setrole_all(p_company uuid, p_role uuid, p_list text) returns text language sql as $f$
+  select format($q$delete from public.role_permissions where role_id=%L;
+    insert into public.role_permissions(company_id,role_id,resource,action)
+    select %L,%L,split_part(x,':',1),split_part(x,':',2) from unnest(string_to_array(%L,',')) x on conflict do nothing$q$,
+    p_role, p_company, p_role, p_list)
+$f$;
+
 do $do$
 declare
   -- Usuarios de prueba
@@ -507,13 +515,75 @@ begin
   perform pg_temp.t('12 Tras 047','Admin A: costo de la fórmula (permitido)',adm,'authenticated',null,pg_temp.permitido(q_fcost),'x','sin_error');
 
   -- 12e) Reposición, otras empresas y anónimo.
-  perform pg_temp.t('12 Tras 047','Reposición solo con producción:reposición + stock (INFO: filas que devuelve)',ven,'authenticated',pg_temp.setrole_prod(ca, rol_ven_a, 'production_replenishment:read,stock:read'),'select * from '||q_repl,'q','info');
+  perform pg_temp.t('12 Tras 047','Reposición solo con producción:reposición + stock (INFO: filas que devuelve)',ven,'authenticated',pg_temp.setrole_prod(ca, rol_ven_a, 'production_replenishment:read,stock_levels:read'),'select * from '||q_repl,'q','info');
   perform pg_temp.t('12 Tras 047','Sin la pantalla de reposición: pronóstico vacío (negado)',ven,'authenticated',p_ord,'select * from '||q_repl,'q','negado');
   perform pg_temp.t('12 Tras 047','Admin B (otra empresa): crear orden en A (denegado)',dem,'authenticated',null,pg_temp.denegado(q_cjob),'x','sin_error');
   perform pg_temp.t('12 Tras 047','Admin B: costo de fórmula de A (denegado)',dem,'authenticated',null,pg_temp.denegado(q_fcost),'x','sin_error');
   perform pg_temp.t('12 Tras 047','Anónimo: estadística de A',null,'anon',null,'select * from '||q_stats,'q','error');
   perform pg_temp.t('12 Tras 047','Catálogo: pantallas de Producción y costs_production exigidas (11)',ven,'authenticated',null,
     $q$select 1 where (select count(*) from public.permission_catalog where enforced and (module='production' or resource='costs_production'))=11$q$,'q','datos');
+
+  ----------------------------------------------------------------------------------------------------
+  -- 13) TRAS LA MIGRACIÓN 048 (antes de aplicarla, estos casos dan FALLA: es lo esperado).
+  --     Stock por pantalla (LECTURAS) y Archivados por pantalla. El rol del Vendedor se reemplaza ENTERO dentro del punto de guardado
+  --     (se revierte). Las ESCRITURAS de Stock siguen a nivel módulo (ver cabecera de la 048).
+  --     Nota: un "negado" con 0 filas es débil si la tabla está vacía en esa empresa; los casos "datos" prueban que hay filas.
+  ----------------------------------------------------------------------------------------------------
+  -- 13a) Solo "Stock por depósito" (ver).
+  perform pg_temp.t('13 Tras 048','Solo stock por depósito: stock_summary (permitido)',ven,'authenticated',pg_temp.setrole_all(ca,rol_ven_a,'dashboard:read,stock_levels:read'),pg_temp.permitido(format('public.stock_summary(%L,1,%L)',ca,'')),'x','sin_error');
+  perform pg_temp.t('13 Tras 048','Solo stock por depósito: lee saldos (control: hay filas)',ven,'authenticated',pg_temp.setrole_all(ca,rol_ven_a,'dashboard:read,stock_levels:read'),format('select 1 from public.stock_balances where company_id=%L',ca),'q','datos');
+  perform pg_temp.t('13 Tras 048','Solo stock por depósito: opciones de ítems (permitido)',ven,'authenticated',pg_temp.setrole_all(ca,rol_ven_a,'dashboard:read,stock_levels:read'),pg_temp.permitido(format('public.stock_item_options(%L,%L)',ca,'')),'x','sin_error');
+  perform pg_temp.t('13 Tras 048','Solo stock por depósito: lee movimientos (denegado)',ven,'authenticated',pg_temp.setrole_all(ca,rol_ven_a,'dashboard:read,stock_levels:read'),format('select 1 from public.stock_movements where company_id=%L',ca),'q','negado');
+  perform pg_temp.t('13 Tras 048','Solo stock por depósito: lee operaciones de stock (denegado)',ven,'authenticated',pg_temp.setrole_all(ca,rol_ven_a,'dashboard:read,stock_levels:read'),format('select 1 from public.stock_operations where company_id=%L',ca),'q','negado');
+  perform pg_temp.t('13 Tras 048','Solo stock por depósito: lee remitos (denegado)',ven,'authenticated',pg_temp.setrole_all(ca,rol_ven_a,'dashboard:read,stock_levels:read'),format('select 1 from public.delivery_notes where company_id=%L',ca),'q','negado');
+  perform pg_temp.t('13 Tras 048','Con stock_levels:insert pero sin el módulo: ingreso manual (denegado)',ven,'authenticated',pg_temp.setrole_all(ca,rol_ven_a,'dashboard:read,stock_levels:read,stock_levels:insert'),
+    pg_temp.denegado(format('public.post_stock_operation(%L,gen_random_uuid(),gen_random_uuid(),null,%L,1,%L,gen_random_uuid(),null,null)',ca,'in','prueba')),'x','sin_error');
+  -- 13b) Solo "Movimientos".
+  perform pg_temp.t('13 Tras 048','Solo movimientos: lee movimientos (control: hay filas)',ven,'authenticated',pg_temp.setrole_all(ca,rol_ven_a,'dashboard:read,stock_movements:read'),format('select 1 from public.stock_movements where company_id=%L',ca),'q','datos');
+  perform pg_temp.t('13 Tras 048','Solo movimientos: lee saldos (denegado)',ven,'authenticated',pg_temp.setrole_all(ca,rol_ven_a,'dashboard:read,stock_movements:read'),format('select 1 from public.stock_balances where company_id=%L',ca),'q','negado');
+  perform pg_temp.t('13 Tras 048','Solo movimientos: lee lotes (denegado)',ven,'authenticated',pg_temp.setrole_all(ca,rol_ven_a,'dashboard:read,stock_movements:read'),format('select 1 from public.stock_lots where company_id=%L',ca),'q','negado');
+  perform pg_temp.t('13 Tras 048','Solo movimientos: stock_summary (denegado)',ven,'authenticated',pg_temp.setrole_all(ca,rol_ven_a,'dashboard:read,stock_movements:read'),pg_temp.denegado(format('public.stock_summary(%L,1,%L)',ca,'')),'x','sin_error');
+  perform pg_temp.t('13 Tras 048','Solo movimientos: desglose de lotes de un ítem (denegado: devuelve saldo por lote)',ven,'authenticated',pg_temp.setrole_all(ca,rol_ven_a,'dashboard:read,stock_movements:read'),pg_temp.denegado(format('public.stock_lot_breakdown(%L,gen_random_uuid())',ca)),'x','sin_error');
+  perform pg_temp.t('13 Tras 048','Solo movimientos: opciones de lotes (denegado)',ven,'authenticated',pg_temp.setrole_all(ca,rol_ven_a,'dashboard:read,stock_movements:read'),pg_temp.denegado(format('public.stock_lot_options(%L,gen_random_uuid(),gen_random_uuid())',ca)),'x','sin_error');
+  perform pg_temp.t('13 Tras 048','Solo resumen de stock (inventory): lee lotes (INFO: filas si A tiene lotes)',ven,'authenticated',pg_temp.setrole_all(ca,rol_ven_a,'dashboard:read,inventory:read'),format('select 1 from public.stock_lots where company_id=%L',ca),'q','info');
+  perform pg_temp.t('13 Tras 048','Solo movimientos: opciones de depósitos (permitido)',ven,'authenticated',pg_temp.setrole_all(ca,rol_ven_a,'dashboard:read,stock_movements:read'),pg_temp.permitido(format('public.stock_warehouse_options(%L,%L)',ca,'')),'x','sin_error');
+  -- 13c) Solo "Remitos de entrega" y solo "Resumen de stock".
+  perform pg_temp.t('13 Tras 048','Solo remitos: lee remitos (INFO: filas si A tiene remitos)',ven,'authenticated',pg_temp.setrole_all(ca,rol_ven_a,'dashboard:read,stock_delivery_notes:read'),format('select 1 from public.delivery_notes where company_id=%L',ca),'q','info');
+  perform pg_temp.t('13 Tras 048','Solo remitos: lee movimientos (denegado)',ven,'authenticated',pg_temp.setrole_all(ca,rol_ven_a,'dashboard:read,stock_delivery_notes:read'),format('select 1 from public.stock_movements where company_id=%L',ca),'q','negado');
+  perform pg_temp.t('13 Tras 048','Solo remitos: opciones de lotes (permitido)',ven,'authenticated',pg_temp.setrole_all(ca,rol_ven_a,'dashboard:read,stock_delivery_notes:read'),pg_temp.permitido(format('public.stock_lot_options(%L,gen_random_uuid(),gen_random_uuid())',ca)),'x','sin_error');
+  perform pg_temp.t('13 Tras 048','Solo resumen de stock: stock_summary (permitido)',ven,'authenticated',pg_temp.setrole_all(ca,rol_ven_a,'dashboard:read,inventory:read'),pg_temp.permitido(format('public.stock_summary(%L,1,%L)',ca,'')),'x','sin_error');
+  perform pg_temp.t('13 Tras 048','Solo resumen de stock: lee movimientos (denegado)',ven,'authenticated',pg_temp.setrole_all(ca,rol_ven_a,'dashboard:read,inventory:read'),format('select 1 from public.stock_movements where company_id=%L',ca),'q','negado');
+  perform pg_temp.t('13 Tras 048','Sin ninguna pantalla de Stock: stock_summary (denegado)',ven,'authenticated',pg_temp.setrole_all(ca,rol_ven_a,'dashboard:read,items:read'),pg_temp.denegado(format('public.stock_summary(%L,1,%L)',ca,'')),'x','sin_error');
+  perform pg_temp.t('13 Tras 048','Sin ninguna pantalla de Stock: lee saldos (denegado)',ven,'authenticated',pg_temp.setrole_all(ca,rol_ven_a,'dashboard:read,items:read'),format('select 1 from public.stock_balances where company_id=%L',ca),'q','negado');
+  -- 13d) Producción + Stock por depósito (caso del operario, H-O1).
+  perform pg_temp.t('13 Tras 048','Operario (órdenes + stock por depósito): lee reservas (INFO)',ven,'authenticated',pg_temp.setrole_all(ca,rol_ven_a,'dashboard:read,production_orders:read,stock_levels:read'),format('select 1 from public.production_job_reservations where company_id=%L',ca),'q','info');
+  perform pg_temp.t('13 Tras 048','Órdenes SIN stock por depósito: lee reservas (denegado)',ven,'authenticated',pg_temp.setrole_all(ca,rol_ven_a,'dashboard:read,production_orders:read'),format('select 1 from public.production_job_reservations where company_id=%L',ca),'q','negado');
+  perform pg_temp.t('13 Tras 048','Órdenes SIN stock por depósito: ubicaciones de reserva (denegado)',ven,'authenticated',pg_temp.setrole_all(ca,rol_ven_a,'dashboard:read,production_orders:read'),format('select 1 from public.production_reservation_locations where company_id=%L',ca),'q','negado');
+  perform pg_temp.t('13 Tras 048','Órdenes + stock por depósito: recalcular reservas (permitido)',ven,'authenticated',pg_temp.setrole_all(ca,rol_ven_a,'dashboard:read,production_orders:read,stock_levels:read'),pg_temp.permitido(format('public.recalculate_production_reservations(%L)',ca)),'x','sin_error');
+  perform pg_temp.t('13 Tras 048','Órdenes SIN stock por depósito: recalcular reservas (denegado)',ven,'authenticated',pg_temp.setrole_all(ca,rol_ven_a,'dashboard:read,production_orders:read'),pg_temp.denegado(format('public.recalculate_production_reservations(%L)',ca)),'x','sin_error');
+  perform pg_temp.t('13 Tras 048','Alcanza + stock por depósito: ¿alcanza? (permitido)',ven,'authenticated',pg_temp.setrole_all(ca,rol_ven_a,'dashboard:read,production_availability:read,stock_levels:read'),pg_temp.permitido(q_can),'x','sin_error');
+  perform pg_temp.t('13 Tras 048','Alcanza SIN stock por depósito: ¿alcanza? (denegado)',ven,'authenticated',pg_temp.setrole_all(ca,rol_ven_a,'dashboard:read,production_availability:read'),pg_temp.denegado(q_can),'x','sin_error');
+  perform pg_temp.t('13 Tras 048','Reposición SIN stock por depósito: pronóstico vacío (negado)',ven,'authenticated',pg_temp.setrole_all(ca,rol_ven_a,'dashboard:read,production_replenishment:read'),'select * from '||q_repl,'q','negado');
+  perform pg_temp.t('13 Tras 048','Reposición + stock por depósito: pronóstico (INFO: filas)',ven,'authenticated',pg_temp.setrole_all(ca,rol_ven_a,'dashboard:read,production_replenishment:read,stock_levels:read'),'select * from '||q_repl,'q','info');
+  -- 13e) Archivados por pantalla (cleanup_preview exige eliminar en la pantalla del recurso; un error de validación posterior vale como permitido).
+  perform pg_temp.t('13 Tras 048','Archivar fórmula con production_formulas:delete (permitido)',ven,'authenticated',pg_temp.setrole_all(ca,rol_ven_a,'dashboard:read,production_formulas:delete'),pg_temp.permitido(format('public.cleanup_preview(%L,%L,gen_random_uuid())',ca,'formulas')),'x','sin_error');
+  perform pg_temp.t('13 Tras 048','Archivar fórmula con solo production_orders:delete (denegado)',ven,'authenticated',pg_temp.setrole_all(ca,rol_ven_a,'dashboard:read,production_orders:delete'),pg_temp.denegado(format('public.cleanup_preview(%L,%L,gen_random_uuid())',ca,'formulas')),'x','sin_error');
+  perform pg_temp.t('13 Tras 048','Archivar orden con production_orders:delete (permitido)',ven,'authenticated',pg_temp.setrole_all(ca,rol_ven_a,'dashboard:read,production_orders:delete'),pg_temp.permitido(format('public.cleanup_preview(%L,%L,gen_random_uuid())',ca,'jobs')),'x','sin_error');
+  perform pg_temp.t('13 Tras 048','Archivar orden con solo production_planning:delete (denegado)',ven,'authenticated',pg_temp.setrole_all(ca,rol_ven_a,'dashboard:read,production_planning:delete'),pg_temp.denegado(format('public.cleanup_preview(%L,%L,gen_random_uuid())',ca,'jobs')),'x','sin_error');
+  perform pg_temp.t('13 Tras 048','Archivar plan con production_planning:delete (permitido)',ven,'authenticated',pg_temp.setrole_all(ca,rol_ven_a,'dashboard:read,production_planning:delete'),pg_temp.permitido(format('public.cleanup_preview(%L,%L,gen_random_uuid())',ca,'plans')),'x','sin_error');
+  perform pg_temp.t('13 Tras 048','Archivar remito con stock_delivery_notes:delete (permitido)',ven,'authenticated',pg_temp.setrole_all(ca,rol_ven_a,'dashboard:read,stock_delivery_notes:delete'),pg_temp.permitido(format('public.cleanup_preview(%L,%L,gen_random_uuid())',ca,'delivery_notes')),'x','sin_error');
+  perform pg_temp.t('13 Tras 048','Archivar remito con solo stock_movements:delete (denegado)',ven,'authenticated',pg_temp.setrole_all(ca,rol_ven_a,'dashboard:read,stock_movements:delete'),pg_temp.denegado(format('public.cleanup_preview(%L,%L,gen_random_uuid())',ca,'delivery_notes')),'x','sin_error');
+  perform pg_temp.t('13 Tras 048','Archivar tipo de cambio con purchases_suppliers:delete (permitido)',ven,'authenticated',pg_temp.setrole_all(ca,rol_ven_a,'dashboard:read,purchases_suppliers:delete'),pg_temp.permitido(format('public.cleanup_preview(%L,%L,gen_random_uuid())',ca,'exchange_types')),'x','sin_error');
+  perform pg_temp.t('13 Tras 048','Archivar ítem con items:delete (permitido)',ven,'authenticated',pg_temp.setrole_all(ca,rol_ven_a,'dashboard:read,items:delete'),pg_temp.permitido(format('public.cleanup_preview(%L,%L,gen_random_uuid())',ca,'items')),'x','sin_error');
+  -- 13f) Administradores, otra empresa y anónimo.
+  perform pg_temp.t('13 Tras 048','Admin A: stock_summary (permitido)',adm,'authenticated',null,pg_temp.permitido(format('public.stock_summary(%L,1,%L)',ca,'')),'x','sin_error');
+  perform pg_temp.t('13 Tras 048','Admin A: lee saldos (control: hay filas)',adm,'authenticated',null,format('select 1 from public.stock_balances where company_id=%L',ca),'q','datos');
+  perform pg_temp.t('13 Tras 048','Admin B (otra empresa): stock_summary de A (denegado)',dem,'authenticated',null,pg_temp.denegado(format('public.stock_summary(%L,1,%L)',ca,'')),'x','sin_error');
+  perform pg_temp.t('13 Tras 048','Admin B: opciones de ítems de A (denegado)',dem,'authenticated',null,pg_temp.denegado(format('public.stock_item_options(%L,%L)',ca,'')),'x','sin_error');
+  perform pg_temp.t('13 Tras 048','Admin B: archivar una fórmula de A (denegado)',dem,'authenticated',null,pg_temp.denegado(format('public.cleanup_preview(%L,%L,gen_random_uuid())',ca,'formulas')),'x','sin_error');
+  perform pg_temp.t('13 Tras 048','Anónimo: stock_summary de A',null,'anon',null,format('select * from public.stock_summary(%L,1,%L)',ca,''),'q','error');
+  perform pg_temp.t('13 Tras 048','Catálogo: pantallas de Stock y Ajustes exigidas (9)',ven,'authenticated',null,
+    $q$select 1 where (select count(*) from public.permission_catalog where enforced and resource in ('inventory','items','stock','stock_levels','stock_movements','stock_delivery_notes','units','categories','warehouses'))=9$q$,'q','datos');
 
 end
 $do$;

@@ -6,16 +6,16 @@ export const cleanupResources = [
     label: "Productos, materias primas e insumos",
     permission: "items",
   },
-  { value: "exchange_types", label: "Tipos de dólar", permission: "purchases" },
-  { value: "formulas", label: "Fórmulas y procesos", permission: "production" },
-  { value: "jobs", label: "Órdenes de producción", permission: "production" },
+  { value: "exchange_types", label: "Tipos de dólar", permission: "purchases_suppliers" },
+  { value: "formulas", label: "Fórmulas y procesos", permission: "production_formulas" },
+  { value: "jobs", label: "Órdenes de producción", permission: "production_orders" },
   {
     value: "runs",
     label: "Fabricaciones registradas",
-    permission: "production",
+    permission: "production_orders",
   },
-  { value: "plans", label: "Planificaciones", permission: "production" },
-  { value: "delivery_notes", label: "Remitos", permission: "stock" },
+  { value: "plans", label: "Planificaciones", permission: "production_planning" },
+  { value: "delivery_notes", label: "Remitos", permission: "stock_delivery_notes" },
 ];
 
 async function call(name, args) {

@@ -39,7 +39,7 @@ export default function PurchasesOverview() {
   const scope = [user?.id, activeCompanyId];
   const enabled = Boolean(activeCompanyId) && can("purchases_overview", "read");
   // El pronóstico lo exige el servidor con el módulo completo de Compras (pasa a Producción en 047).
-  const canForecast = enabled && can("production_replenishment", "read") && can("stock", "read");
+  const canForecast = enabled && can("production_replenishment", "read") && can("stock_levels", "read");
   const canFinance = enabled && can("finance", "read") && can("purchases_accounts", "read");
 
   const open = useQuery({

@@ -169,8 +169,8 @@ export default function Dashboard() {
     { label: 'Registrar venta', to: '/sales/orders', resource: 'sales', action: 'insert' },
     { label: 'Nueva orden de fabricación', to: '/production/orders', resource: 'production_orders', action: 'insert' },
     { label: '¿Tengo stock para fabricar?', to: '/production/availability', resource: 'production_availability', action: 'read' },
-    { label: 'Emitir remito', to: '/inventory/delivery-notes', resource: 'stock', action: 'insert', icon: Truck },
-    { label: 'Consultar stock', to: '/inventory/stock', resource: 'stock', action: 'read' },
+    { label: 'Emitir remito', to: '/inventory/delivery-notes', resource: 'stock_delivery_notes', action: 'insert', icon: Truck },
+    { label: 'Consultar stock', to: '/inventory/stock', resource: 'stock_levels', action: 'read' },
     { label: 'Órdenes de compra', to: '/purchases/orders', resource: 'purchases_orders', action: 'read' },
     { label: 'Cobrar a un cliente', to: '/finance/receivables', resource: 'finance', action: 'read', icon: Banknote },
   ].map((entry) => ({ ...entry, locked: !can(entry.resource, entry.action) }))

@@ -23,7 +23,7 @@ export default function ReplenishmentPage() {
   const [level, setLevel] = useState('attention');
   const [supplier, setSupplier] = useState('');
   const [search, setSearch] = useState('');
-  const allowed = can('stock', 'read') && can('production_replenishment', 'read');
+  const allowed = can('stock_levels', 'read') && can('production_replenishment', 'read');
   const query = useQuery({
     queryKey: ['replenishment-forecast', user?.id, activeCompanyId],
     queryFn: () => getReplenishmentForecast(activeCompanyId),

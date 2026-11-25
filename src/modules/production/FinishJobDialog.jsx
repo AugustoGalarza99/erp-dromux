@@ -48,6 +48,7 @@ export default function FinishJobDialog({
   const [search, setSearch] = useState("");
   const [onlyDiff, setOnlyDiff] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
   const request = useRef(null);
 
   // Entregado neto por insumo y último origen (depósito y lote) de cada uno.
@@ -170,6 +171,7 @@ export default function FinishJobDialog({
   async function confirm() {
     if (busy || !canReview) return;
     setBusy(true);
+    setErrorMsg("");
     try {
       const values = { actualQuantity: actual, outputLot, expiresOn, varianceNote };
       const packaging = Object.fromEntries(packs.map((entry) => [
@@ -193,9 +195,9 @@ export default function FinishJobDialog({
       );
       await onFinished();
     } catch (error) {
-      notifyError(migrationMissing(error)
+      setErrorMsg(notifyError(migrationMissing(error)
         ? new Error("Falta aplicar la migración 043 en la base para terminar con ajustes.")
-        : error);
+        : error));
     } finally {
       setBusy(false);
     }
@@ -435,8 +437,9 @@ export default function FinishJobDialog({
               <li><span><strong>Motivo de la diferencia</strong><small>{varianceNote.trim()}</small></span></li>
             )}
           </ul>
+          {errorMsg && <p role="alert" className="error">{errorMsg}</p>}
           <div className="erp-action-dialog-actions">
-            <button type="button" className="button outline" disabled={busy} onClick={() => setStep("form")}>Volver a editar</button>
+            <button type="button" className="button outline" disabled={busy} onClick={() => { setErrorMsg(""); setStep("form"); }}>Volver a editar</button>
             <button type="button" className="button primary" disabled={busy} onClick={confirm}>
               {busy ? "Procesando…" : "Confirmar y mover stock"}
             </button>

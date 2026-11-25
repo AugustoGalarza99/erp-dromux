@@ -27,7 +27,7 @@ export default function ManufacturingAvailabilityPage() {
   const [error, setError] = useState('');
   const [lineFilter, setLineFilter] = useState('missing');
   const [lineSearch, setLineSearch] = useState('');
-  const allowed = can('stock', 'read');
+  const allowed = can('stock_levels', 'read');
   const itemsQuery = useQuery({
     queryKey: ['production-items', user?.id, activeCompanyId],
     queryFn: () => listProductionItems(activeCompanyId),

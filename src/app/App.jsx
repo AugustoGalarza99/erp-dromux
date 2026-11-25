@@ -364,7 +364,7 @@ export default function App() {
         <Route
           path="/inventory/stock"
           element={
-            <PermissionGate resource="stock">
+            <PermissionGate resource="stock_levels">
               <StockPage />
             </PermissionGate>
           }
@@ -372,7 +372,7 @@ export default function App() {
         <Route
           path="/inventory/movements"
           element={
-            <PermissionGate resource="stock">
+            <PermissionGate resource="stock_movements">
               <MovementsPage />
             </PermissionGate>
           }
@@ -380,7 +380,7 @@ export default function App() {
         <Route
           path="/inventory/delivery-notes"
           element={
-            <PermissionGate resource="stock">
+            <PermissionGate resource="stock_delivery_notes">
               <DeliveryNotesPage />
             </PermissionGate>
           }

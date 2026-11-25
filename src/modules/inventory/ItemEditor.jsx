@@ -151,7 +151,7 @@ export default function ItemEditor() {
     queryKey: ["stock-balances", user?.id, activeCompanyId, itemId],
     queryFn: () => listStockBalances(activeCompanyId, itemId),
     enabled: Boolean(
-      activeCompanyId && itemId && can("stock", "read") && item && !item.infinite_stock,
+      activeCompanyId && itemId && can("stock_levels", "read") && item && !item.infinite_stock,
     ),
     staleTime: 15_000,
   });
@@ -636,7 +636,7 @@ export default function ItemEditor() {
                 <h2>Existencias</h2>
                 {item.infinite_stock ? (
                   <p>Stock infinito: no se controlan existencias.</p>
-                ) : !can("stock", "read") ? (
+                ) : !can("stock_levels", "read") ? (
                   <p>Tu rol no consulta existencias.</p>
                 ) : balancesQuery.isPending ? (
                   <p>Cargando existencias…</p>
@@ -663,7 +663,7 @@ export default function ItemEditor() {
                     </ul>
                   </>
                 )}
-                {can("stock", "read") && (
+                {can("stock_levels", "read") && (
                   <div className="item-side-links">
                     {can("stock", "insert") && (
                       <Link className="button outline" to={`/inventory/stock?q=${encodeURIComponent(item.code)}`}>

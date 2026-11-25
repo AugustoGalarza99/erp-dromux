@@ -44,9 +44,9 @@ export const navGroups = [
           { label: "Todos los ítems", to: "/inventory/items", permission: "items", crumb: "Ítems", keywords: "productos materiales articulos" },
           { label: "Materias primas", to: "/inventory/items?type=raw_material", permission: "items", crumb: "Materias primas", keywords: "insumos" },
           { label: "Productos", to: "/inventory/items?type=finished_product", permission: "items", crumb: "Productos", keywords: "terminados" },
-          { label: "Stock por depósito", to: "/inventory/stock", permission: "stock", keywords: "existencias saldo" },
-          { label: "Movimientos", to: "/inventory/movements", permission: "stock", keywords: "historial entradas salidas" },
-          { label: "Remitos de entrega", to: "/inventory/delivery-notes", permission: "stock", crumb: "Remitos", keywords: "remito entrega" },
+          { label: "Stock por depósito", to: "/inventory/stock", permission: "stock_levels", keywords: "existencias saldo" },
+          { label: "Movimientos", to: "/inventory/movements", permission: "stock_movements", keywords: "historial entradas salidas" },
+          { label: "Remitos de entrega", to: "/inventory/delivery-notes", permission: "stock_delivery_notes", crumb: "Remitos", keywords: "remito entrega" },
         ],
       },
       {

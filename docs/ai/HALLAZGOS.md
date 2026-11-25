@@ -106,3 +106,10 @@ P0: fuga entre empresas, escalada de privilegios, corrupción monetaria/stock o 
 - H-E1 (24/11, Fase 1): entrega de insumo reservado por la propia orden en un lote 100% reservado falla con 'Stock libre insuficiente' aunque la pantalla muestra disponibles. Pendiente revisar issue_delivery_note.
 - H-E1 (24/11) CERRADO: 046c aplicada y verificada en pantalla (entrega del lote 100% reservado por la propia orden y sin duplicar).
 - H-011 y H-011b (24/11): precio de proveedor cerrado por tabla y funciones (046b); queda abierto el precio dentro de purchase_order_lines/receipt_lines (se ven con acceso a Órdenes).
+
+- H-047b (25/11, P1, CERRADO): can_see_production_costs y can_see_reference_cost devolvían NULL a no miembros de la empresa; production_formula_cost no rechazaba. Corregido con 047b (coalesce) y verificado en catálogo. Caso 336 del script lo detectó.
+- H-O1 (25/11, P1, CERRADO por 048 salvo reprueba con el operario): Stock parcial dejaba existencias y reservas en blanco/falsas.
+- H-048a (P2, abierto): escrituras de stock solo por módulo completo (048b).
+- H-048b (P2, abierto): guardia general de funciones sin chequeo visible lista funciones de precios/importación/soporte que delegan a helpers; revisar en el lote de Ventas.
+- H-UX1 a H-UX4 (P2/P3, abiertos): error de stock insuficiente detrás del diálogo; mensaje de pérdida de conexión engañoso; window.confirm en cambio de rol; ayuda inicial ocupa la pantalla a 360 px; PDF imprime "Deposito | Deposito".
+- 25/11 (cierre): H-048a cerrado por decisión (escrituras de Stock = módulo completo; sin 048b). H-UX1, H-UX2 y H-UX3 corregidos (error dentro del diálogo, mensaje de conexión, diálogo de cambio de rol); H-UX4 (ayuda inicial a 360 px) abierto; "Deposito | Deposito" explicado (sin permiso de Depósitos). H-011b sigue abierto: orderPdf imprime precios de proveedor.

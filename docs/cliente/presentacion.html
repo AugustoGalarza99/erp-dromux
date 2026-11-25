@@ -1,0 +1,319 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Dromux ERP · Qué incluye hoy y qué viene</title>
+<style>
+  @page { size: A4; margin: 0; }
+  :root {
+    --ink: #1c2b36; --muted: #5b6b78; --line: #e3eaef; --soft: #f5f8fa;
+    --indigo: #4f46e5; --stock: #2563eb; --prod: #ea6a12; --compras: #7c3aed; --ventas: #16a34a;
+    --fin: #0f8b8d; --rep: #5b7083; --ajustes: #475569; --brand: #0b4f6c;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body { font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif; color: var(--ink); font-size: 10.6pt; line-height: 1.45; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .page { width: 210mm; height: 297mm; padding: 18mm 18mm 16mm; position: relative; page-break-after: always; overflow: hidden; background: #fff; }
+  .page:last-child { page-break-after: auto; }
+  h1, h2, h3, p { margin: 0; }
+  .foot { position: absolute; left: 18mm; right: 18mm; bottom: 9mm; display: flex; justify-content: space-between; font-size: 8pt; color: var(--muted); border-top: 1px solid var(--line); padding-top: 3mm; }
+
+  /* Portada */
+  .cover { padding: 0; background: linear-gradient(160deg, #0b4f6c 0%, #0e6a8a 55%, #1a8aa0 100%); color: #fff; }
+  .cover .inner { padding: 26mm 20mm; height: 100%; display: flex; flex-direction: column; justify-content: space-between; }
+  .logo { display: inline-flex; align-items: center; gap: 10px; font-weight: 700; font-size: 16pt; letter-spacing: .5px; }
+  .logo b { display: inline-grid; place-items: center; width: 38px; height: 38px; border-radius: 10px; background: #fff; color: var(--brand); font-size: 20pt; }
+  .cover h1 { font-size: 34pt; line-height: 1.08; font-weight: 700; margin-top: 8mm; }
+  .cover .lead { font-size: 13.5pt; max-width: 135mm; margin-top: 7mm; opacity: .95; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10mm; }
+  .chip { padding: 6px 14px; border-radius: 999px; background: rgba(255,255,255,.16); border: 1px solid rgba(255,255,255,.35); font-size: 10pt; }
+  .cover .meta { font-size: 9.5pt; opacity: .85; display: flex; justify-content: space-between; }
+
+  /* Encabezados */
+  .eyebrow { text-transform: uppercase; letter-spacing: 1.6px; font-size: 8.4pt; font-weight: 700; color: var(--brand); }
+  h2 { font-size: 21pt; line-height: 1.15; margin-top: 2mm; color: var(--ink); }
+  .sub { color: var(--muted); margin-top: 3mm; max-width: 165mm; }
+  .bar { width: 44px; height: 4px; background: var(--brand); border-radius: 4px; margin: 4mm 0 5mm; }
+
+  /* Tarjetas */
+  .grid { display: grid; gap: 4.5mm; }
+  .g2 { grid-template-columns: 1fr 1fr; }
+  .g3 { grid-template-columns: 1fr 1fr 1fr; }
+  .card { border: 1px solid var(--line); border-radius: 12px; padding: 4.5mm 5mm; background: #fff; border-top: 4px solid var(--accent, var(--brand)); }
+  .card h3 { font-size: 11.6pt; color: var(--accent, var(--brand)); margin-bottom: 1.5mm; }
+  .card p { color: var(--muted); font-size: 9.6pt; }
+  .card ul { margin: 1.5mm 0 0; padding-left: 4.2mm; font-size: 9.6pt; color: var(--ink); }
+  .card li { margin: .7mm 0; }
+  .tag { display: inline-block; font-size: 7.8pt; font-weight: 700; padding: 1.2px 8px; border-radius: 999px; margin-left: 6px; vertical-align: middle; }
+  .ok { background: #dcfce7; color: #166534; }
+  .val { background: #fef3c7; color: #92400e; }
+  .soon { background: #e0e7ff; color: #3730a3; }
+  .later { background: #f1f5f9; color: #475569; }
+
+  .module { margin-bottom: 4.5mm; }
+  .module .head { display: flex; align-items: center; gap: 3mm; margin-bottom: 2mm; }
+  .module .dot { width: 11px; height: 11px; border-radius: 50%; background: var(--accent); }
+  .module h3 { font-size: 13pt; color: var(--accent); }
+  .module p.d { color: var(--muted); font-size: 9.6pt; margin-bottom: 2mm; }
+  .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 1mm 6mm; }
+  .cols div { font-size: 9.6pt; padding-left: 4mm; position: relative; }
+  .cols div::before { content: "✓"; position: absolute; left: 0; color: var(--accent); font-weight: 700; }
+
+  .callout { background: var(--soft); border: 1px solid var(--line); border-left: 5px solid var(--brand); border-radius: 10px; padding: 4mm 5mm; margin-top: 5mm; font-size: 9.8pt; }
+  .callout b { color: var(--brand); }
+
+  /* Línea de tiempo */
+  .road { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4.5mm; margin-top: 5mm; }
+  .col { border-radius: 14px; padding: 5mm; border: 1px solid var(--line); background: var(--soft); }
+  .col h3 { font-size: 12.5pt; margin-bottom: 1mm; }
+  .col .when { font-size: 8.6pt; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 3mm; display: block; }
+  .col ul { margin: 0; padding-left: 4.2mm; font-size: 9.6pt; }
+  .col li { margin: 1.2mm 0; }
+  .c1 { border-top: 5px solid var(--ventas); } .c1 h3, .c1 .when { color: var(--ventas); }
+  .c2 { border-top: 5px solid var(--indigo); } .c2 h3, .c2 .when { color: var(--indigo); }
+  .c3 { border-top: 5px solid var(--rep); } .c3 h3, .c3 .when { color: var(--rep); }
+
+  table { width: 100%; border-collapse: collapse; font-size: 9.6pt; }
+  th { text-align: left; background: var(--brand); color: #fff; padding: 2.4mm 3mm; font-size: 9pt; }
+  td { padding: 2.2mm 3mm; border-bottom: 1px solid var(--line); vertical-align: top; }
+  tr:nth-child(even) td { background: var(--soft); }
+  .small { font-size: 8.6pt; color: var(--muted); }
+</style>
+</head>
+<body>
+
+<!-- 1. PORTADA -->
+<section class="page cover">
+  <div class="inner">
+    <div>
+      <div class="logo"><b>D</b> DROMUX ERP</div>
+      <h1>Gestión de tu fábrica,<br>en un solo lugar</h1>
+      <p class="lead">Producción, stock y compras conectados: cada material, cada orden y cada movimiento quedan registrados, y cada persona de tu equipo ve solo lo que necesita.</p>
+      <div class="chips">
+        <span class="chip">Producción</span><span class="chip">Stock y lotes</span><span class="chip">Compras</span><span class="chip">Equipo y permisos</span>
+      </div>
+    </div>
+    <div class="meta">
+      <span>Qué incluye hoy · Qué viene · Ideas a futuro</span>
+      <span>Noviembre 2026</span>
+    </div>
+  </div>
+</section>
+
+<!-- 2. RESUMEN -->
+<section class="page">
+  <span class="eyebrow">Resumen</span>
+  <h2>Qué podés hacer hoy con Dromux ERP</h2>
+  <div class="bar"></div>
+  <p class="sub">Está pensado para pymes que fabrican, de cualquier rubro: metalúrgica, alimentos, jabones, textil, pinturería y más. Los nombres de unidades, categorías, envases y presentaciones los definís vos; el sistema no trae conceptos de un solo rubro.</p>
+
+  <div class="grid g2" style="margin-top:7mm">
+    <div class="card" style="--accent:var(--prod)">
+      <h3>Fabricar con control</h3>
+      <p>Cargás la fórmula (receta) de cada producto, creás la orden de fabricación, entregás los insumos y registrás lo que realmente salió. El sistema te avisa si el stock alcanza antes de arrancar.</p>
+    </div>
+    <div class="card" style="--accent:var(--stock)">
+      <h3>Stock siempre claro</h3>
+      <p>Existencias por depósito, lotes y vencimientos, remitos de entrega e historial de movimientos. Nada se descuenta dos veces aunque se corte internet o se haga doble clic.</p>
+    </div>
+    <div class="card" style="--accent:var(--compras)">
+      <h3>Compras ordenadas</h3>
+      <p>El equipo pide lo que falta, Compras lo revisa y arma la orden al proveedor. Al recibir la mercadería, el stock se actualiza solo.</p>
+    </div>
+    <div class="card" style="--accent:var(--ajustes)">
+      <h3>Cada persona, lo suyo</h3>
+      <p>El dueño decide qué pantallas ve y qué puede hacer cada empleado. Los costos solo los ve quien vos autorices.</p>
+    </div>
+  </div>
+
+  <div class="callout">
+    <b>Cómo está dividido este documento:</b> primero lo que ya está listo para usar, después lo que viene en el corto plazo y, al final, las ideas a futuro. Cuando algo está en etapa de prueba lo marcamos como <b>“en validación”</b>.
+  </div>
+
+  <div class="grid g3" style="margin-top:6mm">
+    <div class="card" style="--accent:var(--ventas)"><h3>Listo para usar</h3><p>Producción, Stock, Compras y Ajustes del equipo.</p></div>
+    <div class="card" style="--accent:var(--indigo)"><h3>Corto plazo</h3><p>Ventas, clientes, cobros y finanzas.</p></div>
+    <div class="card" style="--accent:var(--rep)"><h3>A futuro</h3><p>Reportes, automatizaciones y más comodidad.</p></div>
+  </div>
+  <div class="foot"><span>Dromux ERP</span><span>2 · Resumen</span></div>
+</section>
+
+<!-- 3. PRODUCCIÓN Y STOCK -->
+<section class="page">
+  <span class="eyebrow">Listo para usar</span>
+  <h2>Producción y Stock</h2>
+  <div class="bar"></div>
+
+  <div class="module" style="--accent:var(--prod)">
+    <div class="head"><span class="dot"></span><h3>Producción <span class="tag ok">Listo</span></h3></div>
+    <p class="d">Desde la receta hasta el producto terminado, con todos los consumos reales.</p>
+    <div class="cols">
+      <div>Resumen del día: qué se fabrica, qué falta, qué decidir</div>
+      <div>Fórmulas con versiones y costo estimado (solo roles autorizados)</div>
+      <div>Órdenes de fabricación: en cola, en proceso, terminadas</div>
+      <div>Entrega de insumos con remito y devolución de sobrantes</div>
+      <div>Cierre con diferencias: salió de más o de menos, con motivo</div>
+      <div>Envasado en presentaciones que vos definís</div>
+      <div>“¿Alcanza el stock?” antes de fabricar, con faltantes</div>
+      <div>Pronóstico y reposición: qué conviene comprar y cuándo</div>
+      <div>Planificación de producción</div>
+      <div>Estadística: lo producido por día, semana, mes o rango</div>
+      <div>Hoja de la orden en PDF para el operario, sin costos</div>
+      <div>Cancelar o archivar con historial; todo se puede recuperar</div>
+    </div>
+  </div>
+
+  <div class="module" style="--accent:var(--stock)">
+    <div class="head"><span class="dot"></span><h3>Stock <span class="tag ok">Listo</span></h3></div>
+    <p class="d">Un solo catálogo para materias primas, semielaborados, productos terminados e insumos.</p>
+    <div class="cols">
+      <div>Ítems con código, unidad, mínimo y tipo</div>
+      <div>Importación desde Excel con vista previa y validación</div>
+      <div>Stock por depósito, entradas, salidas y transferencias</div>
+      <div>Lotes y fechas de vencimiento</div>
+      <div>Reservas: lo que ya está comprometido en otras órdenes</div>
+      <div>Historial de movimientos con quién lo hizo</div>
+      <div>Remitos de entrega para fabricación o para terceros</div>
+      <div>Unidades, categorías y depósitos configurables</div>
+    </div>
+  </div>
+
+  <div class="callout">
+    <b>Pensado para fábricas grandes y chicas:</b> las listas largas (fórmulas con muchos componentes, órdenes con cientos de insumos) se muestran compactas, con búsqueda, filtros y paginación. Se probó con órdenes de 200 insumos.
+  </div>
+  <div class="foot"><span>Dromux ERP</span><span>3 · Producción y Stock</span></div>
+</section>
+
+<!-- 4. COMPRAS Y AJUSTES -->
+<section class="page">
+  <span class="eyebrow">Listo para usar</span>
+  <h2>Compras y gestión del equipo</h2>
+  <div class="bar"></div>
+
+  <div class="module" style="--accent:var(--compras)">
+    <div class="head"><span class="dot"></span><h3>Compras <span class="tag val">En validación</span></h3></div>
+    <p class="d">Del pedido interno a la recepción de la mercadería, sin cargar dos veces.</p>
+    <div class="cols">
+      <div>Pedidos internos: el operario pide, Compras decide</div>
+      <div>Órdenes de compra imprimibles, con recepción parcial o total</div>
+      <div>Proveedores con catálogo y precios por material</div>
+      <div>Comparación de precios entre proveedores</div>
+      <div>Tipos de cambio (ARS / USD) para costos en dólares</div>
+      <div>Cuenta corriente con cada proveedor y órdenes de pago</div>
+      <div>Estadísticas de compras sin sumar unidades distintas</div>
+      <div>Reposición sugerida a partir del stock real</div>
+    </div>
+  </div>
+
+  <div class="module" style="--accent:var(--ajustes)">
+    <div class="head"><span class="dot"></span><h3>Ajustes y equipo <span class="tag ok">Listo</span></h3></div>
+    <p class="d">El dueño maneja los accesos de su gente sin pedirle nada a soporte.</p>
+    <div class="cols">
+      <div>Usuarios y roles: Operario, Vendedor, Encargado y los que quieras</div>
+      <div>Permisos pantalla por pantalla (ver, crear, editar, eliminar)</div>
+      <div>Plantillas de rol para armar accesos en segundos</div>
+      <div>Vista “ver como rol”: probás lo que verá cada empleado</div>
+      <div>Candados visibles en las pantallas sin acceso</div>
+      <div>Historial de accesos: quién cambió qué permiso y cuándo</div>
+      <div>Archivados: recuperar lo que se retiró por error</div>
+      <div>Documentos de producción con tu logo y tus campos</div>
+    </div>
+  </div>
+
+  <div class="callout">
+    <b>Costos protegidos:</b> los costos de materiales y de producción solo los ve quien vos habilites. El operario recibe cantidades y procesos, nunca costos, ni en pantalla ni en los PDF.
+  </div>
+  <div class="callout" style="border-left-color:var(--prod)">
+    <b>Cada empresa está separada:</b> los datos de tu empresa no se mezclan con los de otras. Las acciones sobre el stock quedan registradas con el nombre de quién las hizo.
+  </div>
+  <div class="foot"><span>Dromux ERP</span><span>4 · Compras y equipo</span></div>
+</section>
+
+<!-- 5. CÓMO EMPEZAR + ALCANCE -->
+<section class="page">
+  <span class="eyebrow">Para empezar</span>
+  <h2>Cómo empezar a probar</h2>
+  <div class="bar"></div>
+  <table>
+    <tr><th style="width:11mm">#</th><th>Paso</th><th>Qué hacés</th></tr>
+    <tr><td>1</td><td><b>Configuración básica</b></td><td>Cargá unidades de medida, depósitos y categorías de tu empresa.</td></tr>
+    <tr><td>2</td><td><b>Tus materiales y productos</b></td><td>Creá los ítems uno por uno o importalos desde Excel.</td></tr>
+    <tr><td>3</td><td><b>Stock inicial</b></td><td>Registrá el conteo inicial de cada ítem en su depósito.</td></tr>
+    <tr><td>4</td><td><b>Fórmulas</b></td><td>Armá la receta de cada producto con sus componentes.</td></tr>
+    <tr><td>5</td><td><b>Primera orden</b></td><td>Verificá “¿Alcanza el stock?”, creá la orden, entregá insumos y cerrala.</td></tr>
+    <tr><td>6</td><td><b>Tu equipo</b></td><td>Creá los roles y asigná a cada persona lo que necesita ver y hacer.</td></tr>
+  </table>
+  <p class="small" style="margin-top:3mm">Por el momento, el alta de empleados y cuentas la hacemos nosotros a pedido; se automatiza en una etapa posterior.</p>
+
+  <h2 style="margin-top:9mm;font-size:17pt">Qué todavía no está disponible</h2>
+  <div class="grid g2" style="margin-top:4mm">
+    <div class="card" style="--accent:var(--ventas)"><h3>Ventas y clientes <span class="tag soon">Corto plazo</span></h3><p>Las pantallas existen, pero las estamos terminando de validar. Por ahora no las uses para operar.</p></div>
+    <div class="card" style="--accent:var(--fin)"><h3>Finanzas y cobros <span class="tag soon">Corto plazo</span></h3><p>Tesorería, cuentas por cobrar y ganancia se habilitan junto con Ventas.</p></div>
+    <div class="card" style="--accent:var(--rep)"><h3>Reportes <span class="tag later">Más adelante</span></h3><p>Informes y exportaciones, siempre respetando los permisos de cada persona.</p></div>
+    <div class="card" style="--accent:var(--indigo)"><h3>Inicio con más datos <span class="tag later">Más adelante</span></h3><p>Hoy muestra decisiones del día y producción; se amplía con ventas y cobros.</p></div>
+  </div>
+  <div class="foot"><span>Dromux ERP</span><span>5 · Cómo empezar</span></div>
+</section>
+
+<!-- 6. HOJA DE RUTA -->
+<section class="page">
+  <span class="eyebrow">Lo que viene</span>
+  <h2>Hoja de ruta</h2>
+  <div class="bar"></div>
+  <p class="sub">Las etapas están ordenadas por prioridad, no por fecha: el orden puede ajustarse con lo que aprendamos de tu uso real.</p>
+
+  <div class="road">
+    <div class="col c1">
+      <span class="when">Corto plazo</span>
+      <h3>Vender y cobrar</h3>
+      <ul>
+        <li>Ventas con salida de stock y cobro total o parcial</li>
+        <li>Clientes y listas de precios (varias listas, con descuento)</li>
+        <li>Presupuestos en PDF profesional, con IVA</li>
+        <li>Presupuesto aceptado → venta con un clic</li>
+        <li>Tesorería: cuentas, cobros y pagos</li>
+        <li>Ganancia bruta, solo para quien autorices</li>
+        <li>Aviso al operario cuando su pedido de compra se resuelve</li>
+      </ul>
+    </div>
+    <div class="col c2">
+      <span class="when">Mediano plazo</span>
+      <h3>Controlar y analizar</h3>
+      <ul>
+        <li>Reportes y exportaciones con permisos</li>
+        <li>Conteo de inventario con ajustes y motivo</li>
+        <li>Etiquetas de lote para imprimir</li>
+        <li>Fecha prevista de entrega en compras, con alerta de atraso</li>
+        <li>Pagos a proveedores en lote</li>
+        <li>Actividad del equipo: quién hizo qué hoy</li>
+        <li>Cobros vencidos y facturas por vencer</li>
+      </ul>
+    </div>
+    <div class="col c3">
+      <span class="when">A futuro</span>
+      <h3>Crecer sin fricción</h3>
+      <ul>
+        <li>Alta de cuentas y empresas desde la web</li>
+        <li>Invitar empleados por correo</li>
+        <li>Suscripción y pagos en línea</li>
+        <li>Ofertas por cantidad y kits</li>
+        <li>Importación directa de archivos Excel (.xlsx)</li>
+        <li>Conciliación bancaria simple</li>
+        <li>Búsqueda con favoritos y recientes</li>
+        <li>Comparación con el mes anterior en el Inicio</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="callout" style="margin-top:7mm">
+    <b>Tu opinión orienta el orden.</b> Durante la prueba anotá qué te falta, qué te confunde y qué usás más. Con eso ajustamos las prioridades de las próximas etapas.
+  </div>
+
+  <div class="callout" style="border-left-color:var(--ventas)">
+    <b>Compromiso de calidad:</b> antes de habilitar cada módulo nuevo lo probamos con distintos tipos de usuario (dueño, encargado, operario, vendedor) y con datos de varias empresas, para que nunca se mezclen ni se muestren costos a quien no corresponde.
+  </div>
+  <div class="foot"><span>Dromux ERP</span><span>6 · Hoja de ruta</span></div>
+</section>
+
+</body>
+</html>

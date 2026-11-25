@@ -25,3 +25,12 @@ Problema: costos de producción y de referencia legibles por API con permisos no
 
 ## 24/11/2026 — Alta de empleados, cuentas y empresas (HI-003 / HI-002)
 Decisión del propietario: hasta el lanzamiento comercial el alta de empleados, cuentas y empresas se hace manualmente. La automatización (alta de cuentas, creación de empresas, invitaciones de empleados, cuota de `create_company`) se hará junto con la publicación de la página web y la integración de Stripe (pagos y suscripciones). Mientras tanto HI-002 y HI-003 quedan ACEPTADOS como riesgo conocido (proceso manual del propietario) y diferidos a esa etapa.
+
+## 25/11/2026 — Estadística de producción y órdenes archivadas
+Decisión del propietario: la estadística cuenta solo órdenes terminadas (se fabricó); las canceladas no. Verificado en código (`production_output_summary` / `production_output_by_product`, migración 043): filtran solo `status = 'completed'`, sin filtro de archivado, así que una orden terminada y luego archivada SIGUE contando (coincide con la decisión). Verificado: archivar solo pone `archived = true` (034), no cambia `status`.
+
+## 25/11/2026 — Reposición/¿Alcanza? y permisos que van de la mano
+Decisión del propietario: ¿Alcanza el stock? y Reposición (y ver órdenes con existencias) requieren poder ver Stock por depósito. Cada dueño de empresa asigna los accesos de sus empleados desde Roles (para no crear roles a medida desde soporte); la interfaz avisa las dependencias y ofrece agregarlas con un clic. Consecuencia: el servidor exige pantalla + Stock por depósito (048) y Roles muestra el aviso (PermissionsGrid, DEPENDENCIES).
+
+## 25/11/2026 — Stock: ver por pantalla, registrar con módulo completo
+Problema: dar permisos de Stock pantalla por pantalla para registrar movimientos era confuso y exigía separar el control interno de los movimientos. Decisión del propietario: Ver se da por pantalla; Crear/Editar/Eliminar en cualquier pantalla de Stock otorga el módulo completo, porque todos los movimientos quedan registrados con quién los hizo (`actor_id`). Consecuencia: no se hace la migración 048b; Roles aplica la regla solo y la explica en pantalla.

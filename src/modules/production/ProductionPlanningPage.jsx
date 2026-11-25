@@ -86,7 +86,7 @@ export default function ProductionPlanningPage() {
     enabled: Boolean(
       activeCompanyId &&
       formula &&
-      can("stock", "read") &&
+      can("stock_levels", "read") &&
       Number(quantity) > 0 &&
       Number(quantity) < 1000000000000,
     ),
@@ -264,7 +264,7 @@ export default function ProductionPlanningPage() {
                         : "—"}{" "}
                       {byId[line.componentId]?.units?.symbol}
                     </span>
-                    {can("stock", "read") && (
+                    {can("stock_levels", "read") && (
                       <small
                         className={
                           available >= line.quantity

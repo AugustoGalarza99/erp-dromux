@@ -96,7 +96,7 @@ export default function PurchaseOrdersPage() {
   const loadedSuggestion = useRef('');
   const mayBuy = can('purchases_orders', 'insert');
   // El pronóstico lo exige el servidor con el módulo completo de Compras (pasa a Producción en 047).
-  const canForecast = can('production_replenishment', 'read') && can('stock', 'read');
+  const canForecast = can('production_replenishment', 'read') && can('stock_levels', 'read');
   const [createOpen, setCreateOpen] = useState(false);
   const [orderSearch, setOrderSearch] = useState(params.get('order') ?? '');
   const [orderStatus, setOrderStatus] = useState(params.get('status') ?? '');

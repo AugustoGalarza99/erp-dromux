@@ -30,6 +30,13 @@ const ACTIONS = [
 // "Gestionar" solo existe donde el catálogo lo declara (hoy: Pedidos internos → rechazar y convertir pedidos ajenos).
 const SCREEN_ACTIONS = [...ACTIONS, ["manage", "Gestionar"]];
 
+// Pantallas que necesitan ver el stock para mostrar datos correctos (el servidor las exige junto con Stock por depósito).
+const DEPENDENCIES = [
+  { screen: 'production_availability', needs: 'stock_levels', why: 'para calcular si alcanza el stock' },
+  { screen: 'production_replenishment', needs: 'stock_levels', why: 'para proyectar qué reponer' },
+  { screen: 'production_orders', needs: 'stock_levels', why: 'para ver existencias y materiales asignados en las órdenes' },
+];
+
 const LEGACY_RESOURCES = [
   ['dashboard', 'Panel'], ['inventory', 'Inventario'], ['production', 'Producción'], ['purchases', 'Compras'],
   ['purchase_requests', 'Pedidos de compra internos'], ['sales', 'Ventas'], ['finance', 'Finanzas'],
@@ -93,6 +100,19 @@ export default function PermissionsGrid({ permissions, onChange, disabled = fals
     ...actions.map((action) => ({ resource: screen.resource, action })),
   ]);
   const toggleAction = (screen, action) => {
+    // Stock: ver se da pantalla por pantalla; registrar (crear/editar/eliminar) es todo o nada para todo el módulo (el servidor lo exige así).
+    if (screen.module === 'stock' && action !== 'read') {
+      const stockRows = screen.module && modules.find(([name]) => name === 'stock')?.[1];
+      if (stockRows) {
+        if (has(screen.resource, action)) {
+          const stockResources = stockRows.map((row) => row.resource);
+          onChange(permissions.filter((p) => !(stockResources.includes(p.resource) && p.action !== 'read')));
+        } else {
+          setModule(stockRows, 'all');
+        }
+        return;
+      }
+    }
     const current = userActions(screen).filter((a) => has(screen.resource, a));
     if (action === 'read') {
       setScreen(screen, current.includes('read') ? [] : [...current, 'read']);
@@ -108,7 +128,34 @@ export default function PermissionsGrid({ permissions, onChange, disabled = fals
       .filter((a) => screen.actions.includes(a)).map((action) => ({ resource: screen.resource, action })))),
   ]);
 
+  const labelOf = (resource) => catalog.find((entry) => entry.resource === resource)?.label ?? resource;
+  const missing = DEPENDENCIES.filter((dep) => has(dep.screen, 'read') && !has(dep.needs, 'read')
+    && catalog.some((entry) => entry.resource === dep.needs));
+  const addMissing = () => onChange([
+    ...permissions,
+    ...[...new Set(missing.map((dep) => dep.needs))].map((resource) => ({ resource, action: 'read' })),
+  ]);
+
   return (
+    <>
+    {missing.length > 0 && (
+      <div className="perm-dependency" role="alert">
+        <ShieldAlert size={16} aria-hidden="true" />
+        <div>
+          <strong>Falta un acceso que va de la mano</strong>
+          <ul>
+            {missing.map((dep) => (
+              <li key={dep.screen}>
+                «{labelOf(dep.screen)}» necesita poder ver «{labelOf(dep.needs)}» {dep.why}.
+              </li>
+            ))}
+          </ul>
+          <button type="button" className="button outline" disabled={disabled} onClick={addMissing}>
+            Agregar «Ver» en las pantallas que faltan
+          </button>
+        </div>
+      </div>
+    )}
     <div className="perm-modules">
       {modules.map(([module, rows]) => {
         const open = isOpen(module, rows);
@@ -145,6 +192,13 @@ export default function PermissionsGrid({ permissions, onChange, disabled = fals
                   : withAccess.length > 0 && withAccess.length < rows.length
                     ? "Atención: hasta que se active el control por pantalla, el servidor solo habilita este módulo si el rol tiene TODAS sus pantallas. Un acceso parcial hoy NO le abre estas pantallas en el servidor."
                     : "Por ahora el servidor aplica el acceso a todo el módulo; el control pantalla por pantalla se activa en la próxima actualización."}
+              </p>
+            )}
+            {open && module === 'stock' && (
+              <p className="perm-note-line">
+                Cómo funciona Stock: <strong>Ver</strong> se da pantalla por pantalla. Si marcás <strong>Crear, Editar o Eliminar</strong> en
+                cualquiera, la persona recibe acceso completo a todo Stock (movimientos, remitos e ingresos), porque todos esos movimientos
+                comparten el mismo control. Cada movimiento queda registrado con quién lo hizo.
               </p>
             )}
             {open && (
@@ -220,5 +274,6 @@ export default function PermissionsGrid({ permissions, onChange, disabled = fals
         <small>Usuarios y roles solo los gestiona el administrador.</small>
       </section>
     </div>
+    </>
   );
 }

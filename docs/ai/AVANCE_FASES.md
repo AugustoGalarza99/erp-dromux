@@ -59,3 +59,13 @@ H-007 (P1, escalada por delegación en roles/usuarios; confirmado con prueba, co
 - 047 APLICADA por el propietario; comprobación 8 = 0 filas; consulta 9 muestra que solo los administradores ven costos de producción (Vendedor no). Pendiente de pegar: el resto de 047_comprobaciones.sql y el script completo con grupo 12.
 - Fase 1: pasos 1–15, 18, 19 y envasado OK por pantalla; pendientes los que necesitan al propietario (PDF, operario/vendedor, red, stock insuficiente, 200 insumos).
 - Siguiente: ver PROMPT_PROXIMA_SESION.md.
+
+## Sesión 25/11/2026: 047b, 048, operario/vendedor reales
+- 047 comprobaciones 1–9 OK; script: caso 336 FALLA real -> 047b (NULL en can_see_*; aplicada y verificada: coalesce_ok, 0 filas en la guardia). Re-correr el script para confirmar 336 = PASA (pendiente de pegar).
+- Bloque A: operario y vendedor reales, PDF sin costos, stock insuficiente (falla completo), reintento tras corte simulado, rol de una pantalla, historial de accesos: OK (evidencia/2026-11-25_operario_real.md).
+- 4b: 048 (Stock lecturas + Archivados por pantalla) APLICADA tras revisión crítica (P1-1/P1-2 corregidos) y verificada en la base. 1er intento dio deadlock (app abierta, sin cambios a medias): migración ahora con bloqueos ordenados y lock_timeout. Escrituras de stock por pantalla: 048b pendiente.
+- Roles: aviso de dependencias hacia Stock por depósito (¿Alcanza?, Reposición, Órdenes).
+- Verificación visual automática sin desborde a 360/720/768; revisión humana a 1024/1440 pendiente.
+- Fase 1: pasos 3, 8, 10 (operario/vendedor), 11 (PDF), 16 (reintento, simulado) y 17 OK; orden de 200 insumos y corte de red real pendientes.
+- 25/11 (cierre): script completo 0 FALLA (336 PASA, grupo 13 PASA). Stock simplificado: ver por pantalla, registrar = módulo completo (048b descartada). Interfaz: error de cierre dentro del diálogo, mensaje de conexión, diálogo propio de cambio de rol. C-013 revisado por código; queda H-011b (precios de órdenes de compra).
+- 25/11 (final): operario real verificado tras la 048 (corrección de frontend: gates `stock` -> `stock_levels`); 200 insumos y revisión visual 1024/1440 verificados por el propietario; PDF para el cliente en docs/cliente/. Pendiente: concurrencia, corte de red real, Fase 2a restante, lista de lanzamiento, Ventas.

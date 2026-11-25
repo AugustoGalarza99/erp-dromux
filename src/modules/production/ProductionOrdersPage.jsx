@@ -264,7 +264,7 @@ export default function ProductionOrdersPage() {
   const locationsQuery = useQuery({
     queryKey: ["production-reservation-locations", user?.id, activeCompanyId],
     queryFn: () => listProductionReservationLocations(activeCompanyId),
-    enabled: Boolean(activeCompanyId && can("stock", "read")),
+    enabled: Boolean(activeCompanyId && can("stock_levels", "read")),
   });
   const plansQuery = useQuery({
     queryKey: ["production-plans", user?.id, activeCompanyId],
@@ -558,7 +558,7 @@ export default function ProductionOrdersPage() {
           <Link className="button outline" to="/archivados?type=jobs">
             Archivadas
           </Link>
-          {can("stock", "read") && (
+          {can("stock_levels", "read") && (
             <Link className="button outline" to="/inventory/delivery-notes">
               <Truck size={17} aria-hidden="true" /> Remitos
             </Link>

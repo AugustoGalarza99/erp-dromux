@@ -51,7 +51,7 @@ export default function StockOverview() {
   const { activeCompanyId, user, can } = useAuth();
   const scope = [user?.id, activeCompanyId];
   const canItems = can("items", "read");
-  const canStock = can("stock", "read");
+  const canStock = (can("stock_levels", "read") || can("inventory", "read"));
   const enabled = Boolean(activeCompanyId);
 
   const allItems = useItemCount("");

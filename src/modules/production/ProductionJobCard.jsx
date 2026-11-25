@@ -385,7 +385,7 @@ export default function ProductionJobCard({
           {remitos.map((note, index) => (
             <span key={note.id}>
               {index > 0 && " · "}
-              {can("stock", "read") ? (
+              {can("stock_levels", "read") ? (
                 <Link to="/inventory/delivery-notes">Nº {note.number}</Link>
               ) : (
                 `Nº ${note.number}`

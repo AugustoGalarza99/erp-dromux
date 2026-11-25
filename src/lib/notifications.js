@@ -11,7 +11,11 @@ export function friendlyError(error) {
     return 'Ya existe un registro con esos datos. Revisá el código y volvé a intentar.';
   }
 
-  if (/permission denied|row-level security|PGRST|function public\.|relation public\.|JWT|fetch failed|Failed to fetch/i.test(message)) {
+  if (/fetch failed|Failed to fetch|NetworkError|Load failed/i.test(message)) {
+    return 'Se cortó la conexión. Si la operación ya había llegado al servidor, reintentar no la repite. Revisá tu internet y comprobá el resultado antes de volver a intentar.';
+  }
+
+  if (/permission denied|row-level security|PGRST|function public\.|relation public\.|JWT/i.test(message)) {
     return 'No pudimos completar la operación. Comprobá tu acceso y volvé a intentarlo.';
   }
   return message;

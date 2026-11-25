@@ -77,7 +77,7 @@ export default function DeliveryNotesPage() {
     queryKey: ["production-reservation-locations", user?.id, activeCompanyId],
     queryFn: () => listProductionReservationLocations(activeCompanyId),
     enabled: Boolean(
-      activeCompanyId && can("production_orders", "read") && can("stock", "read"),
+      activeCompanyId && can("production_orders", "read") && can("stock_levels", "read"),
     ),
   });
   const items = itemsQuery.data ?? [];

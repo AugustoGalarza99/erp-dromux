@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Search, UsersRound } from 'lucide-react';
+import ConfirmDeleteDialog from '../../components/ConfirmDeleteDialog';
 import { useAuth } from '../../contexts/AuthContext';
 import { friendlyError, notifyError, notifySuccess } from '../../lib/notifications';
 import { listMembers, listRoles, updateMember } from '../../services/administration';
@@ -16,6 +17,7 @@ export default function UsersPage() {
   const [roleFilter, setRoleFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [limit, setLimit] = useState(PAGE);
+  const [pendingChange, setPendingChange] = useState(null);
 
   const membersQuery = useQuery({
     queryKey: ['members', user?.id, activeCompanyId],
@@ -30,10 +32,14 @@ export default function UsersPage() {
   const members = membersQuery.data ?? [];
   const roles = rolesQuery.data ?? [];
 
-  async function changeRole(member, roleId) {
+  function askChangeRole(member, roleId) {
     if (roleId === member.role_id || saving) return;
-    const target = roles.find((entry) => entry.id === roleId);
-    if (!window.confirm(`¿Cambiar el rol de ${member.display_name || member.email} a "${target?.name ?? ''}"? Sus permisos cambian de inmediato.`)) return;
+    setPendingChange({ member, roleId });
+  }
+
+  async function changeRole() {
+    const { member, roleId } = pendingChange;
+    setPendingChange(null);
     setSaving(member.user_id);
     try {
       await updateMember(activeCompanyId, member.user_id, roleId, member.active);
@@ -115,7 +121,7 @@ export default function UsersPage() {
                 <label className="member-role-control">
                   <span className="sr-only">Rol de {member.display_name || member.email}</span>
                   <select value={member.role_id} disabled={saving === member.user_id || rolesQuery.isPending}
-                    onChange={(event) => changeRole(member, event.target.value)}>
+                    onChange={(event) => askChangeRole(member, event.target.value)}>
                     {roles.map((entry) => <option key={entry.id} value={entry.id}>{entry.name}</option>)}
                   </select>
                 </label>
@@ -134,6 +140,17 @@ export default function UsersPage() {
           </div>
         )}
       </section>
+      <ConfirmDeleteDialog
+        open={Boolean(pendingChange)}
+        intent="primary"
+        title="¿Cambiar el rol de esta persona?"
+        description={pendingChange
+          ? `${pendingChange.member.display_name || pendingChange.member.email} pasará a "${roles.find((entry) => entry.id === pendingChange.roleId)?.name ?? ''}". Sus permisos cambian de inmediato y queda registrado en el historial de accesos.`
+          : ''}
+        confirmLabel="Cambiar rol"
+        onCancel={() => setPendingChange(null)}
+        onConfirm={changeRole}
+      />
     </div>
   );
 }
