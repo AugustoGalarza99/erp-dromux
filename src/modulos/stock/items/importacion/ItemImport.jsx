@@ -68,7 +68,7 @@ async function readWorkbook(file) {
 }
 
 export default function ItemImport({ onClose }) {
-  const { activeCompanyId } = useAuth();
+  const { activeCompanyId, can, role, planIncluye } = useAuth();
   const queryClient = useQueryClient();
   const input = useRef(null);
   const [rows, setRows] = useState([]);
@@ -88,6 +88,20 @@ export default function ItemImport({ onClose }) {
     setFilename('');
   }, [activeCompanyId]);
 
+  // Los precios de venta solo los carga el administrador con Ventas activo: se avisa antes de enviar.
+  const priceIssues = (parsed) => {
+    if (role === 'administrador' && can('ventas', 'editar')) return [];
+    const reason = planIncluye('ventas')
+      ? 'solo un administrador puede cargar precios de venta'
+      : 'tu empresa no tiene activado Ventas';
+    return parsed
+      .filter(({ data }) => String(data.precio_venta_ars ?? '').trim())
+      .map((row) => ({
+        number: row.number,
+        message: `precio_venta_ars: dejalo vacío (${reason})`,
+      }));
+  };
+
   const pickFile = async (file) => {
     if (!file || busy) return;
     const companyId = activeCompanyId;
@@ -103,7 +117,7 @@ export default function ItemImport({ onClose }) {
       if (!parsed.length || parsed.length > 200) {
         throw new Error('El archivo debe tener entre 1 y 200 filas con productos.');
       }
-      const localIssues = validateLocalRows(parsed);
+      const localIssues = [...validateLocalRows(parsed), ...priceIssues(parsed)];
       setIssues(localIssues);
       setRows(parsed);
       if (!localIssues.length) {

@@ -25,7 +25,7 @@ const tabs = [
 
 export default function StockShell({ title, description, actions, children }) {
   const { can } = useAuth();
-  const visible = tabs.filter((tab) => tab.any.some((resource) => can(resource, "read")));
+  const visible = tabs.filter((tab) => tab.any.some((resource) => can(resource, "ver")));
 
   return (
     <div className="stock-shell">

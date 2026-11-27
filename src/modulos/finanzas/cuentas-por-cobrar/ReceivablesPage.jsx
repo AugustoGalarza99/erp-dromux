@@ -9,15 +9,13 @@ import {
   listReceivables, listSalePayments, postSalePayment, reverseSalePayment,
 } from './receivables';
 import { getTreasuryBalances } from '../tesoreria/treasury';
+import { MEDIO_PAGO_ETIQUETA } from '../../../compartido/valores';
 import './receivables.css';
 
 const money = (value) => Number(value).toLocaleString('es-AR', {
   minimumFractionDigits: 2, maximumFractionDigits: 2,
 });
-const methods = {
-  cash: 'Efectivo', transfer: 'Transferencia', card: 'Tarjeta',
-  check: 'Cheque', other: 'Otro',
-};
+const methods = MEDIO_PAGO_ETIQUETA;
 const localToday = () => new Intl.DateTimeFormat('sv-SE', {
   timeZone: 'America/Argentina/Buenos_Aires',
 }).format(new Date());
@@ -67,7 +65,7 @@ export default function ReceivablesPage() {
   const [saleId, setSaleId] = useState('');
   const [amount, setAmount] = useState('');
   const [accountId, setAccountId] = useState('');
-  const [method, setMethod] = useState('transfer');
+  const [method, setMethod] = useState('transferencia');
   const [paidOn, setPaidOn] = useState(localToday);
   const [reference, setReference] = useState('');
   const [note, setNote] = useState('Cobro de venta');
@@ -268,7 +266,7 @@ export default function ReceivablesPage() {
                 onChange={(event) => { setNote(event.target.value);
                   setRequestId(crypto.randomUUID()); }} />
             </label>
-            <button className="button primary" disabled={busy || !validAmount || !accountId || !can('finance', 'insert')}>
+            <button className="button primary" disabled={busy || !validAmount || !accountId || !can('finanzas', 'crear')}>
               <CreditCard size={17} /> {busy ? 'Registrando…' : 'Registrar cobro'}
             </button>
           </form> : <p className="finance-paid-message">La venta está totalmente cobrada.</p>}
@@ -283,7 +281,7 @@ export default function ReceivablesPage() {
                   {payment.reference ? ` · ${payment.reference}` : ''}</small>
                 {payment.reversal && <small>Anulado: {payment.reversal.reason}</small>}
               </div>
-              {!payment.reversal && can('finance', 'update') && <button type="button"
+              {!payment.reversal && can('finanzas', 'editar') && <button type="button"
                 disabled={busy} onClick={() => setReversing(payment)}>Anular</button>}
             </div>)}
           </div>

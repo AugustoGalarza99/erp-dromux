@@ -70,7 +70,7 @@ export default function SupplierAccountsPage() {
   const [busy, setBusy] = useState(false);
   const request = useRef(null);
   const validDates = Boolean(from && to && from <= to);
-  const finance = can('finance', 'read');
+  const finance = can('finanzas', 'ver');
   const key = (name, ...parts) => [name, user?.id, company, ...parts];
   const suppliers = useQuery({
     queryKey: key('finance-suppliers', term),
@@ -388,7 +388,7 @@ export default function SupplierAccountsPage() {
           <Pager page={page} count={ledger.data?.total_count ?? 0} onChange={setPage} />
         </>
       )}
-      {finance && can('finance', 'insert') && (
+      {finance && can('finanzas', 'crear') && (
         <button type="button" className="button primary" onClick={() => setCreateOpen(true)}>
           Nueva orden de pago
         </button>
@@ -407,7 +407,7 @@ export default function SupplierAccountsPage() {
               </h2>
               <p>
                 {money(row.amount)} · {row.account?.name} · {row.paid_on} ·{' '}
-                {{ draft: 'Borrador', paid: 'Pagada', cancelled: 'Anulada' }[row.status]}
+                {{ borrador: 'Borrador', pagado: 'Pagada', cancelado: 'Anulada' }[row.status]}
               </p>
               <p>
                 {row.note}
@@ -417,9 +417,9 @@ export default function SupplierAccountsPage() {
                 <button className="button outline" onClick={() => print(row)}>
                   Descargar PDF
                 </button>
-                {row.status === 'draft' && (
+                {row.status === 'borrador' && (
                   <>
-                    {can('finance', 'insert') && (
+                    {can('finanzas', 'crear') && (
                       <button
                         className="button primary"
                         onClick={() => setAction({ kind: 'pay', row })}
@@ -427,7 +427,7 @@ export default function SupplierAccountsPage() {
                         Registrar pago
                       </button>
                     )}
-                    {can('finance', 'update') && (
+                    {can('finanzas', 'editar') && (
                       <button
                         className="button outline"
                         onClick={() => setAction({ kind: 'cancel', row })}

@@ -15,14 +15,14 @@ import { isMissingFunction } from '../compartido/pricing';
 import { getTreasuryBalances } from '../../finanzas/tesoreria/treasury';
 import SaleAdjustmentPanel from './SaleAdjustmentPanel';
 import SalesShell from '../compartido/SalesShell';
+import { MEDIO_PAGO_ETIQUETA } from '../../../compartido/valores';
 import '../compartido/sales.css';
 
 const money = (value) => Number(value).toLocaleString('es-AR', {
   minimumFractionDigits: 2,
   maximumFractionDigits: 2,
 });
-const methods = { cash: 'Efectivo', transfer: 'Transferencia', card: 'Tarjeta',
-  check: 'Cheque', other: 'Otro' };
+const methods = MEDIO_PAGO_ETIQUETA;
 const newLine = () => ({
   key: crypto.randomUUID(), itemId: '', warehouseId: '', lotCode: '', quantity: '1',
   discount: '', discountReason: '',
@@ -133,9 +133,9 @@ export default function SalesOrdersPage() {
   const [lines, setLines] = useState([newLine()]);
   const [busy, setBusy] = useState(false);
   const [openSaleIds, setOpenSaleIds] = useState(() => new Set());
-  const [paymentMode, setPaymentMode] = useState('pending');
+  const [paymentMode, setPaymentMode] = useState('pendiente');
   const [paymentAmount, setPaymentAmount] = useState('');
-  const [paymentMethod, setPaymentMethod] = useState('cash');
+  const [paymentMethod, setPaymentMethod] = useState('efectivo');
   const [accountId, setAccountId] = useState('');
   const [paymentRequestId, setPaymentRequestId] = useState(() => crypto.randomUUID());
   const [requestId, setRequestId] = useState(() => crypto.randomUUID());
@@ -158,11 +158,11 @@ export default function SalesOrdersPage() {
   const accountsQuery = useQuery({
     queryKey: ['treasury-balances', user?.id, activeCompanyId],
     queryFn: () => getTreasuryBalances(activeCompanyId),
-    enabled: Boolean(activeCompanyId && can('finance', 'read') && can('finance', 'insert')),
+    enabled: Boolean(activeCompanyId && can('finanzas', 'ver') && can('finanzas', 'crear')),
   });
   const accounts = (accountsQuery.data ?? []).filter((account) => account.active);
   const paymentAccounts = accounts.filter((account) =>
-    paymentMethod !== 'cash' || account.kind === 'cash');
+    paymentMethod !== 'efectivo' || account.kind === 'caja');
   const itemIds = lines.map((line) => line.itemId).filter(Boolean);
   const balancesQuery = useQuery({
     queryKey: ['sale-balances', activeCompanyId, [...itemIds].sort().join(',')],
@@ -202,10 +202,10 @@ export default function SalesOrdersPage() {
   const totalCents = Math.round(total * 100);
   const enteredCents = /^\d+(?:\.\d{1,2})?$/.test(paymentAmount)
     ? Math.round(Number(paymentAmount) * 100) : 0;
-  const paymentReady = paymentMode === 'pending' || (
-    can('finance', 'insert') && can('finance', 'read') && !!accountId &&
+  const paymentReady = paymentMode === 'pendiente' || (
+    can('finanzas', 'crear') && can('finanzas', 'ver') && !!accountId &&
     !!paymentAccounts.find((entry) => entry.account_id === accountId) &&
-    totalCents > 0 && (paymentMode === 'paid' ||
+    totalCents > 0 && (paymentMode === 'pagado' ||
       (enteredCents > 0 && enteredCents < totalCents))
   );
   const ready = paymentReady && !!customerId && !!note.trim() && lines.length > 0 &&
@@ -227,7 +227,7 @@ export default function SalesOrdersPage() {
     setLines([newLine()]);
     setRequestId(crypto.randomUUID());
     setPaymentRequestId(crypto.randomUUID());
-    setPaymentMode('pending');
+    setPaymentMode('pendiente');
     setPaymentAmount('');
     setAccountId('');
   }, [activeCompanyId]);
@@ -255,7 +255,7 @@ export default function SalesOrdersPage() {
     try {
       await postSale(activeCompanyId, {
         customerId, note, paymentMode, paymentMethod, accountId,
-        paymentAmount: paymentMode === 'paid' ? (totalCents / 100).toFixed(2) : paymentAmount,
+        paymentAmount: paymentMode === 'pagado' ? (totalCents / 100).toFixed(2) : paymentAmount,
         paymentRequestId,
         lines: lines.map((line) => ({
           ...line,
@@ -264,7 +264,7 @@ export default function SalesOrdersPage() {
       }, requestId);
       setRequestId(crypto.randomUUID());
       setPaymentRequestId(crypto.randomUUID());
-      setPaymentMode('pending');
+      setPaymentMode('pendiente');
       setPaymentAmount('');
       setAccountId('');
       setLines([newLine()]);
@@ -285,7 +285,7 @@ export default function SalesOrdersPage() {
         client.invalidateQueries({ queryKey: ['sales-profit-detail'] }),
         client.invalidateQueries({ queryKey: ['operational-report'] }),
       ]);
-      notifySuccess('Venta registrada', paymentMode === 'pending'
+      notifySuccess('Venta registrada', paymentMode === 'pendiente'
         ? 'El stock se descontó y la venta quedó pendiente de cobro.'
         : 'La venta, el stock y el cobro quedaron registrados juntos.');
     } catch (error) {
@@ -351,18 +351,18 @@ export default function SalesOrdersPage() {
               setPaymentMode(event.target.value);
               setPaymentRequestId(crypto.randomUUID());
             }}>
-              <option value="pending">Pendiente de cobro</option>
-              {can('finance', 'insert') && can('finance', 'read') && (
-                <option value="partial">Cobro parcial ahora</option>
+              <option value="pendiente">Pendiente de cobro</option>
+              {can('finanzas', 'crear') && can('finanzas', 'ver') && (
+                <option value="parcial">Cobro parcial ahora</option>
               )}
-              {can('finance', 'insert') && can('finance', 'read') && (
-                <option value="paid">Pagada por completo ahora</option>
+              {can('finanzas', 'crear') && can('finanzas', 'ver') && (
+                <option value="pagado">Pagada por completo ahora</option>
               )}
             </select>
           </label>
-          {paymentMode !== 'pending' && (
+          {paymentMode !== 'pendiente' && (
             <>
-              {paymentMode === 'partial' && (
+              {paymentMode === 'parcial' && (
                 <label>Importe recibido
                   <input type="number" required min="0.01" step="0.01"
                     max={(totalCents / 100).toFixed(2)} value={paymentAmount}
@@ -379,7 +379,7 @@ export default function SalesOrdersPage() {
                   ))}
                 </select>
               </label>
-              <label>{paymentMethod === 'cash' ? 'Caja que recibe el efectivo' : 'Cuenta que recibe el cobro'}
+              <label>{paymentMethod === 'efectivo' ? 'Caja que recibe el efectivo' : 'Cuenta que recibe el cobro'}
                 <select required value={accountId}
                   onChange={(event) => setAccountId(event.target.value)}>
                   <option value="">Seleccionar cuenta…</option>
@@ -391,7 +391,7 @@ export default function SalesOrdersPage() {
                 </select>
               </label>
               {!paymentAccounts.length && <p className="sales-muted">
-                Creá una {paymentMethod === 'cash' ? 'caja' : 'cuenta'} en Tesorería
+                Creá una {paymentMethod === 'efectivo' ? 'caja' : 'cuenta'} en Tesorería
                 para registrar el cobro en este paso.
               </p>}
               <p className="sales-muted">El cobro quedará registrado en la cuenta seleccionada;
@@ -401,14 +401,14 @@ export default function SalesOrdersPage() {
         </div>
         <p className="sales-muted">Los precios se verifican al confirmar. Si alguien cambia un precio mientras cargás la venta, el servidor pedirá revisar antes de registrar.</p>
         <div className="sales-actions"><span>Venta, stock y cobro inicial se registran juntos.</span>
-          <button className="button primary" disabled={busy || !ready || !can('sales', 'insert') || !can('stock', 'insert')}>
+          <button className="button primary" disabled={busy || !ready || !can('ventas', 'crear') || !can('stock', 'crear')}>
             <ReceiptText size={17} /> {busy ? 'Registrando…' : 'Confirmar venta'}
           </button>
         </div>
       </form>
         <aside className="sales-card">
           <h2>Últimas ventas</h2>
-          {can('finance', 'read') && <Link className="sales-link" to="/finance/receivables">
+          {can('finanzas', 'ver') && <Link className="sales-link" to="/finance/receivables">
             Ver saldos y registrar cobros
           </Link>}
         {salesQuery.isError && <p className="sales-error">{friendlyError(salesQuery.error)}</p>}
@@ -416,11 +416,11 @@ export default function SalesOrdersPage() {
         {salesQuery.data?.map((sale) => <div className="sales-history" key={sale.id}>
           <strong>Venta Nº {sale.number} · {sale.customer_name}</strong>
           <small>{new Date(sale.created_at).toLocaleString('es-AR')} · $ {money(sale.total)}</small>
-          {(sale.sale_adjustments ?? []).some((entry) => entry.kind === 'cancel') && (
+          {(sale.sale_adjustments ?? []).some((entry) => entry.kind === 'anulacion') && (
             <span className="sales-badge canceled">Anulada</span>
           )}
-          {can('stock', 'insert') && can('stock', 'read') &&
-            !(sale.sale_adjustments ?? []).some((entry) => entry.kind === 'cancel') && (
+          {can('stock', 'crear') && can('stock', 'ver') &&
+            !(sale.sale_adjustments ?? []).some((entry) => entry.kind === 'anulacion') && (
               <Link className="sales-link" to={`/inventory/delivery-notes?sale=${sale.id}`}>
                 Emitir remito de entrega
               </Link>

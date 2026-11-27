@@ -7,17 +7,17 @@ function unwrap({ data, error }) {
 
 export async function listRoles(companyId) {
   return unwrap(await supabase
-    .from('roles')
-    .select('id, company_id, code, name, created_at')
-    .eq('company_id', companyId)
-    .order('created_at', { ascending: true }));
+    .from('ajustes_roles')
+    .select('id, company_id:empresa_id, code:codigo, name:nombre, created_at:creado_en')
+    .eq('empresa_id', companyId)
+    .order('creado_en', { ascending: true }));
 }
 
 export async function listRolePermissions(companyId) {
   return unwrap(await supabase
-    .from('role_permissions')
-    .select('role_id, resource, action')
-    .eq('company_id', companyId));
+    .from('ajustes_roles_permisos')
+    .select('role_id:rol_id, resource:recurso, action:accion')
+    .eq('empresa_id', companyId));
 }
 
 export async function listMembers(companyId) {
@@ -54,7 +54,7 @@ export async function updateMember(companyId, userId, roleId, active) {
   }));
 }
 
-/* Historial de cambios de roles, permisos y miembros (migración 044). Solo administrador; 25 por página. */
+/* Historial de cambios de roles, permisos y miembros. Solo administrador; 25 por página. */
 export async function listAccessAudit(companyId, page = 0) {
   const rows = unwrap(await supabase.rpc('access_audit_events_list', {
     p_company: companyId,
@@ -63,12 +63,11 @@ export async function listAccessAudit(companyId, page = 0) {
   return { rows, count: rows[0]?.total_count ? Number(rows[0].total_count) : 0 };
 }
 
-/* Catálogo de módulos y pantallas (migración 045). Si todavía no existe, devuelve lista vacía y se usa la grilla anterior. */
+/* Catálogo de módulos y pantallas con permisos. */
 export async function listPermissionCatalog() {
-  const { data, error } = await supabase
-    .from('permission_catalog')
-    .select('resource, module, parent, label, help, sort, actions, is_group, admin_only, enforced')
-    .order('sort', { ascending: true });
-  if (error) return [];
-  return data ?? [];
+  return unwrap(await supabase
+    .from('ajustes_permisos_catalogo')
+    .select(`resource:recurso, module:modulo, parent:padre, label:etiqueta, help:ayuda,
+      sort:orden, actions:acciones, is_group:es_grupo, admin_only:solo_admin, enforced:exigido`)
+    .order('orden', { ascending: true }));
 }

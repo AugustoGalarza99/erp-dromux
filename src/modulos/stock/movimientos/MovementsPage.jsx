@@ -25,10 +25,10 @@ import { readableMovementNote, saleIdFromNote } from './movementLabels';
 import '../compartido/stock.css';
 
 const labels = {
-  receipt: ['Entrada', ArrowDownToLine],
-  issue: ['Salida', ArrowUpFromLine],
-  transfer_out: ['Transferencia · salida', ArrowRightLeft],
-  transfer_in: ['Transferencia · entrada', ArrowRightLeft],
+  ingreso: ['Entrada', ArrowDownToLine],
+  egreso: ['Salida', ArrowUpFromLine],
+  transferencia_salida: ['Transferencia · salida', ArrowRightLeft],
+  transferencia_entrada: ['Transferencia · entrada', ArrowRightLeft],
 };
 
 export default function MovementsPage() {
@@ -112,7 +112,7 @@ export default function MovementsPage() {
   const linkedSales = useQuery({
     queryKey: ['movement-sale-labels', user?.id, activeCompanyId, saleIds.join(',')],
     queryFn: () => findSalesByIds(activeCompanyId, saleIds),
-    enabled: Boolean(activeCompanyId && saleIds.length && can('sales', 'read')),
+    enabled: Boolean(activeCompanyId && saleIds.length && can('ventas', 'ver')),
   });
   const saleNames = Object.fromEntries((linkedSales.data ?? []).map((sale) => [sale.id, sale]));
   const count = query.data?.count ?? 0;
@@ -242,7 +242,7 @@ export default function MovementsPage() {
               <div className="movement-description">
                 <strong>
                   {label} ·{' '}
-                  {can('items', 'read')
+                  {can('items', 'ver')
                     ? <Link className="movement-item-link" to={`/inventory/items/${row.item_id}`}>{row.item_code}</Link>
                     : row.item_code}
                 </strong>

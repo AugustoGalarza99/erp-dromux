@@ -15,7 +15,7 @@ export default function PriceSimulator({ settings, currency = "ARS" }) {
   const costValue = parseAmount(cost);
   const taxValue = parseAmount(tax) ?? 0;
   const over = Number(settings?.commission_percent ?? 0) + Number(settings?.structure_percent ?? 0);
-  const suggested = previewPrice("margin", parseAmount(wanted), costValue);
+  const suggested = previewPrice("margen", parseAmount(wanted), costValue);
   const rivalNet = parseAmount(rival);
   const afterCosts = (price) => (price != null && costValue != null ? price - costValue - (price * over) / 100 : null);
 

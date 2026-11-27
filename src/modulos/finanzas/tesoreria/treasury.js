@@ -14,9 +14,9 @@ export async function listTreasuryEntries(companyId) {
 }
 
 export async function listUnassignedPayments(companyId) {
-  const rows = unwrap(await supabase.from('sale_payments')
-    .select('id, amount, paid_on, sale_id, sale: sales(number, customer_name), allocation:treasury_sale_accounts(account_id), reversal:sale_payment_reversals(id)')
-    .eq('company_id', companyId).order('created_at', { ascending: false }).limit(100));
+  const rows = unwrap(await supabase.from('ventas_cobros')
+    .select('id, amount:importe, paid_on:fecha_pago, sale_id:venta_id, sale:ventas(number:numero, customer_name:cliente_nombre), allocation:finanzas_cobros_cuentas(account_id:cuenta_id), reversal:ventas_cobros_reversiones(id)')
+    .eq('empresa_id', companyId).order('creado_en', { ascending: false }).limit(100));
   return rows.filter((row) => !row.allocation?.length && !row.reversal?.length);
 }
 

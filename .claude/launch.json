@@ -9,6 +9,19 @@
         "dev"
       ],
       "port": 5173
+    },
+    {
+      "name": "dev-nueva",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "dev:nueva",
+        "--",
+        "--port",
+        "5174",
+        "--strictPort"
+      ],
+      "port": 5174
     }
   ]
 }

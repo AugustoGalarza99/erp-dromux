@@ -41,7 +41,7 @@ export default function RolesPage() {
   const membersQuery = useQuery({
     queryKey: ['members', user?.id, activeCompanyId],
     queryFn: () => listMembers(activeCompanyId),
-    enabled: Boolean(activeCompanyId && myRole === 'admin'),
+    enabled: Boolean(activeCompanyId && myRole === 'administrador'),
   });
   const catalogQuery = useQuery({
     queryKey: ['permission-catalog', user?.id],
@@ -57,7 +57,7 @@ export default function RolesPage() {
   );
   // "Gestionar" solo se conserva en las pantallas cuyo catálogo lo declara.
   const manageable = useMemo(
-    () => new Set(catalog.filter((entry) => (entry.actions ?? []).includes('manage')).map((entry) => entry.resource)),
+    () => new Set(catalog.filter((entry) => (entry.actions ?? []).includes('gestionar')).map((entry) => entry.resource)),
     [catalog],
   );
 
@@ -68,9 +68,9 @@ export default function RolesPage() {
     return map;
   }, [membersQuery.data]);
   const selected = roles.find((role) => role.id === selectedId);
-  const adminSelected = selected?.code === 'admin';
+  const adminSelected = selected?.code === 'administrador';
   // Solo el administrador gestiona roles (migración 044); el servidor lo exige igual.
-  const canSave = myRole === 'admin' && !adminSelected;
+  const canSave = myRole === 'administrador' && !adminSelected;
   const editing = Boolean(selected) || selectedId === 'new';
 
   const visibleRoles = useMemo(() => {
@@ -82,7 +82,7 @@ export default function RolesPage() {
     if (!selected) return;
     const loaded = (permissionsQuery.data ?? [])
       .filter((permission) => permission.role_id === selected.id
-        && (permission.action !== 'manage' || manageable.has(permission.resource))
+        && (permission.action !== 'gestionar' || manageable.has(permission.resource))
         && !groups.has(permission.resource))
       .map(({ resource, action }) => ({ resource, action }));
     setName(selected.name);
@@ -103,7 +103,7 @@ export default function RolesPage() {
   };
 
   function startNew() {
-    const initial = [{ resource: 'dashboard', actions: ['read'] }];
+    const initial = [{ resource: 'inicio', actions: ['ver'] }];
     const list = initial.flatMap(({ resource, actions }) => actions.map((action) => ({ resource, action })));
     setSelectedId('new');
     setName('');
@@ -117,7 +117,7 @@ export default function RolesPage() {
     if (selected) {
       const loaded = (permissionsQuery.data ?? [])
         .filter((permission) => permission.role_id === selected.id
-          && (permission.action !== 'manage' || manageable.has(permission.resource))
+          && (permission.action !== 'gestionar' || manageable.has(permission.resource))
           && !groups.has(permission.resource))
         .map(({ resource, action }) => ({ resource, action }));
       setName(selected.name);
@@ -153,6 +153,7 @@ export default function RolesPage() {
         queryClient.invalidateQueries({ queryKey: ['roles', user.id, activeCompanyId] }),
         queryClient.invalidateQueries({ queryKey: ['role-permissions', user.id, activeCompanyId] }),
         queryClient.invalidateQueries({ queryKey: ['permissions', user.id, activeCompanyId] }),
+        queryClient.invalidateQueries({ queryKey: ['access-audit', user.id, activeCompanyId] }),
       ]);
       if (id) setSelectedId(id);
       setBaseline({ name: name.trim(), permissions: keyOf(permissions) });
@@ -164,7 +165,7 @@ export default function RolesPage() {
     }
   };
 
-  const permissionCount = permissions.filter((p) => p.action === 'read' && !groups.has(p.resource)).length;
+  const permissionCount = permissions.filter((p) => p.action === 'ver' && !groups.has(p.resource)).length;
   const people = selected ? memberCount.get(selected.id) ?? 0 : 0;
 
   return (
@@ -175,7 +176,7 @@ export default function RolesPage() {
           <h1>Roles y permisos</h1>
           <p>Elegí un rol para ver o cambiar qué pantallas y acciones tiene su equipo.</p>
         </div>
-        {myRole === 'admin' && (
+        {myRole === 'administrador' && (
           <button type="button" className="button primary" onClick={() => choose('new')}>
             <Plus size={17} aria-hidden="true" /> Nuevo rol
           </button>
@@ -205,11 +206,11 @@ export default function RolesPage() {
                   aria-pressed={selectedId === role.id}
                   onClick={() => choose(role.id)}
                 >
-                  <span className="role-icon">{role.code === 'admin' ? <Lock size={17} aria-hidden="true" /> : <ShieldCheck size={17} aria-hidden="true" />}</span>
+                  <span className="role-icon">{role.code === 'administrador' ? <Lock size={17} aria-hidden="true" /> : <ShieldCheck size={17} aria-hidden="true" />}</span>
                   <span className="role-card-text">
                     <strong>{role.name}</strong>
                     <small>
-                      {role.code === 'admin' ? 'Acceso total · protegido' : 'Personalizado'}
+                      {role.code === 'administrador' ? 'Acceso total · protegido' : 'Personalizado'}
                       {membersQuery.data ? ` · ${memberCount.get(role.id) ?? 0} ${(memberCount.get(role.id) ?? 0) === 1 ? 'persona' : 'personas'}` : ''}
                     </small>
                   </span>
@@ -242,7 +243,7 @@ export default function RolesPage() {
                       </p>
                     )}
                   </div>
-                  {selected && !adminSelected && myRole === 'admin' && (
+                  {selected && !adminSelected && myRole === 'administrador' && (
                     <button type="button" className="button outline" onClick={() => { startViewAs(selected); navigate('/'); }}>
                       <Eye size={16} aria-hidden="true" /> Ver cómo lo ve este rol
                     </button>
@@ -303,7 +304,7 @@ export default function RolesPage() {
           )}
         </form>
       </div>
-      {myRole === 'admin' && <AccessHistory />}
+      {myRole === 'administrador' && <AccessHistory />}
     </div>
   );
 }

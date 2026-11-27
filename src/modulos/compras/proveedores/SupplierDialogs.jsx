@@ -77,7 +77,7 @@ export function SupplierEditDialog({ supplier, onClose, onSaved }) {
         {error && <p className="error" role="alert">{error}</p>}
         <div className="erp-action-dialog-actions">
           <button type="button" className="button outline" disabled={busy} onClick={onClose}>Cancelar</button>
-          <button className="button primary" disabled={busy || !can('purchases_suppliers', supplier ? 'update' : 'insert')}>
+          <button className="button primary" disabled={busy || !can('compras_proveedores', supplier ? 'editar' : 'crear')}>
             {busy ? 'Guardando…' : 'Guardar proveedor'}
           </button>
         </div>
@@ -153,7 +153,7 @@ export function SupplierQuoteDialog({ supplier, quote, exchangeTypes, onClose, o
           </label>
           {query.error && <p className="error" role="alert">No se pudieron cargar los ítems. Volvé a intentar.</p>}
           <p className="purchase-muted">El ítem debe existir en Inventario. Su unidad de medida se conserva.
-            {can('items', 'insert') && <> <Link to="/inventory/items/new" target="_blank" rel="noopener noreferrer">Crear un ítem en Inventario</Link>.</>}
+            {can('items', 'crear') && <> <Link to="/inventory/items/new" target="_blank" rel="noopener noreferrer">Crear un ítem en Inventario</Link>.</>}
           </p>
         </>}
         <div className="purchase-form-pair">
@@ -196,7 +196,7 @@ export function SupplierQuoteDialog({ supplier, quote, exchangeTypes, onClose, o
         {error && <p className="error" role="alert">{error}</p>}
         <div className="erp-action-dialog-actions">
           <button type="button" className="button outline" disabled={busy} onClick={onClose}>Cancelar</button>
-          <button className="button primary" disabled={busy || !selected || !can('purchases_suppliers', 'update')}>
+          <button className="button primary" disabled={busy || !selected || !can('compras_proveedores', 'editar')}>
             {busy ? 'Guardando…' : quote ? 'Guardar precio' : 'Agregar ítem'}
           </button>
         </div>

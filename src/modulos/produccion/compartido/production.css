@@ -234,15 +234,17 @@
   font-size: 11px;
   font-weight: 800;
 }
-.production-badge.planned {
+.production-badge.planificado {
   color: #8a5b14;
   background: #fff4df;
 }
-.production-badge.completed {
+.production-badge.terminada,
+.production-badge.terminado {
   color: #09765f;
   background: #e2f7ef;
 }
-.production-badge.cancelled {
+.production-badge.cancelada,
+.production-badge.cancelado {
   color: #5a6570;
   background: #edf1f4;
 }
@@ -467,11 +469,11 @@
 .production-return-form .button {
   margin-bottom: 12px;
 }
-.production-badge.queued {
+.production-badge.pendiente {
   color: #695219;
   background: #fff1ce;
 }
-.production-badge.in_progress {
+.production-badge.en_proceso {
   color: #17647c;
   background: #e5f3fa;
 }
@@ -665,16 +667,18 @@
 .production-shell .production-jobs-heading h2 { font-size: 19px; }
 
 .production-shell .production-badge { padding: 4px 11px; border: 1px solid transparent; font-size: 12px; }
-.production-shell .production-badge.queued { color: #475569; background: #eef2f6; border-color: #cbd5e1; }
-.production-shell .production-badge.in_progress { color: #b45309; background: #fff4e5; border-color: #f1c58a; }
-.production-shell .production-badge.completed { color: #166534; background: #eaf7ee; border-color: #a7d7b4; }
-.production-shell .production-badge.cancelled { color: #5a6570; background: #edf1f4; border-color: #cdd5db; }
-.production-shell .production-badge.planned { color: #5b4b8a; background: #f1eefa; border-color: #cdc3e6; }
+.production-shell .production-badge.pendiente { color: #475569; background: #eef2f6; border-color: #cbd5e1; }
+.production-shell .production-badge.en_proceso { color: #b45309; background: #fff4e5; border-color: #f1c58a; }
+.production-shell .production-badge.terminada,
+.production-shell .production-badge.terminado { color: #166534; background: #eaf7ee; border-color: #a7d7b4; }
+.production-shell .production-badge.cancelada,
+.production-shell .production-badge.cancelado { color: #5a6570; background: #edf1f4; border-color: #cdd5db; }
+.production-shell .production-badge.planificado { color: #5b4b8a; background: #f1eefa; border-color: #cdc3e6; }
 
 .production-shell .production-job { margin: 0; border-color: var(--ui-line); border-left: 5px solid #cbd5e1; border-radius: 14px; box-shadow: none; }
-.production-shell .production-job:has(.production-badge.in_progress) { border-left-color: var(--module-accent); }
-.production-shell .production-job:has(.production-badge.completed) { border-left-color: #15803d; }
-.production-shell .production-job:has(.production-badge.cancelled) { border-left-color: #94a3b8; }
+.production-shell .production-job:has(.production-badge.en_proceso) { border-left-color: var(--module-accent); }
+.production-shell .production-job:has(.production-badge.terminada) { border-left-color: #15803d; }
+.production-shell .production-job:has(.production-badge.cancelada) { border-left-color: #94a3b8; }
 .production-shell .production-job:hover { border-color: var(--module-accent); }
 .production-shell .production-job-focused .production-job { border-color: var(--module-accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--module-accent) 22%, transparent); }
 .production-shell .production-job-head strong { font-size: 16px; }

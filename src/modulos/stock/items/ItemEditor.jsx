@@ -39,7 +39,7 @@ import "./items.css";
 const emptyForm = {
   code: "",
   name: "",
-  item_type: "raw_material",
+  item_type: "materia_prima",
   category_id: "",
   unit_id: "",
   barcode: "",
@@ -104,7 +104,7 @@ export default function ItemEditor() {
   const { user, activeCompanyId, can, role } = useAuth();
   // El costo de referencia lo ve el administrador o quien tenga el permiso "Ver costos de materiales". El servidor lo
   // vuelve a validar: aquí solo evitamos mostrar un campo vacío que parecería editable.
-  const canSeeCost = role === "admin" || can("costs_materials", "read");
+  const canSeeCost = role === "administrador" || can("costos_materiales", "ver");
   const [form, setForm] = useState(emptyForm);
   const [purchaseCost, setPurchaseCost] = useState(emptyPurchaseCost);
   const [categorySearch, setCategorySearch] = useState("");
@@ -124,7 +124,7 @@ export default function ItemEditor() {
   const costContext = useQuery({
     queryKey: ["item-cost-context", user?.id, activeCompanyId, itemId],
     queryFn: () => getItemCostContext(activeCompanyId, itemId),
-    enabled: Boolean(activeCompanyId && itemId && can("costs_materials", "read")),
+    enabled: Boolean(activeCompanyId && itemId && can("costos_materiales", "ver")),
   });
 
   const categoryQuery = useQuery({
@@ -151,7 +151,7 @@ export default function ItemEditor() {
     queryKey: ["stock-balances", user?.id, activeCompanyId, itemId],
     queryFn: () => listStockBalances(activeCompanyId, itemId),
     enabled: Boolean(
-      activeCompanyId && itemId && can("stock_levels", "read") && item && !item.infinite_stock,
+      activeCompanyId && itemId && can("stock_saldos", "ver") && item && !item.infinite_stock,
     ),
     staleTime: 15_000,
   });
@@ -198,7 +198,7 @@ export default function ItemEditor() {
   }, [isNew, activeCompanyId]);
 
   const dirty = snapshotOf(form, purchaseCost) !== baseline.current;
-  const canSave = can("items", isNew ? "insert" : "update") && !item?.archived;
+  const canSave = can("items", isNew ? "crear" : "editar") && !item?.archived;
 
   // Avisa si se intenta cerrar la pestaña con cambios sin guardar.
   useEffect(() => {
@@ -366,7 +366,7 @@ export default function ItemEditor() {
     unitQuery.isPending ||
     categoryQuery.isPending ||
     (!isNew && !dirty) ||
-    Boolean(itemId && can("costs_materials", "read") && costContext.isPending);
+    Boolean(itemId && can("costos_materiales", "ver") && costContext.isPending);
 
   return (
     <StockShell
@@ -636,7 +636,7 @@ export default function ItemEditor() {
                 <h2>Existencias</h2>
                 {item.infinite_stock ? (
                   <p>Stock infinito: no se controlan existencias.</p>
-                ) : !can("stock_levels", "read") ? (
+                ) : !can("stock_saldos", "ver") ? (
                   <p>Tu rol no consulta existencias.</p>
                 ) : balancesQuery.isPending ? (
                   <p>Cargando existencias…</p>
@@ -663,9 +663,9 @@ export default function ItemEditor() {
                     </ul>
                   </>
                 )}
-                {can("stock_levels", "read") && (
+                {can("stock_saldos", "ver") && (
                   <div className="item-side-links">
-                    {can("stock", "insert") && (
+                    {can("stock", "crear") && (
                       <Link className="button outline" to={`/inventory/stock?q=${encodeURIComponent(item.code)}`}>
                         <Warehouse size={15} aria-hidden="true" /> Registrar entrada o salida
                       </Link>
@@ -675,7 +675,7 @@ export default function ItemEditor() {
                     </Link>
                   </div>
                 )}
-                {!item.archived && can("items", "update") && (
+                {!item.archived && can("items", "editar") && (
                   <div className="item-side-danger">
                     <h3>Estado del ítem</h3>
                     <p>

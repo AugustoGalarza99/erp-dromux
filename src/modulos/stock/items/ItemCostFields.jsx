@@ -21,8 +21,8 @@ export default function ItemCostFields({ form, cost, onCostChange, onPesosChange
   const [supplierSearch, setSupplierSearch] = useState('');
   const [exchangeSearch, setExchangeSearch] = useState('');
   const term = useDebouncedValue(supplierSearch);
-  const canReadPurchases = can('costs_materials', 'read');
-  const canAssociate = canReadPurchases && can('purchases_suppliers', 'update');
+  const canReadPurchases = can('costos_materiales', 'ver');
+  const canAssociate = canReadPurchases && can('compras_proveedores', 'editar');
   const suppliers = useQuery({
     queryKey: ['item-supplier-options', user?.id, activeCompanyId, term],
     queryFn: () => searchActiveSuppliers(activeCompanyId, term),
@@ -112,13 +112,13 @@ export default function ItemCostFields({ form, cost, onCostChange, onPesosChange
         </label>
         {cost.currency === 'ARS' ? (
           <label>
-            Costo por unidad en pesos {form.item_type === 'raw_material' || cost.supplier ? '*' : '(opcional)'}
+            Costo por unidad en pesos {form.item_type === 'materia_prima' || cost.supplier ? '*' : '(opcional)'}
             <input
               type="number"
               min="0"
               max="999999999999.99"
               step="0.01"
-              required={form.item_type === 'raw_material' || Boolean(cost.supplier)}
+              required={form.item_type === 'materia_prima' || Boolean(cost.supplier)}
               disabled={locked}
               value={form.reference_unit_cost}
               placeholder="Ej.: 1250.00"

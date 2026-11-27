@@ -97,7 +97,7 @@ export default function ReceiveOrderPanel({ order, onClose, onBusyChange }) {
   const warehousesQuery = useQuery({
     queryKey: ['stock-options', user?.id, activeCompanyId, 'warehouses', warehouseSearch],
     queryFn: () => findStockWarehouses(activeCompanyId, warehouseSearch),
-    enabled: Boolean(activeCompanyId && can('stock', 'read')),
+    enabled: Boolean(activeCompanyId && can('stock', 'ver')),
   });
 
   useEffect(() => {
@@ -224,8 +224,8 @@ export default function ReceiveOrderPanel({ order, onClose, onBusyChange }) {
     }
   };
 
-  const canReceive = can('purchases_orders', 'insert') && can('stock', 'insert')
-    && can('stock', 'read') && ['open', 'partial'].includes(order.status);
+  const canReceive = can('compras_ordenes', 'crear') && can('stock', 'crear')
+    && can('stock', 'ver') && ['abierta', 'parcial'].includes(order.status);
 
   return (
     <section className="purchase-card purchase-receive-panel">

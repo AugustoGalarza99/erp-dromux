@@ -10,7 +10,7 @@ export default function ModuleHelp() {
   const { can, user } = useAuth();
   const section = guideSections.find((entry) =>
     entry.routes.some((route) => pathname.startsWith(route)));
-  if (!section || !can(section.resource, 'read')) return null;
+  if (!section || !can(section.resource, 'ver')) return null;
 
   return (
     <ModuleGuide

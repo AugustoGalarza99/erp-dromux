@@ -60,13 +60,13 @@ export default function SupplierExchangePanel({ types }) {
       <div className="supplier-catalog-head">
         <div>
           <h2>Cotizaciones del dólar</h2>
-          <Link to="/archivados?type=exchange_types">Ver tipos archivados</Link>
+          <Link to="/archivados?type=tipos_cambio">Ver tipos archivados</Link>
           <p className="purchase-muted">
             Cada ítem en dólares usa el tipo que le asignaste. Podés corregir el
             valor las veces que necesites.
           </p>
         </div>
-        {can("purchases_suppliers", "update") && (
+        {can("compras_proveedores", "editar") && (
           <button
             type="button"
             className="button outline"
@@ -102,7 +102,7 @@ export default function SupplierExchangePanel({ types }) {
                 ? `Vigente desde ${type.effective_on.split("-").reverse().join("/")}`
                 : "Cargá el valor de un dólar en pesos"}
             </small>
-            {type.active && can("purchases_suppliers", "update") && (
+            {type.active && can("compras_proveedores", "editar") && (
               <button
                 type="button"
                 className="button outline"
@@ -119,7 +119,7 @@ export default function SupplierExchangePanel({ types }) {
               </button>
             )}
             <CleanupButton
-              resource="exchange_types"
+              resource="tipos_cambio"
               id={type.id}
               label={`Dólar ${type.name}`}
             />

@@ -28,12 +28,12 @@ export default function ReportsPage() {
   });
   const data = report.data ?? {};
   const cards = [
-    { name: 'Ventas registradas', value: data.sales, permission: 'sales' },
-    { name: 'Importe neto vendido', value: data.revenue == null ? null : money(data.revenue), permission: 'sales' },
-    { name: 'Fabricaciones terminadas', value: data.finished_jobs, permission: 'production_overview' },
-    { name: 'Órdenes en cola o en proceso', value: data.jobs_in_progress, permission: 'production_overview' },
-    { name: 'Órdenes de compra creadas', value: data.purchase_orders, permission: 'purchases_overview' },
-  ].filter((entry) => can(entry.permission, 'read') && entry.value != null);
+    { name: 'Ventas registradas', value: data.sales, permission: 'ventas' },
+    { name: 'Importe neto vendido', value: data.revenue == null ? null : money(data.revenue), permission: 'ventas' },
+    { name: 'Fabricaciones terminadas', value: data.finished_jobs, permission: 'produccion_resumen' },
+    { name: 'Órdenes en cola o en proceso', value: data.jobs_in_progress, permission: 'produccion_resumen' },
+    { name: 'Órdenes de compra creadas', value: data.purchase_orders, permission: 'compras_resumen' },
+  ].filter((entry) => can(entry.permission, 'ver') && entry.value != null);
 
   return (
     <section className="reports-page">
@@ -69,7 +69,7 @@ export default function ReportsPage() {
             <strong>{card.value}</strong>
           </article>)}
         </div>
-        {can('sales', 'read') && <section className="reports-card">
+        {can('ventas', 'ver') && <section className="reports-card">
           <h2>Productos más vendidos</h2>
           {(data.top_products ?? []).length ? <ol className="reports-products">
             {data.top_products.map((product) => <li key={product.name}>
@@ -78,7 +78,7 @@ export default function ReportsPage() {
           </ol> : <p>No se registraron productos vendidos en este período.</p>}
         </section>}
       </>}
-      {role === 'admin' && can('finance', 'read') && can('sales', 'read') && (
+      {role === 'administrador' && can('finanzas', 'ver') && can('ventas', 'ver') && (
         <Link className="reports-profit-link" to="/finance/costs#ventas">
           Analizar costo y ganancia por venta <ArrowUpRight size={16} />
         </Link>

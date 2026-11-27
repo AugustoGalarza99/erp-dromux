@@ -2,34 +2,35 @@ import { supabase } from '../../../compartido/utilidades/supabase';
 
 /*
  * Pedidos de compra internos: un operario pide materiales y Compras los convierte en orden.
- * Requiere la migración 038 (tablas y funciones `*_purchase_request*`). Los permisos reales los
- * valida la base: acá solo se arman las consultas.
+ * Los permisos reales los valida la base: acá solo se arman las consultas.
  */
 function unwrap({ data, error }) {
   if (error) throw error;
   return data;
 }
 
-const columns = `id, number, status, priority, needed_by, note, resolution_note, requester_label,
-  requested_by, purchase_order_id, created_at, resolved_at,
-  order:purchase_orders(number),
-  lines:purchase_request_lines(line_no, item_id, item_code, item_name, unit_symbol, quantity, note)`;
+const columns = `id, number:numero, status:estado, priority:prioridad, needed_by:fecha_necesaria, note:nota,
+  resolution_note:nota_resolucion, requester_label:solicitante_nombre, requested_by:solicitado_por,
+  purchase_order_id:orden_compra_id, created_at:creado_en, resolved_at:resuelto_en,
+  order:compras_ordenes(number:numero),
+  lines:compras_pedidos_lineas(line_no:linea, item_id, item_code:item_codigo, item_name:item_nombre,
+    unit_symbol:unidad_simbolo, quantity:cantidad, note:nota)`;
 
 export async function listPurchaseRequests(companyId, { page = 0, status = '', search = '', userId = '', mine = false } = {}) {
   let query = supabase
-    .from('purchase_requests')
+    .from('compras_pedidos')
     .select(columns, { count: 'exact' })
-    .eq('company_id', companyId)
-    .order('created_at', { ascending: false })
+    .eq('empresa_id', companyId)
+    .order('creado_en', { ascending: false })
     .order('id', { ascending: false })
     .range(page * 25, page * 25 + 24);
-  if (status) query = query.eq('status', status);
-  if (mine && userId) query = query.eq('requested_by', userId);
+  if (status) query = query.eq('estado', status);
+  if (mine && userId) query = query.eq('solicitado_por', userId);
   const value = search.trim().replace(/^#/, '');
   if (value) {
     query = /^\d+$/.test(value)
-      ? query.eq('number', value)
-      : query.ilike('requester_label', `%${value}%`);
+      ? query.eq('numero', value)
+      : query.ilike('solicitante_nombre', `%${value}%`);
   }
   const { data, count, error } = await query;
   if (error) throw error;
@@ -38,9 +39,9 @@ export async function listPurchaseRequests(companyId, { page = 0, status = '', s
 
 export async function getPurchaseRequest(companyId, requestId) {
   return unwrap(await supabase
-    .from('purchase_requests')
+    .from('compras_pedidos')
     .select(columns)
-    .eq('company_id', companyId)
+    .eq('empresa_id', companyId)
     .eq('id', requestId)
     .single());
 }

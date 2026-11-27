@@ -19,7 +19,7 @@ export default function ModuleShell({
   className = "",
 }) {
   const { can } = useAuth();
-  const visible = tabs.filter((tab) => tab.any.some((resource) => can(resource, "read")));
+  const visible = tabs.filter((tab) => tab.any.some((resource) => can(resource, "ver")));
 
   return (
     <div className={`mod-shell ${className}`}>

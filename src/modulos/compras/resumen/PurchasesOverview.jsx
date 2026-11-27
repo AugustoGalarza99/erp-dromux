@@ -37,20 +37,20 @@ export function receivedLines(order) {
 export default function PurchasesOverview() {
   const { activeCompanyId, user, can } = useAuth();
   const scope = [user?.id, activeCompanyId];
-  const enabled = Boolean(activeCompanyId) && can("purchases_overview", "read");
+  const enabled = Boolean(activeCompanyId) && can("compras_resumen", "ver");
   // El pronóstico lo exige el servidor con el módulo completo de Compras (pasa a Producción en 047).
-  const canForecast = enabled && can("production_replenishment", "read") && can("stock_levels", "read");
-  const canFinance = enabled && can("finance", "read") && can("purchases_accounts", "read");
+  const canForecast = enabled && can("produccion_reposicion", "ver") && can("stock_saldos", "ver");
+  const canFinance = enabled && can("finanzas", "ver") && can("compras_cuentas", "ver");
 
   const open = useQuery({
-    queryKey: ["purchase-orders", ...scope, "overview", "open"],
-    queryFn: () => listPurchaseOrdersPage(activeCompanyId, 0, "", "open"),
+    queryKey: ["purchase-orders", ...scope, "overview", "abierta"],
+    queryFn: () => listPurchaseOrdersPage(activeCompanyId, 0, "", "abierta"),
     enabled,
     staleTime: 30_000,
   });
   const partial = useQuery({
-    queryKey: ["purchase-orders", ...scope, "overview", "partial"],
-    queryFn: () => listPurchaseOrdersPage(activeCompanyId, 0, "", "partial"),
+    queryKey: ["purchase-orders", ...scope, "overview", "parcial"],
+    queryFn: () => listPurchaseOrdersPage(activeCompanyId, 0, "", "parcial"),
     enabled,
     staleTime: 30_000,
   });
@@ -70,13 +70,13 @@ export default function PurchasesOverview() {
   // Pedidos internos pendientes. Si la base todavía no tiene la función (migración 038), se omite sin error.
   const requests = useQuery({
     queryKey: ["purchase-requests", ...scope, "overview"],
-    queryFn: () => listPurchaseRequests(activeCompanyId, { page: 0, status: "pending" }),
-    enabled: enabled && can("purchase_requests", "read"),
+    queryFn: () => listPurchaseRequests(activeCompanyId, { page: 0, status: "pendiente" }),
+    enabled: enabled && can("compras_pedidos", "ver"),
     retry: false,
     staleTime: 30_000,
   });
   const pendingRequests = requests.data?.count ?? 0;
-  const urgentRequests = (requests.data?.rows ?? []).filter((row) => row.priority === "urgent").length;
+  const urgentRequests = (requests.data?.rows ?? []).filter((row) => row.priority === "urgente").length;
 
   const toReceive = useMemo(
     () => [...(open.data?.rows ?? []), ...(partial.data?.rows ?? [])]
@@ -105,7 +105,7 @@ export default function PurchasesOverview() {
   }, [forecast.data]);
   const urgentTotal = suggestions.reduce((sum, group) => sum + group.urgent, 0);
   const withoutSupplier = suggestions.find((group) => !group.id);
-  const drafts = (payments.data?.rows ?? []).filter((row) => row.status === "draft");
+  const drafts = (payments.data?.rows ?? []).filter((row) => row.status === "borrador");
 
   const loading = open.isPending || partial.isPending;
   const error = open.error || partial.error || forecast.error || payments.error;
@@ -129,7 +129,7 @@ export default function PurchasesOverview() {
   }
   if (old.length > 0) {
     decisions.push({
-      key: "old", level: "attention", icon: Clock3, to: "/purchases/orders?status=open",
+      key: "old", level: "attention", icon: Clock3, to: "/purchases/orders?status=abierta",
       title: plural(old.length, "orden con más de 14 días sin recibir completa", "órdenes con más de 14 días sin recibir completas"),
       ask: "Reclamá la entrega al proveedor o cancelá lo que ya no necesitás.",
     });
@@ -155,7 +155,7 @@ export default function PurchasesOverview() {
   const kpis = [
     ...(requests.isSuccess ? [{ key: "requests", label: "Pedidos internos", icon: ClipboardList, warn: urgentRequests > 0,
       value: pendingRequests, note: urgentRequests ? `${urgentRequests} urgentes` : "Esperando respuesta", to: "/purchases/requests" }] : []),
-    { key: "open", label: "Órdenes abiertas", icon: ShoppingCart, value: open.data ? openCount : "…", note: "Esperando mercadería", to: "/purchases/orders?status=open" },
+    { key: "open", label: "Órdenes abiertas", icon: ShoppingCart, value: open.data ? openCount : "…", note: "Esperando mercadería", to: "/purchases/orders?status=abierta" },
     { key: "partial", label: "Recepción parcial", icon: PackageCheck, value: partial.data ? partialCount : "…", note: "Llegó una parte, falta el resto", to: "/purchases/orders?status=partial" },
     ...(canForecast ? [{ key: "reorder", label: "Para reponer", icon: AlertOctagon, warn: urgentTotal > 0, value: forecast.data ? suggestions.reduce((s, g) => s + g.count, 0) : "…", note: urgentTotal ? `${urgentTotal} urgentes` : "Con compra sugerida", to: "/production/replenishment" }] : []),
     ...(canFinance ? [{ key: "drafts", label: "Pagos en borrador", icon: Wallet, value: payments.data ? drafts.length : "…", note: "Por confirmar", to: "/purchases/accounts" }] : []),
@@ -165,7 +165,7 @@ export default function PurchasesOverview() {
     <PurchasesShell
       title="Resumen de compras"
       description="Qué esperás recibir, qué conviene reponer y qué pagos esperan confirmación. Desde acá llegás a cada pantalla del módulo."
-      actions={can("purchases_orders", "insert") && (
+      actions={can("compras_ordenes", "crear") && (
         <Link className="button primary" to="/purchases/orders?new=1">
           <Plus size={17} aria-hidden="true" /> Nueva orden de compra
         </Link>
@@ -238,7 +238,7 @@ export default function PurchasesOverview() {
                   </small>
                 </span>
                 <span className={`mod-chip ${age >= 14 ? "is-urgent" : ""}`}>
-                  {order.status === "partial" ? "Parcial" : "Abierta"}
+                  {order.status === "parcial" ? "Parcial" : "Abierta"}
                 </span>
               </Link>
             );

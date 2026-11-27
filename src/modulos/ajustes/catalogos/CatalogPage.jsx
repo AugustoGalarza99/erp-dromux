@@ -8,10 +8,11 @@ import {
   saveCatalog,
   setCatalogActive,
 } from './catalogs';
+import { MAGNITUD_ETIQUETA } from '../../../compartido/valores';
 import './catalogs.css';
 
 const configurations = {
-  units: {
+  unidades: {
     title: 'Unidades de medida',
     description: 'Definí cómo se mide y registra cada material o producto.',
     singular: 'unidad',
@@ -21,30 +22,23 @@ const configurations = {
       { key: 'symbol', label: 'Símbolo', placeholder: 'ej: kg', required: true },
       {
         key: 'dimension', label: 'Magnitud', required: true,
-        options: [
-          ['count', 'Cantidad'],
-          ['mass', 'Masa'],
-          ['volume', 'Volumen'],
-          ['length', 'Longitud'],
-          ['area', 'Superficie'],
-          ['time', 'Tiempo'],
-        ],
+        options: Object.entries(MAGNITUD_ETIQUETA),
       },
     ],
-    detail: (item) => `${item.symbol} · ${item.dimension}`,
+    detail: (item) => `${item.symbol} · ${MAGNITUD_ETIQUETA[item.dimension] ?? item.dimension}`,
   },
-  categories: {
+  categorias: {
     title: 'Categorías',
     description: 'Organizá tus futuros ítems por tipo o familia.',
     singular: 'categoría',
     fields: [
-      { key: 'code', label: 'Código', placeholder: 'ej: materia_prima', required: true },
-      { key: 'name', label: 'Nombre', placeholder: 'ej: Materias primas', required: true },
+      { key: 'code', label: 'Código', placeholder: 'ej: insumos', required: true },
+      { key: 'name', label: 'Nombre', placeholder: 'ej: Insumos generales', required: true },
       { key: 'description', label: 'Descripción', placeholder: 'Opcional' },
     ],
     detail: (item) => item.description || item.code,
   },
-  warehouses: {
+  depositos: {
     title: 'Depósitos',
     description: 'Prepará las ubicaciones que usarán tus movimientos de stock.',
     singular: 'depósito',
@@ -94,7 +88,7 @@ export default function CatalogPage({ resource }) {
   const rows = query.data?.rows ?? [];
   const count = query.data?.count ?? 0;
   const totalPages = Math.max(1, Math.ceil(count / 25));
-  const canEdit = can(resource, 'update');
+  const canEdit = can(resource, 'editar');
 
   const refresh = () => queryClient.invalidateQueries({
     queryKey: ['catalog', user?.id, activeCompanyId, resource],
@@ -164,7 +158,7 @@ export default function CatalogPage({ resource }) {
           <h1>{config.title}</h1>
           <p>{config.description}</p>
         </div>
-        {can(resource, 'insert') && (
+        {can(resource, 'crear') && (
           <button className="button primary" onClick={startNew}>
             <Plus size={17} /> {config.newLabel ?? `Nueva ${config.singular}`}
           </button>
@@ -248,7 +242,7 @@ export default function CatalogPage({ resource }) {
           </div>
         </section>
 
-        {(can(resource, 'insert') || canEdit) && (
+        {(can(resource, 'crear') || canEdit) && (
           <section className="catalog-card catalog-editor">
             <span className="eyebrow">
               {editing ? `EDITAR ${config.singular.toUpperCase()}` : 'NUEVO REGISTRO'}
@@ -263,7 +257,7 @@ export default function CatalogPage({ resource }) {
                     <select
                       required={field.required}
                       disabled={busy}
-                      value={form[field.key]}
+                      value={form[field.key] ?? ''}
                       onChange={(event) => setForm((current) => ({
                         ...current, [field.key]: event.target.value,
                       }))}
@@ -282,11 +276,11 @@ export default function CatalogPage({ resource }) {
                       pattern={field.key === 'code' ? '[a-z][a-z0-9_]*' : undefined}
                       title={field.key === 'code' ? 'Empezá con una letra minúscula; después solo minúsculas, números y guion bajo (ej.: kg, caja_x6).' : undefined}
                       disabled={busy}
-                      value={form[field.key]}
+                      value={form[field.key] ?? ''}
                       onChange={(event) => setForm((current) => ({
                         ...current,
                         [field.key]: field.key === 'code'
-                          ? event.target.value.toLowerCase().replace(/s+/g, '_')
+                          ? event.target.value.toLowerCase().replace(/\s+/g, '_')
                           : event.target.value,
                       }))}
                       placeholder={field.placeholder}

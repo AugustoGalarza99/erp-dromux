@@ -229,10 +229,10 @@
   --type-finished: #166534;   --type-finished-soft: #eaf7ee;   /* producto terminado: verde */
   --type-consumable: #5b4b8a; --type-consumable-soft: #f1eefa; /* insumo: lavanda */
 }
-[data-type="raw_material"] { --type-color: var(--type-raw); --type-soft: var(--type-raw-soft); }
-[data-type="semi_finished"] { --type-color: var(--type-semi); --type-soft: var(--type-semi-soft); }
-[data-type="finished_product"] { --type-color: var(--type-finished); --type-soft: var(--type-finished-soft); }
-[data-type="consumable"] { --type-color: var(--type-consumable); --type-soft: var(--type-consumable-soft); }
+[data-type="materia_prima"] { --type-color: var(--type-raw); --type-soft: var(--type-raw-soft); }
+[data-type="semielaborado"] { --type-color: var(--type-semi); --type-soft: var(--type-semi-soft); }
+[data-type="producto_terminado"] { --type-color: var(--type-finished); --type-soft: var(--type-finished-soft); }
+[data-type="insumo"] { --type-color: var(--type-consumable); --type-soft: var(--type-consumable-soft); }
 
 /* Confirmaciones que no son destructivas (crear, recibir, salir sin guardar): ícono y color del módulo. */
 .erp-confirm-icon.is-primary { background: var(--module-soft); color: var(--module-accent); }

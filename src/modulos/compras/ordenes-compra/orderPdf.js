@@ -49,10 +49,10 @@ export function createPurchaseOrderPdf(order, companyName) {
     timeZone: 'America/Argentina/Buenos_Aires',
   })}`, 18, 67);
   const statusLabels = {
-    open: 'Abierta',
-    partial: 'Recibida parcialmente',
-    received: 'Recibida',
-    cancelled: 'Cancelada',
+    abierta: 'Abierta',
+    parcial: 'Recibida parcialmente',
+    recibida: 'Recibida',
+    cancelada: 'Cancelada',
   };
   pdf.text(`Estado: ${statusLabels[order.status] ?? order.status}`, 110, 67);
 

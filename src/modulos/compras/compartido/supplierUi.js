@@ -1,11 +1,10 @@
+import { TIPO_ITEM_ETIQUETA } from '../../../compartido/valores';
+
 export const money = (value, currency = 'ARS') => Number(value).toLocaleString('es-AR', {
   style: 'currency', currency, maximumFractionDigits: 2,
 });
 
-export const typeNames = {
-  raw_material: 'Materia prima', semi_finished: 'Semielaborado',
-  finished_product: 'Producto terminado', consumable: 'Insumo',
-};
+export const typeNames = TIPO_ITEM_ETIQUETA;
 
 export const argentinaToday = () => new Intl.DateTimeFormat('sv-SE', {
   timeZone: 'America/Argentina/Buenos_Aires',

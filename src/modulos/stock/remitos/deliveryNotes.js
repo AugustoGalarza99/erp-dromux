@@ -1,4 +1,5 @@
 import { supabase } from "../../../compartido/utilidades/supabase";
+import { TIPOS_ITEM } from "../../../compartido/valores";
 
 function unwrap({ data, error }) {
   if (error) throw error;
@@ -8,16 +9,19 @@ function unwrap({ data, error }) {
 export async function listDeliveryNotes(companyId) {
   return unwrap(
     await supabase
-      .from("delivery_notes")
+      .from("stock_remitos")
       .select(
-        `id, number, kind, job_id, sale_id, sale:sales(number, customer_name), recipient, note, status,
-      void_reason, created_at, delivery_note_lines(line_no, item_id, sale_line_no,
-        item_code, item_name, unit_symbol, warehouse_id, warehouse_name,
-        lot_code, quantity)`,
+        `id, number:numero, kind:tipo, job_id:orden_id, sale_id:venta_id,
+      sale:ventas(number:numero, customer_name:cliente_nombre), recipient:destinatario,
+      note:nota, status:estado, void_reason:motivo_anulacion, created_at:creado_en,
+      delivery_note_lines:stock_remitos_lineas(line_no:linea, item_id, sale_line_no:venta_linea,
+        item_code:item_codigo, item_name:item_nombre, unit_symbol:unidad_simbolo,
+        warehouse_id:deposito_id, warehouse_name:deposito_nombre, lot_code:lote_codigo,
+        quantity:cantidad)`,
       )
-      .eq("company_id", companyId)
-      .eq("archived", false)
-      .order("created_at", { ascending: false })
+      .eq("empresa_id", companyId)
+      .eq("archivado", false)
+      .order("creado_en", { ascending: false })
       .limit(100),
   );
 }
@@ -54,19 +58,14 @@ export async function voidDeliveryNote(companyId, noteId, reason) {
 export async function listDeliveryItems(companyId) {
   return unwrap(
     await supabase
-      .from("items")
+      .from("stock_items")
       .select(
-        "id, code, name, item_type, track_lots, infinite_stock, units!items_unit_company_fk(symbol)",
+        "id, code:codigo, name:nombre, item_type:tipo_item, track_lots:usa_lotes, infinite_stock:stock_infinito, units:stock_unidades!stock_items_unit_company_fk(symbol:simbolo)",
       )
-      .eq("company_id", companyId)
-      .eq("active", true)
-      .in("item_type", [
-        "raw_material",
-        "semi_finished",
-        "finished_product",
-        "consumable",
-      ])
-      .order("name")
+      .eq("empresa_id", companyId)
+      .eq("activo", true)
+      .in("tipo_item", TIPOS_ITEM)
+      .order("nombre")
       .limit(600),
   );
 }

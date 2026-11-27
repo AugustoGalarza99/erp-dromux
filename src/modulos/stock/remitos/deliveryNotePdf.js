@@ -21,8 +21,8 @@ export function downloadDeliveryNotePdf(note, companyName, productName) {
     `Empresa: ${companyName || 'Empresa'}`,
     `Fecha: ${new Date(note.created_at).toLocaleString('es-AR')}`,
     `Destino: ${note.recipient}`,
-    `Tipo: ${{ production: 'Para fabricación', materials: 'Materiales',
-      products: 'Semielaborados y productos', sale: 'Entrega de venta' }[note.kind]}`,
+    `Tipo: ${{ produccion: 'Para fabricación', materiales: 'Materiales',
+      productos: 'Semielaborados y productos', venta: 'Entrega de venta' }[note.kind]}`,
     ...(note.sale?.number ? [`Venta Nº ${note.sale.number} · ${note.sale.customer_name}`] : []),
     ...(productName ? [`Orden de fabricación: ${productName}`] : []),
     `Observaciones: ${note.note}`,
@@ -54,7 +54,7 @@ export function downloadDeliveryNotePdf(note, companyName, productName) {
   pdf.setFontSize(9);
   pdf.text('Entregó: ____________________   Recibió: ____________________', 16, signY);
   pdf.text('Aclaración: __________________   Fecha: _____________________', 16, signY + 9);
-  if (note.status === 'voided') {
+  if (note.status === 'anulado') {
     pdf.setTextColor(177, 48, 54);
     pdf.setFont('helvetica', 'bold');
     pdf.text('ANULADO · Documento sin vigencia', 16, signY + 23);

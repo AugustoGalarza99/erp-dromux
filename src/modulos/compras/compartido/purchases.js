@@ -7,26 +7,26 @@ function unwrap({ data, error }) {
 
 export async function listSuppliers(companyId, search = '') {
   let query = supabase
-    .from('suppliers')
-    .select('id, name, tax_id, email, phone, notes, active, lead_time_days')
-    .eq('company_id', companyId)
-    .order('name')
+    .from('compras_proveedores')
+    .select('id, name:nombre, tax_id:identificacion_fiscal, email, phone:telefono, notes:nota, active:activo, lead_time_days:demora_dias')
+    .eq('empresa_id', companyId)
+    .order('nombre')
     .limit(100);
 
-  if (search.trim()) query = query.ilike('name', `%${search.trim()}%`);
+  if (search.trim()) query = query.ilike('nombre', `%${search.trim()}%`);
   return unwrap(await query);
 }
 
 export async function getSupplier(companyId, supplierId) {
-  return unwrap(await supabase.from('suppliers')
-    .select('id, name, active')
-    .eq('company_id', companyId).eq('id', supplierId).single());
+  return unwrap(await supabase.from('compras_proveedores')
+    .select('id, name:nombre, active:activo')
+    .eq('empresa_id', companyId).eq('id', supplierId).single());
 }
 
 export async function getPurchaseSuggestion(companyId, itemId, supplierId) {
-  const item = unwrap(await supabase.from('items')
-    .select('id, code')
-    .eq('company_id', companyId).eq('id', itemId).single());
+  const item = unwrap(await supabase.from('stock_items')
+    .select('id, code:codigo')
+    .eq('empresa_id', companyId).eq('id', itemId).single());
   const options = await findPurchaseItems(companyId, item.code, supplierId || null);
   const choice = options.find((entry) => entry.id === itemId);
   if (!choice) throw new Error('El material ya no está disponible para ese proveedor.');
@@ -34,9 +34,9 @@ export async function getPurchaseSuggestion(companyId, itemId, supplierId) {
   let supplier = null;
   let price = choice.reference_unit_cost ?? null;
   if (supplierId) {
-    supplier = unwrap(await supabase.from('suppliers')
-      .select('id, name, active')
-      .eq('company_id', companyId).eq('id', supplierId).single());
+    supplier = unwrap(await supabase.from('compras_proveedores')
+      .select('id, name:nombre, active:activo')
+      .eq('empresa_id', companyId).eq('id', supplierId).single());
     const quote = (await listSupplierQuotes(companyId, supplierId, itemId))
       .find((entry) => entry.supplier_active && entry.unit_cost_ars != null);
     price = quote?.unit_cost_ars ?? null;
@@ -46,37 +46,37 @@ export async function getPurchaseSuggestion(companyId, itemId, supplierId) {
 
 export async function saveSupplier(companyId, id, values) {
   const payload = {
-    name: values.name.trim(),
-    tax_id: values.tax_id.trim(),
+    nombre: values.name.trim(),
+    identificacion_fiscal: values.tax_id.trim(),
     email: values.email.trim(),
-    phone: values.phone.trim(),
-    notes: values.notes.trim(),
-    supplies_description: values.supplies_description?.trim() ?? '',
-    lead_time_days: Number(values.lead_time_days),
+    telefono: values.phone.trim(),
+    nota: values.notes.trim(),
+    provee_descripcion: values.supplies_description?.trim() ?? '',
+    demora_dias: Number(values.lead_time_days),
   };
 
   if (id) {
     return unwrap(await supabase
-      .from('suppliers')
+      .from('compras_proveedores')
       .update(payload)
-      .eq('company_id', companyId)
+      .eq('empresa_id', companyId)
       .eq('id', id)
       .select('id')
       .single());
   }
 
   return unwrap(await supabase
-    .from('suppliers')
-    .insert({ ...payload, company_id: companyId })
+    .from('compras_proveedores')
+    .insert({ ...payload, empresa_id: companyId })
     .select('id')
     .single());
 }
 
 export async function setSupplierActive(companyId, id, active) {
   return unwrap(await supabase
-    .from('suppliers')
-    .update({ active })
-    .eq('company_id', companyId)
+    .from('compras_proveedores')
+    .update({ activo: active })
+    .eq('empresa_id', companyId)
     .eq('id', id)
     .select('id')
     .single());
@@ -84,16 +84,16 @@ export async function setSupplierActive(companyId, id, active) {
 
 export async function listPurchaseOrders(companyId) {
   return unwrap(await supabase
-    .from('purchase_orders')
+    .from('compras_ordenes')
     .select(`
-      id, number, status, note, created_at, supplier_name,
-      lines:purchase_order_lines(
-        line_no, item_code, item_name, unit_symbol, quantity,
-        received_quantity, unit_price
+      id, number:numero, status:estado, note:nota, created_at:creado_en, supplier_name:proveedor_nombre,
+      lines:compras_ordenes_lineas(
+        line_no:linea, item_code:item_codigo, item_name:item_nombre, unit_symbol:unidad_simbolo,
+        quantity:cantidad, received_quantity:cantidad_recibida, unit_price:precio_unitario
       )
     `)
-    .eq('company_id', companyId)
-    .order('created_at', { ascending: false })
+    .eq('empresa_id', companyId)
+    .order('creado_en', { ascending: false })
     .limit(50));
 }
 
@@ -122,27 +122,27 @@ export async function listSupplierQuotes(companyId, supplierId = null, itemId = 
 
 export async function saveSupplierQuote(companyId, supplierId, itemId, price, sku = '', currency = 'ARS', exchangeTypeId = null, adjustment = 0) {
   const existing = unwrap(await supabase
-    .from('supplier_items')
+    .from('compras_proveedores_items')
     .select('item_id')
-    .eq('company_id', companyId)
-    .eq('supplier_id', supplierId)
+    .eq('empresa_id', companyId)
+    .eq('proveedor_id', supplierId)
     .eq('item_id', itemId)
     .maybeSingle());
 
-  const payload = { unit_price: price, supplier_sku: sku.trim(), currency_code: currency,
-    exchange_rate_type_id: currency === 'USD' ? exchangeTypeId : null, adjustment_percent: adjustment };
+  const payload = { precio_unitario: price, proveedor_codigo: sku.trim(), moneda: currency,
+    tipo_cambio_id: currency === 'USD' ? exchangeTypeId : null, ajuste_porcentaje: adjustment };
   if (existing) {
     const { error } = await supabase
-      .from('supplier_items')
+      .from('compras_proveedores_items')
       .update(payload)
-      .eq('company_id', companyId)
-      .eq('supplier_id', supplierId)
+      .eq('empresa_id', companyId)
+      .eq('proveedor_id', supplierId)
       .eq('item_id', itemId);
     if (error) throw error;
   } else {
     const { error } = await supabase
-      .from('supplier_items')
-      .insert({ company_id: companyId, supplier_id: supplierId,
+      .from('compras_proveedores_items')
+      .insert({ empresa_id: companyId, proveedor_id: supplierId,
         item_id: itemId, ...payload });
     if (error) throw error;
   }
@@ -150,10 +150,10 @@ export async function saveSupplierQuote(companyId, supplierId, itemId, price, sk
 
 export async function removeSupplierQuote(companyId, supplierId, itemId) {
   const { error, count } = await supabase
-    .from('supplier_items')
+    .from('compras_proveedores_items')
     .delete({ count: 'exact' })
-    .eq('company_id', companyId)
-    .eq('supplier_id', supplierId)
+    .eq('empresa_id', companyId)
+    .eq('proveedor_id', supplierId)
     .eq('item_id', itemId);
   if (error) throw error;
   if (count !== 1) throw new Error('La cotización ya no existe o no tenés permiso.');
@@ -189,17 +189,17 @@ export async function getReceivableLines(companyId, orderId) {
 
 export async function listPurchaseReceipts(companyId, orderId) {
   return unwrap(await supabase
-    .from('purchase_receipts')
+    .from('compras_recepciones')
     .select(`
-      id, note, actor_id, created_at,
-      lines:purchase_receipt_lines(
-        line_no, quantity, warehouse_code, lot_code, expires_on,
-        stock_operation_id
+      id, note:nota, actor_id:autor_id, created_at:creado_en,
+      lines:compras_recepciones_lineas(
+        line_no:linea, quantity:cantidad, warehouse_code:deposito_codigo, lot_code:lote_codigo,
+        expires_on:vencimiento, stock_operation_id:operacion_stock_id
       )
     `)
-    .eq('company_id', companyId)
-    .eq('order_id', orderId)
-    .order('created_at', { ascending: false })
+    .eq('empresa_id', companyId)
+    .eq('orden_compra_id', orderId)
+    .order('creado_en', { ascending: false })
     .limit(50));
 }
 
@@ -250,17 +250,18 @@ export async function previewSupplierAdjustment(companyId, supplierId, itemId, p
 }
 
 export async function listPurchaseOrdersPage(companyId, page = 0, search = '', status = '') {
-  let query = supabase.from('purchase_orders')
-    .select(`id, number, status, note, created_at, supplier_name,
-      lines:purchase_order_lines(line_no, item_code, item_name, unit_symbol,
-        quantity, received_quantity, unit_price)`, { count: 'exact' })
-    .eq('company_id', companyId)
-    .order('created_at', { ascending: false }).order('id', { ascending: false })
+  let query = supabase.from('compras_ordenes')
+    .select(`id, number:numero, status:estado, note:nota, created_at:creado_en, supplier_name:proveedor_nombre,
+      lines:compras_ordenes_lineas(line_no:linea, item_code:item_codigo, item_name:item_nombre,
+        unit_symbol:unidad_simbolo, quantity:cantidad, received_quantity:cantidad_recibida,
+        unit_price:precio_unitario)`, { count: 'exact' })
+    .eq('empresa_id', companyId)
+    .order('creado_en', { ascending: false }).order('id', { ascending: false })
     .range(page * 25, page * 25 + 24);
   const value = search.trim().replace(/^#/, '');
   if (value) query = /^\d+$/.test(value)
-    ? query.eq('number', value) : query.ilike('supplier_name', `%${value}%`);
-  if (status) query = query.eq('status', status);
+    ? query.eq('numero', value) : query.ilike('proveedor_nombre', `%${value}%`);
+  if (status) query = query.eq('estado', status);
   const { data, count, error } = await query;
   if (error) throw error;
   return { rows: data ?? [], count: count ?? 0 };

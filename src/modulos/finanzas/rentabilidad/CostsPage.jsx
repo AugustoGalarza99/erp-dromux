@@ -68,16 +68,16 @@ export default function CostsPage() {
   }, [hash]);
   const [search, setSearch] = useState('');
   const term = useDebouncedValue(search);
-  const allowed = Boolean(activeCompanyId && role === 'admin' && can('finance', 'read'));
+  const allowed = Boolean(activeCompanyId && role === 'administrador' && can('finanzas', 'ver'));
   const query = useQuery({
     queryKey: ['product-costs', user?.id, activeCompanyId, term],
     queryFn: () => listProductCosts(activeCompanyId, term),
-    enabled: allowed && can('items', 'read'),
+    enabled: allowed && can('items', 'ver'),
   });
   const profitQuery = useQuery({
     queryKey: ['sales-profit', user?.id, activeCompanyId],
     queryFn: () => getSalesProfitSummary(activeCompanyId),
-    enabled: allowed && can('sales', 'read'),
+    enabled: allowed && can('ventas', 'ver'),
   });
 
   async function refreshPrices() {
@@ -129,7 +129,7 @@ export default function CostsPage() {
             value={search}
             onChange={(event) => setSearch(event.target.value)}
           />
-          {can('production_formulas', 'read') && <Link to="/production/formulas">Ver fórmulas</Link>}
+          {can('produccion_formulas', 'ver') && <Link to="/production/formulas">Ver fórmulas</Link>}
         </div>
         {query.isPending && <p>Calculando costos…</p>}
         {query.error && <p role="alert" className="error">{friendlyError(query.error)}</p>}
@@ -149,7 +149,7 @@ export default function CostsPage() {
                 <tr key={row.item_id}>
                   <td><strong>{row.name}</strong><small>{row.code} · {row.unit_symbol}</small></td>
                   <td>{ars(row.cost)}</td>
-                  <td>{row.item_type === 'finished_product' && can('sales', 'update') ? (
+                  <td>{row.item_type === 'producto_terminado' && can('ventas', 'editar') ? (
                     <PriceEditor
                       key={`${row.item_id}:${row.price}`}
                       row={row}
@@ -168,7 +168,7 @@ export default function CostsPage() {
           </table>
         </div>
       </div>
-      {can('sales', 'read') && <SalesProfitTable />}
+      {can('ventas', 'ver') && <SalesProfitTable />}
       <p className="finance-extra-note">
         Margen bruto = precio de venta menos costo estimado por unidad.
         No incluye impuestos, comisiones, flete ni gastos indirectos.

@@ -8,24 +8,24 @@ function unwrap({ data, error }) {
 export async function listExchangeTypes(companyId) {
   return unwrap(
     await supabase
-      .from("exchange_rate_types")
-      .select("id, name, active")
-      .eq("company_id", companyId)
-      .eq("archived", false)
-      .order("name"),
+      .from("finanzas_tipos_cambio")
+      .select("id, name:nombre, active:activo")
+      .eq("empresa_id", companyId)
+      .eq("archivado", false)
+      .order("nombre"),
   );
 }
 
 export async function listExchangeRates(companyId) {
   return unwrap(
     await supabase
-      .from("exchange_rates")
+      .from("finanzas_cotizaciones")
       .select(
-        "id, type_id, ars_per_usd, effective_on, created_at, type:exchange_rate_types(name)",
+        "id, type_id:tipo_cambio_id, ars_per_usd:ars_por_usd, effective_on:vigente_desde, created_at:creado_en, type:finanzas_tipos_cambio(name:nombre)",
       )
-      .eq("company_id", companyId)
-      .order("effective_on", { ascending: false })
-      .order("created_at", { ascending: false })
+      .eq("empresa_id", companyId)
+      .order("vigente_desde", { ascending: false })
+      .order("creado_en", { ascending: false })
       .limit(100),
   );
 }

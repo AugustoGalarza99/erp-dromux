@@ -26,10 +26,10 @@ const typeLabels = itemTypeLabels;
 
 const typeTabs = [
   ["", "Todos"],
-  ["raw_material", "Materias primas"],
-  ["semi_finished", "Semielaborados"],
-  ["finished_product", "Productos"],
-  ["consumable", "Insumos"],
+  ["materia_prima", "Materias primas"],
+  ["semielaborado", "Semielaborados"],
+  ["producto_terminado", "Productos"],
+  ["insumo", "Insumos"],
 ];
 
 export default function ItemsPage() {
@@ -37,7 +37,7 @@ export default function ItemsPage() {
   const [params, setParams] = useSearchParams();
   const [inputSearch, setInputSearch] = useState(params.get("q") ?? "");
   const [showImport, setShowImport] = useState(
-    params.get("import") === "1" && can("items", "insert"),
+    params.get("import") === "1" && can("items", "crear"),
   );
   const page = Math.max(0, Number.parseInt(params.get("page") || "0", 10) || 0);
   const search = params.get("q") ?? "";
@@ -86,7 +86,7 @@ export default function ItemsPage() {
     <StockShell
       title="Ítems"
       description="Un solo catálogo para materias primas, semielaborados, productos terminados e insumos."
-      actions={can("items", "insert") && (
+      actions={can("items", "crear") && (
         <>
           <button type="button" className="button outline" onClick={() => setShowImport(true)}>
             <FileUp size={17} aria-hidden="true" /> Importar
@@ -187,13 +187,13 @@ export default function ItemsPage() {
                 </span>
               </Link>
               <div className="item-row-actions">
-                {can("items", "update") && (
+                {can("items", "editar") && (
                   <Link className="button outline" to={`/inventory/items/${item.id}`}
                     aria-label={`Editar ${item.name}`}>
                     <Pencil size={15} aria-hidden="true" /> <span>Editar</span>
                   </Link>
                 )}
-                {can("stock_levels", "read") && !item.infinite_stock && (
+                {can("stock_saldos", "ver") && !item.infinite_stock && (
                   <>
                     <Link className="button outline"
                       to={`/inventory/stock?q=${encodeURIComponent(item.code)}`}

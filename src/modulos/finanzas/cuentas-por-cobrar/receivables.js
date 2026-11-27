@@ -19,13 +19,13 @@ export async function listReceivables(companyId, page, search) {
 
 export async function listSalePayments(companyId, saleId) {
   const [payments, reversals] = await Promise.all([
-    supabase.from('sale_payments')
-      .select('id, sale_id, amount, method, paid_on, reference, note, created_at')
-      .eq('company_id', companyId).eq('sale_id', saleId)
-      .order('created_at', { ascending: false }),
-    supabase.from('sale_payment_reversals')
-      .select('payment_id, reason, created_at')
-      .eq('company_id', companyId).eq('sale_id', saleId),
+    supabase.from('ventas_cobros')
+      .select('id, sale_id:venta_id, amount:importe, method:medio_pago, paid_on:fecha_pago, reference:referencia, note:nota, created_at:creado_en')
+      .eq('empresa_id', companyId).eq('venta_id', saleId)
+      .order('creado_en', { ascending: false }),
+    supabase.from('ventas_cobros_reversiones')
+      .select('payment_id:cobro_id, reason:motivo, created_at:creado_en')
+      .eq('empresa_id', companyId).eq('venta_id', saleId),
   ]);
   const rows = unwrap(payments);
   const canceled = unwrap(reversals);

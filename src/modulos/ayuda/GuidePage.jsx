@@ -9,7 +9,7 @@ export default function GuidePage() {
   const { can } = useAuth();
   const [search, setSearch] = useState('');
   const { hash } = useLocation();
-  const entries = guideSections.filter((entry) => can(entry.resource, 'read')
+  const entries = guideSections.filter((entry) => can(entry.resource, 'ver')
     && `${entry.title} ${entry.description} ${entry.steps.join(' ')}`
       .toLocaleLowerCase('es').includes(search.toLocaleLowerCase('es').trim()));
 

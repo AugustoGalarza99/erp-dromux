@@ -20,7 +20,7 @@ export default function ArchivesPage() {
   const { activeCompanyId, user, can } = useAuth();
   const client = useQueryClient();
   const [params, setParams] = useSearchParams();
-  const options = cleanupResources.filter((entry) => can(entry.permission, "read"));
+  const options = cleanupResources.filter((entry) => can(entry.permission, "ver"));
   const resource = options.find((entry) => entry.value === params.get("type")) ?? options[0];
   const [search, setSearch] = useState("");
   const term = useDebouncedValue(search);
@@ -61,7 +61,7 @@ export default function ArchivesPage() {
     }
   }
 
-  const canRestore = resource && can(resource.permission, "delete");
+  const canRestore = resource && can(resource.permission, "eliminar");
 
   return (
     <div className="settings-page">

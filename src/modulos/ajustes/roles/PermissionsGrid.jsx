@@ -1,76 +1,25 @@
 import { useMemo, useState } from 'react';
 import { Lock, ShieldAlert } from 'lucide-react';
+import { ACCION_ETIQUETA, GRUPO_PERMISOS_ETIQUETA } from '../../../compartido/valores';
 
 /*
  * Permisos de un rol, módulo por módulo (diseño 045):
  *  1) ¿Puede entrar al módulo? Sí / No.
  *  2) Si puede: a qué pantallas accede y qué puede hacer en cada una (ver, crear, editar, eliminar).
  *  3) Datos sensibles (costos): decisión explícita del administrador.
- * La lista viene del catálogo del servidor. Sin catálogo (antes de la migración 045) se usa la grilla anterior.
+ * La lista viene del catálogo del servidor.
  */
-const MODULE_LABELS = {
-  home: 'Inicio',
-  stock: 'Stock',
-  production: 'Producción',
-  sales: 'Ventas',
-  purchases: 'Compras',
-  finance: 'Finanzas',
-  reports: 'Reportes',
-  settings: 'Ajustes',
-  sensitive: 'Datos sensibles',
-};
-
-const ACTIONS = [
-  ['read', 'Ver'],
-  ['insert', 'Crear'],
-  ['update', 'Editar'],
-  ['delete', 'Eliminar'],
-];
+const ACTIONS = ["ver", "crear", "editar", "eliminar"].map((action) => [action, ACCION_ETIQUETA[action]]);
 
 // "Gestionar" solo existe donde el catálogo lo declara (hoy: Pedidos internos → rechazar y convertir pedidos ajenos).
-const SCREEN_ACTIONS = [...ACTIONS, ["manage", "Gestionar"]];
+const SCREEN_ACTIONS = [...ACTIONS, ["gestionar", ACCION_ETIQUETA.gestionar]];
 
 // Pantallas que necesitan ver el stock para mostrar datos correctos (el servidor las exige junto con Stock por depósito).
 const DEPENDENCIES = [
-  { screen: 'production_availability', needs: 'stock_levels', why: 'para calcular si alcanza el stock' },
-  { screen: 'production_replenishment', needs: 'stock_levels', why: 'para proyectar qué reponer' },
-  { screen: 'production_orders', needs: 'stock_levels', why: 'para ver existencias y materiales asignados en las órdenes' },
+  { screen: 'produccion_disponibilidad', needs: 'stock_saldos', why: 'para calcular si alcanza el stock' },
+  { screen: 'produccion_reposicion', needs: 'stock_saldos', why: 'para proyectar qué reponer' },
+  { screen: 'produccion_ordenes', needs: 'stock_saldos', why: 'para ver existencias y materiales asignados en las órdenes' },
 ];
-
-const LEGACY_RESOURCES = [
-  ['dashboard', 'Panel'], ['inventory', 'Inventario'], ['production', 'Producción'], ['purchases', 'Compras'],
-  ['purchase_requests', 'Pedidos de compra internos'], ['sales', 'Ventas'], ['finance', 'Finanzas'],
-  ['reports', 'Reportes'], ['settings', 'Configuración'], ['users', 'Usuarios'], ['roles', 'Roles y permisos'],
-  ['units', 'Unidades'], ['categories', 'Categorías'], ['warehouses', 'Depósitos'], ['items', 'Ítems'],
-  ['stock', 'Stock y movimientos'],
-];
-
-function LegacyGrid({ permissions, onChange, disabled }) {
-  const has = (resource, action) => permissions.some((p) => p.resource === resource && p.action === action);
-  const toggle = (resource, action) => onChange(has(resource, action)
-    ? permissions.filter((p) => !(p.resource === resource && p.action === action))
-    : [...permissions, { resource, action }]);
-  return (
-    <div className="permissions-scroll">
-      <table className="permissions-table">
-        <thead><tr><th>Módulo</th>{ACTIONS.map(([key, label]) => <th key={key}>{label}</th>)}</tr></thead>
-        <tbody>
-          {LEGACY_RESOURCES.map(([resource, label]) => (
-            <tr key={resource}>
-              <td>{label}</td>
-              {ACTIONS.map(([action]) => (
-                <td key={action}>
-                  <input type="checkbox" aria-label={`${label}: ${action}`} checked={has(resource, action)}
-                    disabled={disabled} onChange={() => toggle(resource, action)} />
-                </td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
-}
 
 export default function PermissionsGrid({ permissions, onChange, disabled = false, catalog = [] }) {
   const screens = useMemo(
@@ -91,7 +40,7 @@ export default function PermissionsGrid({ permissions, onChange, disabled = fals
   const isOpen = (module, rows) => openState[module]
     ?? rows.some((screen) => permissions.some((p) => p.resource === screen.resource));
 
-  if (!catalog.length) return <LegacyGrid permissions={permissions} onChange={onChange} disabled={disabled} />;
+  if (!catalog.length) return <p role="status">Cargando la lista de pantallas…</p>;
 
   const userActions = (screen) => SCREEN_ACTIONS.map(([a]) => a).filter((a) => screen.actions.includes(a));
   const without = (resources) => permissions.filter((p) => !resources.includes(p.resource));
@@ -101,12 +50,12 @@ export default function PermissionsGrid({ permissions, onChange, disabled = fals
   ]);
   const toggleAction = (screen, action) => {
     // Stock: ver se da pantalla por pantalla; registrar (crear/editar/eliminar) es todo o nada para todo el módulo (el servidor lo exige así).
-    if (screen.module === 'stock' && action !== 'read') {
+    if (screen.module === 'stock' && action !== 'ver') {
       const stockRows = screen.module && modules.find(([name]) => name === 'stock')?.[1];
       if (stockRows) {
         if (has(screen.resource, action)) {
           const stockResources = stockRows.map((row) => row.resource);
-          onChange(permissions.filter((p) => !(stockResources.includes(p.resource) && p.action !== 'read')));
+          onChange(permissions.filter((p) => !(stockResources.includes(p.resource) && p.action !== 'ver')));
         } else {
           setModule(stockRows, 'all');
         }
@@ -114,26 +63,26 @@ export default function PermissionsGrid({ permissions, onChange, disabled = fals
       }
     }
     const current = userActions(screen).filter((a) => has(screen.resource, a));
-    if (action === 'read') {
-      setScreen(screen, current.includes('read') ? [] : [...current, 'read']);
+    if (action === 'ver') {
+      setScreen(screen, current.includes('ver') ? [] : [...current, 'ver']);
     } else {
-      setScreen(screen, current.includes(action) ? current.filter((a) => a !== action) : [...new Set([...current, 'read', action])]);
+      setScreen(screen, current.includes(action) ? current.filter((a) => a !== action) : [...new Set([...current, 'ver', action])]);
     }
   };
   const columnsOf = (rows) => SCREEN_ACTIONS.slice(1)
-    .filter(([action]) => action !== "manage" || rows.some((screen) => screen.actions.includes("manage")));
+    .filter(([action]) => action !== "gestionar" || rows.some((screen) => screen.actions.includes("gestionar")));
   const setModule = (rows, mode) => onChange([
     ...without(rows.map((screen) => screen.resource)),
-    ...(mode === 'none' ? [] : rows.flatMap((screen) => (mode === 'all' ? userActions(screen) : ['read'])
+    ...(mode === 'none' ? [] : rows.flatMap((screen) => (mode === 'all' ? userActions(screen) : ['ver'])
       .filter((a) => screen.actions.includes(a)).map((action) => ({ resource: screen.resource, action })))),
   ]);
 
   const labelOf = (resource) => catalog.find((entry) => entry.resource === resource)?.label ?? resource;
-  const missing = DEPENDENCIES.filter((dep) => has(dep.screen, 'read') && !has(dep.needs, 'read')
+  const missing = DEPENDENCIES.filter((dep) => has(dep.screen, 'ver') && !has(dep.needs, 'ver')
     && catalog.some((entry) => entry.resource === dep.needs));
   const addMissing = () => onChange([
     ...permissions,
-    ...[...new Set(missing.map((dep) => dep.needs))].map((resource) => ({ resource, action: 'read' })),
+    ...[...new Set(missing.map((dep) => dep.needs))].map((resource) => ({ resource, action: 'ver' })),
   ]);
 
   return (
@@ -159,13 +108,13 @@ export default function PermissionsGrid({ permissions, onChange, disabled = fals
     <div className="perm-modules">
       {modules.map(([module, rows]) => {
         const open = isOpen(module, rows);
-        const withAccess = rows.filter((screen) => has(screen.resource, 'read'));
-        const sensitive = module === 'sensitive';
+        const withAccess = rows.filter((screen) => has(screen.resource, 'ver'));
+        const sensitive = module === 'sensible';
         return (
-          <section className={`perm-module ${open ? 'is-open' : ''}`} key={module} aria-label={MODULE_LABELS[module] ?? module}>
+          <section className={`perm-module ${open ? 'is-open' : ''}`} key={module} aria-label={GRUPO_PERMISOS_ETIQUETA[module] ?? module}>
             <header>
               <div>
-                <h3>{MODULE_LABELS[module] ?? module}</h3>
+                <h3>{GRUPO_PERMISOS_ETIQUETA[module] ?? module}</h3>
                 <small>
                   {open
                     ? `${withAccess.length} de ${rows.length} ${sensitive ? 'permisos' : 'pantallas'} con acceso`
@@ -174,7 +123,7 @@ export default function PermissionsGrid({ permissions, onChange, disabled = fals
               </div>
               <label className="perm-switch">
                 <input type="checkbox" role="switch" checked={open} disabled={disabled}
-                  aria-label={sensitive ? 'Permitir ver datos sensibles' : `¿Puede entrar al módulo ${MODULE_LABELS[module] ?? module}?`}
+                  aria-label={sensitive ? 'Permitir ver datos sensibles' : `¿Puede entrar al módulo ${GRUPO_PERMISOS_ETIQUETA[module] ?? module}?`}
                   onChange={(event) => {
                     if (event.target.checked) setOpenState({ ...openState, [module]: true });
                     else { setOpenState({ ...openState, [module]: false }); setModule(rows, 'none'); }
@@ -206,7 +155,7 @@ export default function PermissionsGrid({ permissions, onChange, disabled = fals
                 {rows.length > 1 && !sensitive && (
                   <div className="perm-bulk">
                     <button type="button" className="button outline" disabled={disabled} onClick={() => setModule(rows, 'all')}>Acceso total al módulo</button>
-                    <button type="button" className="button outline" disabled={disabled} onClick={() => setModule(rows, 'read')}>Solo ver todo</button>
+                    <button type="button" className="button outline" disabled={disabled} onClick={() => setModule(rows, 'ver')}>Solo ver todo</button>
                     <button type="button" className="button outline" disabled={disabled} onClick={() => setModule(rows, 'none')}>Quitar todo</button>
                   </div>
                 )}
@@ -221,7 +170,7 @@ export default function PermissionsGrid({ permissions, onChange, disabled = fals
                     </thead>
                     <tbody>
                       {rows.map((screen) => {
-                        const access = has(screen.resource, 'read');
+                        const access = has(screen.resource, 'ver');
                         return (
                           <tr key={screen.resource} className={access ? '' : 'is-denied'}>
                             <td>
@@ -231,7 +180,7 @@ export default function PermissionsGrid({ permissions, onChange, disabled = fals
                             <td>
                               <label className="perm-access">
                                 <input type="checkbox" role="switch" checked={access} disabled={disabled}
-                                  aria-label={`${screen.label}: acceso`} onChange={() => toggleAction(screen, 'read')} />
+                                  aria-label={`${screen.label}: acceso`} onChange={() => toggleAction(screen, 'ver')} />
                                 <span>{access ? 'Acceso' : <><Lock size={12} aria-hidden="true" /> Sin acceso</>}</span>
                               </label>
                             </td>
@@ -257,11 +206,11 @@ export default function PermissionsGrid({ permissions, onChange, disabled = fals
       <section className="perm-summary" aria-label="Resumen de accesos">
         <h3>Resumen: qué puede y qué no puede este rol</h3>
         {modules.map(([module, rows]) => {
-          const yes = rows.filter((screen) => has(screen.resource, 'read'));
-          const no = rows.filter((screen) => !has(screen.resource, 'read'));
+          const yes = rows.filter((screen) => has(screen.resource, 'ver'));
+          const no = rows.filter((screen) => !has(screen.resource, 'ver'));
           return (
             <p key={module}>
-              <strong>{MODULE_LABELS[module] ?? module}:</strong>{' '}
+              <strong>{GRUPO_PERMISOS_ETIQUETA[module] ?? module}:</strong>{' '}
               {yes.length === 0 ? 'sin acceso.' : (
                 <>
                   <span className="perm-yes">Puede: {yes.map((s) => s.label).join(', ')}.</span>

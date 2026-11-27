@@ -30,7 +30,7 @@ const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
 export default function ProductionOverview() {
   const { activeCompanyId, user, can } = useAuth();
   const scope = [user?.id, activeCompanyId];
-  const enabled = Boolean(activeCompanyId) && can("production_overview", "read");
+  const enabled = Boolean(activeCompanyId) && can("produccion_resumen", "ver");
 
   const jobs = useQuery({
     queryKey: ["production-dashboard", ...scope],
@@ -110,7 +110,7 @@ export default function ProductionOverview() {
     <ProductionShell
       title="Resumen de producción"
       description="Qué se está fabricando, qué falta y qué necesita tu decisión hoy. Desde acá llegás a cada pantalla del módulo."
-      actions={can("production_orders", "insert") && (
+      actions={can("produccion_ordenes", "crear") && (
         <Link className="button primary" to="/production/orders?new=1">
           <Plus size={17} aria-hidden="true" /> Nueva orden
         </Link>
@@ -176,7 +176,7 @@ export default function ProductionOverview() {
               <span className="mod-line-text">
                 <strong>{job.product_name} · {job.planned_quantity}</strong>
                 <small>
-                  {job.status === "queued" ? "En cola" : "En fabricación"} ·{" "}
+                  {job.status === "pendiente" ? "En cola" : "En fabricación"} ·{" "}
                   {job.due_on ? `Entrega ${dateEs(job.due_on)}` : "Sin fecha prevista"}
                 </small>
               </span>

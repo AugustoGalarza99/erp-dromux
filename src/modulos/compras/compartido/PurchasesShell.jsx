@@ -7,11 +7,11 @@ import "./purchasesModule.css";
  * Cada pantalla se habilita por separado (permisos por pantalla, migración 046).
  */
 const tabs = [
-  { to: "/purchases", label: "Resumen", icon: LayoutGrid, end: true, any: ["purchases_overview"] },
-  { to: "/purchases/requests", label: "Pedidos internos", icon: ClipboardList, any: ["purchase_requests"] },
-  { to: "/purchases/orders", label: "Órdenes de compra", icon: ShoppingCart, any: ["purchases_orders"] },
-  { to: "/purchases/suppliers", label: "Proveedores", icon: Store, any: ["purchases_suppliers"] },
-  { to: "/purchases/accounts", label: "Compras y cuentas", icon: Wallet, any: ["purchases_accounts"] },
+  { to: "/purchases", label: "Resumen", icon: LayoutGrid, end: true, any: ["compras_resumen"] },
+  { to: "/purchases/requests", label: "Pedidos internos", icon: ClipboardList, any: ["compras_pedidos"] },
+  { to: "/purchases/orders", label: "Órdenes de compra", icon: ShoppingCart, any: ["compras_ordenes"] },
+  { to: "/purchases/suppliers", label: "Proveedores", icon: Store, any: ["compras_proveedores"] },
+  { to: "/purchases/accounts", label: "Compras y cuentas", icon: Wallet, any: ["compras_cuentas"] },
 ];
 
 export default function PurchasesShell({ title, description, actions, children }) {

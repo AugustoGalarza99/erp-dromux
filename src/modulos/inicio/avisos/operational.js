@@ -12,17 +12,17 @@ export async function listOperationalAlerts(companyId) {
 }
 
 export async function listReadAlerts(companyId) {
-  return unwrap(await supabase.from('operational_alert_reads')
-    .select('alert_key, fingerprint')
-    .eq('company_id', companyId));
+  return unwrap(await supabase.from('inicio_alertas_leidas')
+    .select('alert_key:alerta_clave, fingerprint:huella')
+    .eq('empresa_id', companyId));
 }
 
 export async function markOperationalAlertRead(companyId, userId, alert) {
-  return unwrap(await supabase.from('operational_alert_reads').upsert({
-    company_id: companyId,
-    user_id: userId,
-    alert_key: alert.alert_key,
-    fingerprint: alert.fingerprint,
-    read_at: new Date().toISOString(),
-  }, { onConflict: 'company_id,user_id,alert_key' }));
+  return unwrap(await supabase.from('inicio_alertas_leidas').upsert({
+    empresa_id: companyId,
+    usuario_id: userId,
+    alerta_clave: alert.alert_key,
+    huella: alert.fingerprint,
+    leido_en: new Date().toISOString(),
+  }, { onConflict: 'empresa_id,usuario_id,alerta_clave' }));
 }

@@ -1,20 +1,23 @@
 import { supabase } from '../../../compartido/utilidades/supabase';
 
+const comunes = 'id, company_id:empresa_id, code:codigo, name:nombre, active:activo, created_at:creado_en';
+
+// fields: [clave del formulario, columna de la base]
 export const catalogs = {
-  units: {
-    table: 'units',
-    columns: 'id, company_id, code, name, symbol, dimension, active, created_at',
-    fields: ['code', 'name', 'symbol', 'dimension'],
+  unidades: {
+    table: 'stock_unidades',
+    columns: `${comunes}, symbol:simbolo, dimension:magnitud`,
+    fields: [['code', 'codigo'], ['name', 'nombre'], ['symbol', 'simbolo'], ['dimension', 'magnitud']],
   },
-  categories: {
-    table: 'item_categories',
-    columns: 'id, company_id, code, name, description, active, created_at',
-    fields: ['code', 'name', 'description'],
+  categorias: {
+    table: 'stock_categorias',
+    columns: `${comunes}, description:descripcion`,
+    fields: [['code', 'codigo'], ['name', 'nombre'], ['description', 'descripcion']],
   },
-  warehouses: {
-    table: 'warehouses',
-    columns: 'id, company_id, code, name, location, active, created_at',
-    fields: ['code', 'name', 'location'],
+  depositos: {
+    table: 'stock_depositos',
+    columns: `${comunes}, location:ubicacion`,
+    fields: [['code', 'codigo'], ['name', 'nombre'], ['location', 'ubicacion']],
   },
 };
 
@@ -30,11 +33,11 @@ export async function listCatalog(resource, companyId, page, search) {
   let query = supabase
     .from(config.table)
     .select(config.columns, { count: 'exact' })
-    .eq('company_id', companyId)
-    .order('name', { ascending: true })
+    .eq('empresa_id', companyId)
+    .order('nombre', { ascending: true })
     .range(page * 25, page * 25 + 24);
 
-  if (search.trim()) query = query.ilike('name', `%${search.trim()}%`);
+  if (search.trim()) query = query.ilike('nombre', `%${search.trim()}%`);
 
   const { data, count, error } = await query;
   if (error) throw error;
@@ -46,14 +49,14 @@ export async function saveCatalog(resource, companyId, id, values) {
   if (!config) throw new Error('Catálogo desconocido');
 
   const payload = Object.fromEntries(
-    config.fields.map((field) => [field, values[field]?.trim() ?? '']),
+    config.fields.map(([field, column]) => [column, values[field]?.trim() ?? '']),
   );
 
   if (id) {
     return unwrap(await supabase
       .from(config.table)
       .update(payload)
-      .eq('company_id', companyId)
+      .eq('empresa_id', companyId)
       .eq('id', id)
       .select('id')
       .single());
@@ -61,7 +64,7 @@ export async function saveCatalog(resource, companyId, id, values) {
 
   return unwrap(await supabase
     .from(config.table)
-    .insert({ ...payload, company_id: companyId })
+    .insert({ ...payload, empresa_id: companyId })
     .select('id')
     .single());
 }
@@ -72,8 +75,8 @@ export async function setCatalogActive(resource, companyId, id, active) {
 
   return unwrap(await supabase
     .from(config.table)
-    .update({ active })
-    .eq('company_id', companyId)
+    .update({ activo: active })
+    .eq('empresa_id', companyId)
     .eq('id', id)
     .select('id')
     .single());

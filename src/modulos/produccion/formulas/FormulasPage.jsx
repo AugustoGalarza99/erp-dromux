@@ -55,8 +55,8 @@ export default function FormulasPage() {
   const [busy, setBusy] = useState(false);
   const [cost, setCost] = useState(null);
   const [formError, setFormError] = useState("");
-  const canSeeCost = (role === "admin" || can("costs_production", "read"));
-  const canEdit = can("production_formulas", "update");
+  const canSeeCost = (role === "administrador" || can("costos_produccion", "ver"));
+  const canEdit = can("produccion_formulas", "editar");
 
   const itemsQuery = useQuery({
     queryKey: ["production-items", user?.id, activeCompanyId],
@@ -71,11 +71,11 @@ export default function FormulasPage() {
   const items = itemsQuery.data ?? [];
   const formulas = formulasQuery.data ?? [];
   const products = items.filter((item) =>
-    ["semi_finished", "finished_product"].includes(item.item_type),
+    ["semielaborado", "producto_terminado"].includes(item.item_type),
   );
   const components = useMemo(
     () => items.filter((item) =>
-      ["raw_material", "semi_finished", "consumable"].includes(item.item_type)
+      ["materia_prima", "semielaborado", "insumo"].includes(item.item_type)
       && item.id !== productId && item.active !== false),
     [items, productId],
   );
@@ -156,12 +156,12 @@ export default function FormulasPage() {
         (item) =>
           item &&
           item.has_reference_cost === false &&
-          (["raw_material", "consumable"].includes(item.item_type) ||
+          (["materia_prima", "insumo"].includes(item.item_type) ||
             !formulas.some((formula) => formula.product_id === item.id)),
       );
     if (withoutCost) {
       const message =
-        withoutCost.item_type === "semi_finished"
+        withoutCost.item_type === "semielaborado"
           ? `${withoutCost.name} es un semielaborado sin fórmula. Creá primero su fórmula en esta pantalla.`
           : `${withoutCost.name} no tiene costo de referencia. Abrí su ficha en Stock, completá el costo por unidad y volvé a guardar.`;
       setFormError(message);

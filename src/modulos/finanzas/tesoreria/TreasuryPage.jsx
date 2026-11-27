@@ -15,9 +15,9 @@ const ars = (value) => Number(value).toLocaleString('es-AR', {
   style: 'currency', currency: 'ARS',
 });
 const kinds = {
-  income: 'Otro ingreso', expense: 'Gasto', supplier_payment: 'Pago a proveedor',
+  ingreso: 'Otro ingreso', egreso: 'Gasto', pago_proveedor: 'Pago a proveedor',
   customer_payment: 'Cobro de cliente', annulled_payment: 'Cobro anulado',
-  transfer_out: 'Transferencia entre cuentas', transfer_in: 'Transferencia recibida',
+  transferencia_salida: 'Transferencia entre cuentas', transferencia_entrada: 'Transferencia recibida',
 };
 const today = () => new Intl.DateTimeFormat('sv-SE', {
   timeZone: 'America/Argentina/Buenos_Aires',
@@ -28,8 +28,8 @@ export default function TreasuryPage() {
   const client = useQueryClient();
   const [busy, setBusy] = useState(false);
   const [confirmEntry, setConfirmEntry] = useState(false);
-  const [newAccount, setNewAccount] = useState({ name: '', kind: 'bank', opening: '0' });
-  const [entry, setEntry] = useState({ kind: 'expense', accountId: '', targetId: '',
+  const [newAccount, setNewAccount] = useState({ name: '', kind: 'banco', opening: '0' });
+  const [entry, setEntry] = useState({ kind: 'egreso', accountId: '', targetId: '',
     orderId: '', amount: '', note: '', date: today() });
   const [requestId, setRequestId] = useState(() => crypto.randomUUID());
   const [allocation, setAllocation] = useState({});
@@ -48,10 +48,10 @@ export default function TreasuryPage() {
   const orders = useQuery({
     queryKey: ['treasury-orders', user?.id, activeCompanyId],
     queryFn: () => listPurchaseOrders(activeCompanyId),
-    enabled: !!activeCompanyId && can('purchases_orders', 'read'),
+    enabled: !!activeCompanyId && can('compras_ordenes', 'ver'),
   });
   useEffect(() => {
-    setEntry({ kind: 'expense', accountId: '', targetId: '', orderId: '',
+    setEntry({ kind: 'egreso', accountId: '', targetId: '', orderId: '',
       amount: '', note: '', date: today() });
     setRequestId(crypto.randomUUID());
   }, [activeCompanyId]);
@@ -69,7 +69,7 @@ export default function TreasuryPage() {
     try {
       await createTreasuryAccount(activeCompanyId, newAccount);
       await refresh();
-      setNewAccount({ name: '', kind: 'bank', opening: '0' });
+      setNewAccount({ name: '', kind: 'banco', opening: '0' });
       notifySuccess('Cuenta creada');
     } catch (error) { notifyError(error); } finally { setBusy(false); }
   }
@@ -77,11 +77,11 @@ export default function TreasuryPage() {
   async function saveEntry(event) {
     event.preventDefault();
     if (busy) return;
-    if (entry.kind === 'supplier_payment' && !entry.orderId) {
+    if (entry.kind === 'pago_proveedor' && !entry.orderId) {
       notifyError(new Error('Elegí una orden de compra abierta.'));
       return;
     }
-    if (entry.kind === 'transfer_out' && !entry.targetId) {
+    if (entry.kind === 'transferencia_salida' && !entry.targetId) {
       notifyError(new Error('Elegí la cuenta de destino.'));
       return;
     }
@@ -120,22 +120,22 @@ export default function TreasuryPage() {
     {balances.error && <p role="alert" className="error">No pudimos consultar los saldos. Reintentá más tarde.</p>}
     <div className="finance-extra-accounts">{(balances.data ?? []).map((row) =>
       <article className="finance-extra-account" key={row.account_id}>
-        <small>{row.kind === 'cash' ? 'EFECTIVO' : row.kind === 'bank' ? 'BANCO' : 'OTRA CUENTA'}</small>
+        <small>{row.kind === 'caja' ? 'EFECTIVO' : row.kind === 'banco' ? 'BANCO' : 'OTRA CUENTA'}</small>
         <h2>{row.name}</h2>
         <strong>{ars(row.balance)}</strong>
         <span>Ingresos {ars(row.income)} · Egresos {ars(row.expense)}</span>
       </article>)}</div>
     {!balances.isPending && !balances.data?.length && <p>Creá una cuenta para empezar a registrar movimientos.</p>}
     <div className="finance-extra-columns">
-      {can('finance', 'insert') && <section className="finance-extra-card">
+      {can('finanzas', 'crear') && <section className="finance-extra-card">
         <h2>Nueva cuenta</h2>
         <form className="finance-extra-form" onSubmit={saveAccount}>
           <label>Nombre<input required minLength={2} maxLength={100} value={newAccount.name}
             onChange={(event) => setNewAccount({ ...newAccount, name: event.target.value })} /></label>
           <label>Tipo<select value={newAccount.kind}
             onChange={(event) => setNewAccount({ ...newAccount, kind: event.target.value })}>
-            <option value="bank">Banco</option><option value="cash">Efectivo</option>
-            <option value="other">Otra cuenta</option>
+            <option value="banco">Banco</option><option value="caja">Efectivo</option>
+            <option value="otra">Otra cuenta</option>
           </select></label>
           <label>Saldo inicial en pesos<input required type="number" step="0.01"
             value={newAccount.opening}
@@ -143,14 +143,14 @@ export default function TreasuryPage() {
           <button className="button primary" disabled={busy}>Crear cuenta</button>
         </form>
       </section>}
-      {can('finance', 'insert') && <section className="finance-extra-card">
+      {can('finanzas', 'crear') && <section className="finance-extra-card">
         <h2>Registrar movimiento</h2>
         <form className="finance-extra-form" onSubmit={saveEntry}>
           <label>Movimiento<select value={entry.kind} onChange={(event) => {
             setEntry({ ...entry, kind: event.target.value, orderId: '', targetId: '' });
             setRequestId(crypto.randomUUID());
           }}>
-            {['expense', 'supplier_payment', 'income', 'transfer_out'].map((key) =>
+            {['egreso', 'pago_proveedor', 'ingreso', 'transferencia_salida'].map((key) =>
               <option key={key} value={key}>{kinds[key]}</option>)}
           </select></label>
           <label>Cuenta de origen<select required value={entry.accountId}
@@ -159,18 +159,18 @@ export default function TreasuryPage() {
             <option value="">Elegí una cuenta</option>
             {accounts.map((row) => <option key={row.account_id} value={row.account_id}>{row.name}</option>)}
           </select></label>
-          {entry.kind === 'transfer_out' && <label>Cuenta de destino<select required
+          {entry.kind === 'transferencia_salida' && <label>Cuenta de destino<select required
             value={entry.targetId} onChange={(event) => { setEntry({ ...entry, targetId: event.target.value });
               setRequestId(crypto.randomUUID()); }}>
             <option value="">Elegí una cuenta</option>
             {accounts.filter((row) => row.account_id !== entry.accountId).map((row) =>
               <option key={row.account_id} value={row.account_id}>{row.name}</option>)}
           </select></label>}
-          {entry.kind === 'supplier_payment' && <label>Orden de compra<select required
+          {entry.kind === 'pago_proveedor' && <label>Orden de compra<select required
             value={entry.orderId} onChange={(event) => { setEntry({ ...entry, orderId: event.target.value });
               setRequestId(crypto.randomUUID()); }}>
             <option value="">Elegí una orden abierta</option>
-            {(orders.data ?? []).filter((row) => row.status === 'open').map((row) =>
+            {(orders.data ?? []).filter((row) => row.status === 'abierta').map((row) =>
               <option key={row.id} value={row.id}>Nº {row.number} · {row.supplier_name}</option>)}
           </select></label>}
           <label>Importe en pesos<input required type="number" min="0.01" step="0.01"
@@ -192,7 +192,7 @@ export default function TreasuryPage() {
       {unassigned.data.map((payment) => <div className="finance-extra-movement" key={payment.id}>
         <span>Venta Nº {payment.sale?.number} · {payment.sale?.customer_name}
           <small>{payment.paid_on} · {ars(payment.amount)}</small></span>
-        {can('finance', 'update') && <><select aria-label="Cuenta para cobro"
+        {can('finanzas', 'editar') && <><select aria-label="Cuenta para cobro"
           value={allocation[payment.id] ?? ''}
           onChange={(event) => setAllocation({ ...allocation, [payment.id]: event.target.value })}>
           <option value="">Elegí una cuenta</option>
@@ -208,7 +208,7 @@ export default function TreasuryPage() {
         <span><strong>{kinds[row.kind]} · {balances.data?.find((account) =>
           account.account_id === row.account_id)?.name ?? 'Cuenta'}</strong>
           <small>{readableMovementNote(row.note)} · {row.occurred_on}</small></span>
-        <strong className={['expense', 'supplier_payment', 'transfer_out'].includes(row.kind)
+        <strong className={['egreso', 'pago_proveedor', 'transferencia_salida'].includes(row.kind)
           ? 'finance-negative' : ''}>{ars(row.amount)}</strong>
       </div>)}
     </section>

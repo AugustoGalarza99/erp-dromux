@@ -17,6 +17,7 @@ export async function getMemberships() {
       name: row.company_name,
       slug: row.company_slug,
       active: row.company_active,
+      modules: row.company_modules ?? {},
     },
     roles: {
       id: row.role_id,
@@ -27,22 +28,24 @@ export async function getMemberships() {
 }
 
 const supportResources = [
-  'dashboard', 'inventory', 'items', 'stock', 'warehouses', 'units',
-  'categories', 'production', 'purchases', 'sales', 'finance',
-  'reports', 'settings', 'users', 'roles',
+  'inicio', 'inventario', 'items', 'stock', 'depositos', 'unidades',
+  'categorias', 'produccion', 'compras', 'ventas', 'finanzas',
+  'reportes', 'ajustes', 'usuarios', 'roles',
 ];
 
 export async function getPermissions(roleId, support = false) {
   if (support) {
     // El soporte lee todo lo del catálogo salvo los datos sensibles (costos); sin catálogo, la lista fija.
-    const { data } = await supabase.from('permission_catalog').select('resource, module');
-    const fromCatalog = (data ?? []).filter((entry) => entry.module !== 'sensitive').map((entry) => entry.resource);
-    return [...new Set([...supportResources, ...fromCatalog])].map((resource) => ({ resource, action: 'read' }));
+    const { data } = await supabase
+      .from('ajustes_permisos_catalogo')
+      .select('resource:recurso, module:modulo');
+    const fromCatalog = (data ?? []).filter((entry) => entry.module !== 'sensible').map((entry) => entry.resource);
+    return [...new Set([...supportResources, ...fromCatalog])].map((resource) => ({ resource, action: 'ver' }));
   }
   return unwrap(await supabase
-    .from('role_permissions')
-    .select('resource, action')
-    .eq('role_id', roleId));
+    .from('ajustes_roles_permisos')
+    .select('resource:recurso, action:accion')
+    .eq('rol_id', roleId));
 }
 
 export async function beginSupportSession(companyId, reason) {

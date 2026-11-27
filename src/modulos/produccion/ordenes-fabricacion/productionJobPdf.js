@@ -13,7 +13,7 @@ export function buildProductionJobPdf(job, items, warehouses, companyName, setti
     net.set(
       event.component_id,
       (net.get(event.component_id) ?? 0) +
-        Number(event.quantity) * (event.kind === 'return' ? -1 : 1),
+        Number(event.quantity) * (event.kind === 'devolucion' ? -1 : 1),
     );
   }
   const snapshot = job.document_snapshot ?? {};
@@ -81,10 +81,10 @@ export function buildProductionJobPdf(job, items, warehouses, companyName, setti
         warehouses.find((entry) => entry.id === job.warehouse_id)?.name ?? 'Deposito',
         'Estado',
         {
-          queued: 'En cola',
-          in_progress: 'En proceso',
-          completed: 'Completada',
-          cancelled: 'Cancelada',
+          pendiente: 'En cola',
+          en_proceso: 'En proceso',
+          terminada: 'Completada',
+          cancelada: 'Cancelada',
         }[job.status] ?? '',
       ],
     ],

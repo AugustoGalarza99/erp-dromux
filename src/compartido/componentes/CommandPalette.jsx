@@ -20,7 +20,7 @@ const isTyping = (target) =>
  * g f Finanzas, g r Reportes, g a Ajustes). No actúa mientras se escribe.
  */
 export default function CommandPalette({ open, onOpenChange }) {
-  const { can, role } = useAuth();
+  const { can, role, planIncluye } = useAuth();
   const navigate = useNavigate();
   const [query, setQuery] = useState("");
   const [active, setActive] = useState(0);
@@ -28,7 +28,7 @@ export default function CommandPalette({ open, onOpenChange }) {
   const returnFocus = useRef(null);
   const listRef = useRef(null);
 
-  const entries = useMemo(() => searchEntries({ can, role }), [can, role]);
+  const entries = useMemo(() => searchEntries({ can, role, planIncluye }), [can, role, planIncluye]);
 
   const results = useMemo(() => {
     const words = normalize(query).split(/\s+/).filter(Boolean);
@@ -166,7 +166,9 @@ export default function CommandPalette({ open, onOpenChange }) {
                 </span>
                 <span className="cmdk-text">
                   <strong>{entry.label}</strong>
-                  <small>{entry.locked ? `${entry.area} · Acceso restringido` : entry.area}</small>
+                  <small>{entry.locked
+                      ? `${entry.area} · ${entry.planLocked ? "No incluido en tu plan" : "Acceso restringido"}`
+                      : entry.area}</small>
                 </span>
                 {entry.locked && <Lock size={14} aria-label="Acceso restringido" />}
                 {entry.shortcut && (

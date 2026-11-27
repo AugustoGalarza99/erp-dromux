@@ -12,7 +12,7 @@
 .delivery-card-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 13px; }
 .delivery-card-actions .button { padding: 9px 12px; font-size: 12px; }
 .delivery-status { align-self: start; padding: 5px 9px; border-radius: 30px; background: #e5f5ef; color: #137257; font-size: 11px; font-weight: 800; }
-.delivery-status.voided { background: #f8eceb; color: #a63840; }
+.delivery-status.anulado { background: #f8eceb; color: #a63840; }
 .delivery-composer { display: grid; gap: 5px; }
 .delivery-composer-tip { padding: 12px 14px; border-left: 3px solid #19958c; border-radius: 8px; background: #f1f9f7; color: #3c5961; font-size: 12px; line-height: 1.6; }
 .delivery-line { position: relative; min-width: 0; margin: 12px 0; padding: 13px; border: 1px solid #dbe8e8; border-radius: 12px; background: #fafdfe; }
@@ -44,8 +44,8 @@
 .stock-shell .delivery-card-head h2 { font-size: 16px; line-height: 1.35; overflow-wrap: anywhere; }
 .stock-shell .delivery-card-head p { color: var(--ui-muted); font-size: 13px; }
 .delivery-status { padding: 4px 11px; border: 1px solid; border-radius: 20px; font-size: 12px; font-weight: 800; white-space: nowrap; }
-.delivery-status.voided { border-color: #b91c1c; background: #fff3f3; color: #991b1b; }
-.delivery-status:not(.voided) { border-color: #15803d; background: #edf9f0; color: #166534; }
+.delivery-status.anulado { border-color: #b91c1c; background: #fff3f3; color: #991b1b; }
+.delivery-status:not(.anulado) { border-color: #15803d; background: #edf9f0; color: #166534; }
 
 .delivery-kinds { min-width: 0; margin: 0; padding: 0; border: 0; }
 .delivery-kinds legend { padding: 0; margin-bottom: 8px; color: var(--ui-ink); font-size: 14px; font-weight: 800; }

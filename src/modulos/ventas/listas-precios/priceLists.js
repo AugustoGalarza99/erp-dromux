@@ -8,27 +8,27 @@ function unwrap({ data, error }) {
 export async function listPriceLists(companyId) {
   return unwrap(
     await supabase
-      .from("price_lists")
-      .select("id, name, currency, base_list_id, base_discount_percent, rounding_step, valid_from, valid_to, is_default, archived, note")
-      .eq("company_id", companyId)
-      .order("archived")
-      .order("name")
+      .from("ventas_listas_precios")
+      .select("id, name:nombre, currency:moneda, base_list_id:lista_base_id, base_discount_percent:descuento_base_porcentaje, rounding_step:redondeo, valid_from:vigente_desde, valid_to:vigente_hasta, is_default:es_predeterminada, archived:archivado, note:nota")
+      .eq("empresa_id", companyId)
+      .order("archivado")
+      .order("nombre")
       .limit(200),
   );
 }
 
 export async function listCompanyUnits(companyId) {
   return unwrap(
-    await supabase.from("units").select("id, symbol, name").eq("company_id", companyId).order("symbol").limit(200),
+    await supabase.from("stock_unidades").select("id, symbol:simbolo, name:nombre").eq("empresa_id", companyId).order("simbolo").limit(200),
   );
 }
 
 export async function getItemSaleSettings(companyId, itemId) {
   const rows = unwrap(
     await supabase
-      .from("item_sale_settings")
-      .select("tax_percent, content_quantity, content_unit_id")
-      .eq("company_id", companyId)
+      .from("ventas_items_config")
+      .select("tax_percent:impuesto_porcentaje, content_quantity:contenido_cantidad, content_unit_id:contenido_unidad_id")
+      .eq("empresa_id", companyId)
       .eq("item_id", itemId)
       .limit(1),
   );
@@ -99,7 +99,7 @@ export async function removePriceListItem(companyId, listId, itemId, reason) {
 export async function bulkPriceChange(companyId, listId, { mode, percent, apply, reason, requestId }) {
   return unwrap(
     await supabase.rpc("bulk_price_change", {
-      p_company: companyId, p_list: listId, p_mode: mode, p_percent: mode === "percent" ? percent : null,
+      p_company: companyId, p_list: listId, p_mode: mode, p_percent: mode === "porcentaje" ? percent : null,
       p_item_ids: null, p_apply: apply, p_reason: reason ?? "", p_request_id: apply ? requestId : null,
     }),
   );
@@ -133,9 +133,10 @@ export async function listPriceHistory(companyId, listId, itemId, page = 0) {
 export async function listCustomerPriceLists(companyId) {
   return unwrap(
     await supabase
-      .from("customer_price_lists")
-      .select("customer_id, price_list_id")
-      .eq("company_id", companyId)
+      .from("ventas_clientes")
+      .select("customer_id:id, price_list_id:lista_precio_id")
+      .eq("empresa_id", companyId)
+      .not("lista_precio_id", "is", null)
       .limit(2000),
   );
 }

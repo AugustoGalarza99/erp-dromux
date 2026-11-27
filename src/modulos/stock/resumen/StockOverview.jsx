@@ -22,10 +22,10 @@ import { formatQuantity } from "../compartido/stockNumber";
 import StockShell from "../compartido/StockShell";
 
 const movementKinds = {
-  receipt: ["Entrada", ArrowDownToLine],
-  issue: ["Salida", ArrowUpFromLine],
-  transfer_out: ["Transferencia (sale)", ArrowRightLeft],
-  transfer_in: ["Transferencia (entra)", ArrowRightLeft],
+  ingreso: ["Entrada", ArrowDownToLine],
+  egreso: ["Salida", ArrowUpFromLine],
+  transferencia_salida: ["Transferencia (sale)", ArrowRightLeft],
+  transferencia_entrada: ["Transferencia (entra)", ArrowRightLeft],
 };
 
 const todayIso = () => {
@@ -41,7 +41,7 @@ function useItemCount(type) {
   return useQuery({
     queryKey: ["stock-overview-items", user?.id, activeCompanyId, type],
     queryFn: () => listItems(activeCompanyId, { page: 0, search: "", type, status: "active" }),
-    enabled: Boolean(activeCompanyId) && can("items", "read"),
+    enabled: Boolean(activeCompanyId) && can("items", "ver"),
     staleTime: 60_000,
   });
 }
@@ -50,13 +50,13 @@ function useItemCount(type) {
 export default function StockOverview() {
   const { activeCompanyId, user, can } = useAuth();
   const scope = [user?.id, activeCompanyId];
-  const canItems = can("items", "read");
-  const canStock = (can("stock_levels", "read") || can("inventory", "read"));
+  const canItems = can("items", "ver");
+  const canStock = (can("stock_saldos", "ver") || can("inventario", "ver"));
   const enabled = Boolean(activeCompanyId);
 
   const allItems = useItemCount("");
-  const rawItems = useItemCount("raw_material");
-  const products = useItemCount("finished_product");
+  const rawItems = useItemCount("materia_prima");
+  const products = useItemCount("producto_terminado");
 
   const dashboard = useQuery({
     queryKey: ["erp-dashboard", ...scope],
@@ -94,7 +94,7 @@ export default function StockOverview() {
   const lowStock = dashboard.data?.low_stock;
   const monthPrefix = today.slice(0, 7);
   const recentNotes = (notes.data ?? []).slice(0, 5);
-  const notesThisMonth = (notes.data ?? []).filter((note) => note.status !== "voided"
+  const notesThisMonth = (notes.data ?? []).filter((note) => note.status !== "anulado"
     && String(note.created_at).startsWith(monthPrefix)).length;
   const error = allItems.error || movementsToday.error || notes.error || dashboard.error;
   const show = (value) => (value == null ? "…" : value);
@@ -116,10 +116,10 @@ export default function StockOverview() {
   ].filter(Boolean);
 
   const actions = [
-    can("items", "insert") && { to: "/inventory/items/new", label: "Nuevo ítem", icon: Plus, primary: true },
-    can("stock", "insert") && { to: "/inventory/stock", label: "Registrar entrada o salida", icon: ArrowDownToLine },
-    can("stock", "insert") && can("items", "read") && { to: "/inventory/delivery-notes", label: "Emitir remito", icon: Truck },
-    can("items", "insert") && { to: "/inventory/items?import=1", label: "Importar desde planilla", icon: FileUp },
+    can("items", "crear") && { to: "/inventory/items/new", label: "Nuevo ítem", icon: Plus, primary: true },
+    can("stock", "crear") && { to: "/inventory/stock", label: "Registrar entrada o salida", icon: ArrowDownToLine },
+    can("stock", "crear") && can("items", "ver") && { to: "/inventory/delivery-notes", label: "Emitir remito", icon: Truck },
+    can("items", "crear") && { to: "/inventory/items?import=1", label: "Importar desde planilla", icon: FileUp },
   ].filter(Boolean);
 
   return (
@@ -206,7 +206,7 @@ export default function StockOverview() {
                   <small>{new Date(note.created_at).toLocaleDateString("es-AR")} · {note.delivery_note_lines?.length ?? 0} ítems</small>
                 </span>
                 <span className={`delivery-status ${note.status}`}>
-                  {note.status === "voided" ? "Anulado" : "Entregado"}
+                  {note.status === "anulado" ? "Anulado" : "Entregado"}
                 </span>
               </Link>
             ))}

@@ -105,9 +105,21 @@ function SetupCompany() {
 }
 
 function PermissionGate({ resource, anyOf, adminOnly = false, children }) {
-  const { can, role } = useAuth();
-  const allowed = (!adminOnly || role === "admin")
-    && (anyOf ?? [resource]).some((entry) => can(entry, "read"));
+  const { can, role, planIncluye } = useAuth();
+  const inPlan = (anyOf ?? [resource]).some((entry) => planIncluye(entry));
+  const allowed = (!adminOnly || role === "administrador")
+    && (anyOf ?? [resource]).some((entry) => can(entry, "ver"));
+
+  if (!inPlan) {
+    return (
+      <div className="restricted-screen" role="status">
+        <span className="restricted-icon"><Lock size={26} aria-hidden="true" /></span>
+        <span className="restricted-chip"><Lock size={13} aria-hidden="true" /> No incluido en tu plan</span>
+        <h1>Este módulo no está incluido en tu plan</h1>
+        <p>Tu empresa no tiene activado este módulo. Si lo necesitás, consultá con tu proveedor del sistema.</p>
+      </div>
+    );
+  }
 
   if (!allowed) {
     return (
@@ -250,7 +262,7 @@ function Gate() {
 
   if (supportNeedsAccess) return <SupportAccess />;
 
-  if (!can("dashboard", "read")) {
+  if (!can("inicio", "ver")) {
     return (
       <div className="setup">
         <h1>Acceso limitado</h1>
@@ -275,7 +287,7 @@ export default function App() {
         <Route
           path="/settings/users"
           element={
-            <PermissionGate resource="users" adminOnly>
+            <PermissionGate resource="usuarios" adminOnly>
               <UsersPage />
             </PermissionGate>
           }
@@ -291,24 +303,24 @@ export default function App() {
         <Route
           path="/settings/units"
           element={
-            <PermissionGate resource="units">
-              <CatalogPage resource="units" />
+            <PermissionGate resource="unidades">
+              <CatalogPage resource="unidades" />
             </PermissionGate>
           }
         />
         <Route
           path="/settings/categories"
           element={
-            <PermissionGate resource="categories">
-              <CatalogPage resource="categories" />
+            <PermissionGate resource="categorias">
+              <CatalogPage resource="categorias" />
             </PermissionGate>
           }
         />
         <Route
           path="/settings/warehouses"
           element={
-            <PermissionGate resource="warehouses">
-              <CatalogPage resource="warehouses" />
+            <PermissionGate resource="depositos">
+              <CatalogPage resource="depositos" />
             </PermissionGate>
           }
         />
@@ -316,7 +328,7 @@ export default function App() {
         <Route
           path="/purchases/requests"
           element={
-            <PermissionGate resource="purchase_requests">
+            <PermissionGate resource="compras_pedidos">
               <PurchaseRequestsPage />
             </PermissionGate>
           }
@@ -324,7 +336,7 @@ export default function App() {
         <Route
           path="/purchases"
           element={
-            <PermissionGate resource="purchases_overview">
+            <PermissionGate resource="compras_resumen">
               <PurchasesOverview />
             </PermissionGate>
           }
@@ -332,7 +344,7 @@ export default function App() {
         <Route
           path="/production"
           element={
-            <PermissionGate resource="production_overview">
+            <PermissionGate resource="produccion_resumen">
               <ProductionOverview />
             </PermissionGate>
           }
@@ -364,7 +376,7 @@ export default function App() {
         <Route
           path="/inventory/stock"
           element={
-            <PermissionGate resource="stock_levels">
+            <PermissionGate resource="stock_saldos">
               <StockPage />
             </PermissionGate>
           }
@@ -372,7 +384,7 @@ export default function App() {
         <Route
           path="/inventory/movements"
           element={
-            <PermissionGate resource="stock_movements">
+            <PermissionGate resource="stock_movimientos">
               <MovementsPage />
             </PermissionGate>
           }
@@ -380,7 +392,7 @@ export default function App() {
         <Route
           path="/inventory/delivery-notes"
           element={
-            <PermissionGate resource="stock_delivery_notes">
+            <PermissionGate resource="stock_remitos">
               <DeliveryNotesPage />
             </PermissionGate>
           }
@@ -388,7 +400,7 @@ export default function App() {
         <Route
           path="/purchases/suppliers"
           element={
-            <PermissionGate resource="purchases_suppliers">
+            <PermissionGate resource="compras_proveedores">
               <SuppliersPage />
             </PermissionGate>
           }
@@ -396,7 +408,7 @@ export default function App() {
         <Route
           path="/purchases/orders"
           element={
-            <PermissionGate resource="purchases_orders">
+            <PermissionGate resource="compras_ordenes">
               <PurchaseOrdersPage />
             </PermissionGate>
           }
@@ -404,7 +416,7 @@ export default function App() {
         <Route
           path="/production/formulas"
           element={
-            <PermissionGate resource="production_formulas">
+            <PermissionGate resource="produccion_formulas">
               <FormulasPage />
             </PermissionGate>
           }
@@ -412,7 +424,7 @@ export default function App() {
         <Route
           path="/production/orders"
           element={
-            <PermissionGate resource="production_orders">
+            <PermissionGate resource="produccion_ordenes">
               <ProductionOrdersPage />
             </PermissionGate>
           }
@@ -420,7 +432,7 @@ export default function App() {
         <Route
           path="/production/planning"
           element={
-            <PermissionGate resource="production_planning">
+            <PermissionGate resource="produccion_planificacion">
               <ProductionPlanningPage />
             </PermissionGate>
           }
@@ -428,7 +440,7 @@ export default function App() {
         <Route
           path="/production/availability"
           element={
-            <PermissionGate resource="production_availability">
+            <PermissionGate resource="produccion_disponibilidad">
               <ManufacturingAvailabilityPage />
             </PermissionGate>
           }
@@ -436,7 +448,7 @@ export default function App() {
         <Route
           path="/production/replenishment"
           element={
-            <PermissionGate resource="production_replenishment">
+            <PermissionGate resource="produccion_reposicion">
               <ReplenishmentPage />
             </PermissionGate>
           }
@@ -444,7 +456,7 @@ export default function App() {
         <Route
           path="/sales"
           element={
-            <PermissionGate resource="sales">
+            <PermissionGate resource="ventas">
               <SalesOverview />
             </PermissionGate>
           }
@@ -452,7 +464,7 @@ export default function App() {
         <Route
           path="/sales/quotes"
           element={
-            <PermissionGate resource="sales">
+            <PermissionGate resource="ventas">
               <QuotesPage />
             </PermissionGate>
           }
@@ -460,7 +472,7 @@ export default function App() {
         <Route
           path="/sales/customers"
           element={
-            <PermissionGate resource="sales">
+            <PermissionGate resource="ventas">
               <CustomersPage />
             </PermissionGate>
           }
@@ -472,7 +484,7 @@ export default function App() {
         <Route
           path="/sales/lista-precios"
           element={
-            <PermissionGate resource="sales">
+            <PermissionGate resource="ventas">
               <PriceListsPage />
             </PermissionGate>
           }
@@ -480,7 +492,7 @@ export default function App() {
         <Route
           path="/sales/orders"
           element={
-            <PermissionGate resource="sales">
+            <PermissionGate resource="ventas">
               <SalesOrdersPage />
             </PermissionGate>
           }
@@ -488,7 +500,7 @@ export default function App() {
         <Route
           path="/finance/treasury"
           element={
-            <PermissionGate resource="finance">
+            <PermissionGate resource="finanzas">
               <TreasuryPage />
             </PermissionGate>
           }
@@ -496,7 +508,7 @@ export default function App() {
         <Route
           path="/finance/costs"
           element={
-            <PermissionGate resource="finance">
+            <PermissionGate resource="finanzas">
               <CostsPage />
             </PermissionGate>
           }
@@ -504,7 +516,7 @@ export default function App() {
         <Route
           path="/purchases/accounts"
           element={
-            <PermissionGate resource="purchases_accounts">
+            <PermissionGate resource="compras_cuentas">
               <SupplierAccountsPage />
             </PermissionGate>
           }
@@ -512,7 +524,7 @@ export default function App() {
         <Route
           path="/production/packaging"
           element={
-            <PermissionGate resource="production_packaging">
+            <PermissionGate resource="produccion_envasado">
               <PackagingPage />
             </PermissionGate>
           }
@@ -520,7 +532,7 @@ export default function App() {
         <Route
           path="/production/stats"
           element={
-            <PermissionGate resource="production_stats">
+            <PermissionGate resource="produccion_estadistica">
               <ProductionStatsPage />
             </PermissionGate>
           }
@@ -528,7 +540,7 @@ export default function App() {
         <Route
           path="/settings/production-documents"
           element={
-            <PermissionGate resource="production_documents">
+            <PermissionGate resource="produccion_documentos">
               <ProductionDocumentSettings />
             </PermissionGate>
           }
@@ -537,7 +549,7 @@ export default function App() {
         <Route
           path="/reports"
           element={
-            <PermissionGate resource="reports">
+            <PermissionGate resource="reportes">
               <ReportsPage />
             </PermissionGate>
           }
@@ -547,7 +559,7 @@ export default function App() {
         <Route
           path="/finance/receivables"
           element={
-            <PermissionGate resource="finance">
+            <PermissionGate resource="finanzas">
               <ReceivablesPage />
             </PermissionGate>
           }

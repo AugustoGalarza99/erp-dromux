@@ -9,7 +9,7 @@ export function buildPaymentOrderPdf(row, company) {
   pdf.text(`ORDEN DE PAGO ${row.number}`, 16, 23);
   pdf.setFontSize(10);
   const header = pdf.splitTextToSize(
-    `${company || 'Empresa'}\nProveedor: ${row.supplier?.name}\nCuenta: ${row.account?.name}\nFecha: ${row.paid_on}\nEstado: ${{ draft: 'BORRADOR - NO PAGADO', paid: 'PAGADA', cancelled: 'ANULADA' }[row.status]}\nReferencia: ${row.reference || '-'}\n${row.note}`,
+    `${company || 'Empresa'}\nProveedor: ${row.supplier?.name}\nCuenta: ${row.account?.name}\nFecha: ${row.paid_on}\nEstado: ${{ borrador: 'BORRADOR - NO PAGADO', pagado: 'PAGADA', cancelado: 'ANULADA' }[row.status]}\nReferencia: ${row.reference || '-'}\n${row.note}`,
     178,
   );
   pdf.text(header, 16, 34);

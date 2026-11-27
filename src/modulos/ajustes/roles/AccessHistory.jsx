@@ -4,12 +4,8 @@ import { History } from 'lucide-react';
 import { useAuth } from '../../../compartido/contextos/AuthContext';
 import { friendlyError } from '../../../compartido/utilidades/notifications';
 import { listAccessAudit } from '../compartido/administration';
+import { AUDITORIA_ETIQUETA } from '../../../compartido/valores';
 
-const ACTIONS = {
-  role_created: 'Creó un rol',
-  role_updated: 'Modificó un rol',
-  member_updated: 'Cambió un usuario',
-};
 const PAGE_SIZE = 25;
 
 const missingMigration = (error) =>
@@ -18,10 +14,10 @@ const missingMigration = (error) =>
 /* Texto corto de lo que cambió, para personas. */
 function summary(row) {
   const d = row.detail ?? {};
-  if (row.action === 'role_created') {
+  if (row.action === 'rol_creado') {
     return `Rol “${d.name}” con ${(d.permissions ?? []).length} permisos`;
   }
-  if (row.action === 'role_updated') {
+  if (row.action === 'rol_editado') {
     const parts = [];
     if (d.name_before !== d.name_after) parts.push(`nombre: ${d.name_before} → ${d.name_after}`);
     if (d.added?.length) parts.push(`agregó ${d.added.length} permiso(s)`);
@@ -80,7 +76,7 @@ export default function AccessHistory() {
                   <td data-label="Fecha">{new Date(row.created_at).toLocaleString('es-AR')}</td>
                   <td data-label="Quién">{row.actor_email ?? 'Usuario'}</td>
                   <td data-label="Qué hizo">
-                    {ACTIONS[row.action] ?? row.action}
+                    {AUDITORIA_ETIQUETA[row.action] ?? row.action}
                     {row.target_email ? ` · ${row.target_email}` : ''}
                     {!row.target_email && row.target_role_name ? ` · ${row.target_role_name}` : ''}
                   </td>

@@ -187,7 +187,7 @@ export function SettingsDialog({ open, onClose, onSaved }) {
 export function ItemPriceDialog({ row, list, settings, onClose, onSaved }) {
   const { activeCompanyId, user } = useAuth();
   const open = Boolean(row);
-  const [method, setMethod] = useState("fixed");
+  const [method, setMethod] = useState("fijo");
   const [value, setValue] = useState("");
   const [reason, setReason] = useState("");
   const [busy, setBusy] = useState(false);
@@ -196,7 +196,7 @@ export function ItemPriceDialog({ row, list, settings, onClose, onSaved }) {
 
   useEffect(() => {
     if (!row) return;
-    setMethod(row.method ?? "fixed");
+    setMethod(row.method ?? "fijo");
     setValue(row.method_value != null ? String(row.method_value) : row.net_price != null ? String(row.net_price) : "");
     setReason("");
   }, [row]);
@@ -223,7 +223,7 @@ export function ItemPriceDialog({ row, list, settings, onClose, onSaved }) {
   }, [open, saleQuery.data, saleQuery.isPending]);
 
   const cost = row?.cost != null ? Number(row.cost) : null;
-  const needsCost = method !== "fixed";
+  const needsCost = method !== "fijo";
   const price = previewPrice(method, parseAmount(value), cost, list?.rounding_step);
   const margin = marginOf(price, cost);
   const markup = markupOf(price, cost);
@@ -286,11 +286,11 @@ export function ItemPriceDialog({ row, list, settings, onClose, onSaved }) {
               <label>Cómo fijar el precio
                 <select value={method} onChange={(event) => setMethod(event.target.value)}>
                   {Object.entries(methodLabels).map(([key, label]) => (
-                    <option key={key} value={key} disabled={key !== "fixed" && cost == null}>{label}</option>
+                    <option key={key} value={key} disabled={key !== "fijo" && cost == null}>{label}</option>
                   ))}
                 </select>
               </label>
-              <label>{method === "fixed" ? "Precio neto (sin IVA)" : method === "margin" ? "Margen sobre el precio (%)" : "Recargo sobre el costo (%)"}
+              <label>{method === "fijo" ? "Precio neto (sin IVA)" : method === "margen" ? "Margen sobre el precio (%)" : "Recargo sobre el costo (%)"}
                 <input inputMode="decimal" value={value} onChange={(event) => setValue(event.target.value)} aria-label="Valor del precio" />
               </label>
             </div>

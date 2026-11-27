@@ -27,7 +27,7 @@ export default function UsersPage() {
   const rolesQuery = useQuery({
     queryKey: ['roles', user?.id, activeCompanyId],
     queryFn: () => listRoles(activeCompanyId),
-    enabled: Boolean(activeCompanyId && role === 'admin'),
+    enabled: Boolean(activeCompanyId && role === 'administrador'),
   });
   const members = membersQuery.data ?? [];
   const roles = rolesQuery.data ?? [];
@@ -93,7 +93,7 @@ export default function UsersPage() {
             <span className="sr-only">Buscar persona</span>
             <input type="search" placeholder="Buscar por nombre o correo…" value={search} onChange={reset(setSearch)} />
           </label>
-          {role === 'admin' && (
+          {role === 'administrador' && (
             <select aria-label="Filtrar por rol" value={roleFilter} onChange={reset(setRoleFilter)}>
               <option value="">Todos los roles</option>
               {roles.map((entry) => <option key={entry.id} value={entry.id}>{entry.name}</option>)}
@@ -117,7 +117,7 @@ export default function UsersPage() {
                 <strong>{member.display_name || member.email?.split('@')[0]}</strong>
                 <small>{member.email}</small>
               </div>
-              {role === 'admin' ? (
+              {role === 'administrador' ? (
                 <label className="member-role-control">
                   <span className="sr-only">Rol de {member.display_name || member.email}</span>
                   <select value={member.role_id} disabled={saving === member.user_id || rolesQuery.isPending}

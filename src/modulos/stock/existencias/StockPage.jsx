@@ -186,7 +186,7 @@ export default function StockPage() {
                 >
                   <ArrowRightLeft size={15} aria-hidden="true" /> Ver movimientos
                 </Link>
-                {can('items', 'read') && (
+                {can('items', 'ver') && (
                   <Link className="button outline" to={`/inventory/items/${selected.item_id}`}>
                     <Pencil size={15} aria-hidden="true" /> Ver ficha del ítem
                   </Link>

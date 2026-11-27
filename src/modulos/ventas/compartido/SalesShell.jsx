@@ -7,11 +7,11 @@ import "./salesModule.css";
  * Los presupuestos y las ofertas por cantidad se agregan como pestañas cuando existan (migración 040).
  */
 const tabs = [
-  { to: "/sales", label: "Resumen", icon: LayoutGrid, end: true, any: ["sales"] },
-  { to: "/sales/orders", label: "Registrar venta", icon: Wallet, any: ["sales"] },
-  { to: "/sales/quotes", label: "Presupuestos", icon: FileText, any: ["sales"] },
-  { to: "/sales/customers", label: "Clientes", icon: ContactRound, any: ["sales"] },
-  { to: "/sales/lista-precios", label: "Listas de precios", icon: Tags, any: ["sales"] },
+  { to: "/sales", label: "Resumen", icon: LayoutGrid, end: true, any: ["ventas"] },
+  { to: "/sales/orders", label: "Registrar venta", icon: Wallet, any: ["ventas"] },
+  { to: "/sales/quotes", label: "Presupuestos", icon: FileText, any: ["ventas"] },
+  { to: "/sales/customers", label: "Clientes", icon: ContactRound, any: ["ventas"] },
+  { to: "/sales/lista-precios", label: "Listas de precios", icon: Tags, any: ["ventas"] },
 ];
 
 export default function SalesShell({ title, description, actions, children }) {

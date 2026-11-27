@@ -34,9 +34,9 @@ import '../compartido/purchases.css';
 const money = (value) => Number(value || 0).toLocaleString('es-AR', {
   style: 'currency', currency: 'ARS', maximumFractionDigits: 2,
 });
-const statusLabels = { open: 'Abierta', partial: 'Parcial', received: 'Recibida', cancelled: 'Cancelada' };
-const statusSegments = [['', 'Todas'], ['open', 'Abiertas'], ['partial', 'Parciales'],
-  ['received', 'Recibidas'], ['cancelled', 'Canceladas']];
+const statusLabels = { abierta: 'Abierta', parcial: 'Parcial', recibida: 'Recibida', cancelada: 'Cancelada' };
+const statusSegments = [['', 'Todas'], ['abierta', 'Abiertas'], ['parcial', 'Parciales'],
+  ['recibida', 'Recibidas'], ['cancelada', 'Canceladas']];
 
 /* Ítems de una orden ya creada: plegados y paginados para órdenes grandes. */
 function OrderLines({ order }) {
@@ -94,9 +94,9 @@ export default function PurchaseOrdersPage() {
   const suggestedSupplier = params.get('supplier');
   const suggestedQuantity = params.get('quantity');
   const loadedSuggestion = useRef('');
-  const mayBuy = can('purchases_orders', 'insert');
+  const mayBuy = can('compras_ordenes', 'crear');
   // El pronóstico lo exige el servidor con el módulo completo de Compras (pasa a Producción en 047).
-  const canForecast = can('production_replenishment', 'read') && can('stock_levels', 'read');
+  const canForecast = can('produccion_reposicion', 'ver') && can('stock_saldos', 'ver');
   const [createOpen, setCreateOpen] = useState(false);
   const [orderSearch, setOrderSearch] = useState(params.get('order') ?? '');
   const [orderStatus, setOrderStatus] = useState(params.get('status') ?? '');
@@ -152,7 +152,7 @@ export default function PurchaseOrdersPage() {
           // Pedido interno: se cargan las líneas del catálogo; las escritas a mano se avisan aparte.
           const request = await getPurchaseRequest(activeCompanyId, fromRequest);
           if (!mounted) return;
-          if (request.status !== 'pending') throw new Error('Ese pedido ya fue resuelto.');
+          if (request.status !== 'pendiente') throw new Error('Ese pedido ya fue resuelto.');
           const catalog = (request.lines ?? []).filter((line) => line.item_id);
           const skipped = (request.lines ?? []).filter((line) => !line.item_id).map((line) => line.item_name);
           setLines(catalog.map((line) => ({
@@ -471,7 +471,7 @@ export default function PurchaseOrdersPage() {
           const orderTotal = (order.lines ?? []).reduce(
             (sum, line) => sum + Number(line.quantity) * Number(line.unit_price), 0);
           const percent = lineCount ? Math.round((done / lineCount) * 100) : 0;
-          const active = ['open', 'partial'].includes(order.status);
+          const active = ['abierta', 'parcial'].includes(order.status);
           return (
             <article className={`po-order is-${order.status}`} key={order.id}>
               <header className="po-order-head">
@@ -481,7 +481,7 @@ export default function PurchaseOrdersPage() {
                 </div>
                 <span className={`mod-chip po-status-${order.status}`}>{statusLabels[order.status] ?? order.status}</span>
               </header>
-              {order.status !== 'cancelled' && (
+              {order.status !== 'cancelada' && (
                 <div className="po-progress">
                   <div className="job-progress-bar" role="progressbar" aria-valuemin={0} aria-valuemax={100}
                     aria-valuenow={percent} aria-label="Líneas recibidas">
@@ -492,7 +492,7 @@ export default function PurchaseOrdersPage() {
               )}
               <OrderLines order={order} />
               <div className="po-order-actions">
-                {active && mayBuy && can('stock', 'insert') && can('stock', 'read') && (
+                {active && mayBuy && can('stock', 'crear') && can('stock', 'ver') && (
                   <button className="button primary" type="button" onClick={() => setReceivingOrderId(order.id)}>
                     <PackageCheck size={16} aria-hidden="true" /> Recibir mercadería
                   </button>
@@ -515,7 +515,7 @@ export default function PurchaseOrdersPage() {
                 >
                   <Download size={15} aria-hidden="true" /> PDF
                 </button>
-                {active && can('purchases_orders', 'update') && (
+                {active && can('compras_ordenes', 'editar') && (
                   <button className="button outline po-cancel" type="button" onClick={() => setCancelTarget(order)}>
                     Cancelar pendiente
                   </button>

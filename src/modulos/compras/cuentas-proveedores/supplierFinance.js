@@ -31,13 +31,13 @@ export const payableOrders = (company, supplier, page) =>
 
 export async function paymentOrders(company, page) {
   const { data, count, error } = await supabase
-    .from('supplier_payment_orders')
+    .from('compras_pagos')
     .select(
-      '*, supplier:suppliers(name), account:treasury_accounts(name), lines:supplier_payment_order_lines(amount, order:purchase_orders(number))',
+      'id, number:numero, supplier_id:proveedor_id, account_id:cuenta_id, amount:importe, paid_on:fecha_pago, note:nota, reference:referencia, status:estado, created_at:creado_en, confirmed_at:confirmado_en, supplier:compras_proveedores(name:nombre), account:finanzas_cuentas(name:nombre), lines:compras_pagos_lineas(amount:importe, order:compras_ordenes(number:numero))',
       { count: 'exact' },
     )
-    .eq('company_id', company)
-    .order('created_at', { ascending: false })
+    .eq('empresa_id', company)
+    .order('creado_en', { ascending: false })
     .order('id')
     .range(page * 25, page * 25 + 24);
   if (error) throw error;
@@ -70,13 +70,13 @@ export const cancelPaymentOrder = (company, id) =>
 
 export async function findFinanceSuppliers(company, term) {
   let query = supabase
-    .from('suppliers')
-    .select('id,name,active')
-    .eq('company_id', company)
-    .order('name')
+    .from('compras_proveedores')
+    .select('id,name:nombre,active:activo')
+    .eq('empresa_id', company)
+    .order('nombre')
     .order('id')
     .limit(30);
-  if (term.trim()) query = query.ilike('name', `%${term.trim()}%`);
+  if (term.trim()) query = query.ilike('nombre', `%${term.trim()}%`);
   const { data, error } = await query;
   if (error) throw error;
   return data ?? [];

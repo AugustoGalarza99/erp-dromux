@@ -33,12 +33,12 @@ export default function SaleAdjustmentPanel({ sale, accounts, onUpdated }) {
   const [refundAccount, setRefundAccount] = useState('');
   const [refundReason, setRefundReason] = useState('');
   const [refundRequestId, setRefundRequestId] = useState(() => crypto.randomUUID());
-  const canceled = (sale.sale_adjustments ?? []).some((entry) => entry.kind === 'cancel');
+  const canceled = (sale.sale_adjustments ?? []).some((entry) => entry.kind === 'anulacion');
   const availableLines = sale.sale_lines.filter((line) => remainingFor(sale, line) > 0);
   const creditQuery = useQuery({
     queryKey: ['sale-credit', user?.id, activeCompanyId, sale.id],
     queryFn: () => getSaleCredit(activeCompanyId, sale.id),
-    enabled: Boolean(activeCompanyId && can('finance', 'read')),
+    enabled: Boolean(activeCompanyId && can('finanzas', 'ver')),
   });
   const credit = Number(creditQuery.data?.credit_due ?? 0);
 
@@ -47,7 +47,7 @@ export default function SaleAdjustmentPanel({ sale, accounts, onUpdated }) {
     setReason('');
     setRequestId(crypto.randomUUID());
     setLines(Object.fromEntries(availableLines.map((line) => [line.line_no, {
-      quantity: next === 'cancel' ? String(remainingFor(sale, line)) : '',
+      quantity: next === 'anulacion' ? String(remainingFor(sale, line)) : '',
       restock: false,
     }])));
   }
@@ -61,7 +61,7 @@ export default function SaleAdjustmentPanel({ sale, accounts, onUpdated }) {
     const original = availableLines.find((line) => line.line_no === entry.line_no);
     return /^\d+(?:\.\d{1,6})?$/.test(entry.quantity)
       && Number(entry.quantity) <= remainingFor(sale, original);
-  }) && (kind !== 'cancel' || chosen.length === availableLines.length);
+  }) && (kind !== 'anulacion' || chosen.length === availableLines.length);
 
   async function submitAdjustment() {
     if (!valid || busy) return;
@@ -73,7 +73,7 @@ export default function SaleAdjustmentPanel({ sale, accounts, onUpdated }) {
       setRequestId(crypto.randomUUID());
       await onUpdated();
       await client.invalidateQueries({ queryKey: ['sale-credit', user?.id, activeCompanyId, sale.id] });
-      notifySuccess(kind === 'cancel' ? 'Venta anulada' : 'Devolución registrada',
+      notifySuccess(kind === 'anulacion' ? 'Venta anulada' : 'Devolución registrada',
         'El stock y el saldo se actualizaron según los productos recibidos.');
     } catch (error) {
       notifyError(error);
@@ -112,7 +112,7 @@ export default function SaleAdjustmentPanel({ sale, accounts, onUpdated }) {
         <div className="sales-adjustment-history">
           {(sale.sale_adjustments ?? []).map((entry) => (
             <small key={entry.id}>
-              {entry.kind === 'cancel' ? 'Anulación' : 'Devolución'} ·
+              {entry.kind === 'anulacion' ? 'Anulación' : 'Devolución'} ·
               {money(entry.credit_total)} · {entry.reason}
             </small>
           ))}
@@ -126,20 +126,20 @@ export default function SaleAdjustmentPanel({ sale, accounts, onUpdated }) {
           {credit > 0 && <strong> · Crédito a reintegrar: {money(credit)}</strong>}
         </p>
       )}
-      {can('sales', 'update') && can('stock', 'insert') && !canceled
+      {can('ventas', 'editar') && can('stock', 'crear') && !canceled
         && availableLines.length > 0 && (
         <div className="sales-adjustment-actions">
-          <button type="button" className="sales-link" onClick={() => selectKind('return')}>
+          <button type="button" className="sales-link" onClick={() => selectKind('devolucion')}>
             Registrar devolución
           </button>
-          <button type="button" className="sales-link" onClick={() => selectKind('cancel')}>
+          <button type="button" className="sales-link" onClick={() => selectKind('anulacion')}>
             Anular venta
           </button>
         </div>
       )}
       {kind && (
         <div className="sales-adjustment-form">
-          <h3>{kind === 'cancel' ? 'Anular venta' : 'Productos devueltos'}</h3>
+          <h3>{kind === 'anulacion' ? 'Anular venta' : 'Productos devueltos'}</h3>
           <p>Reingresá stock únicamente si la mercadería volvió en condiciones de venderse.
             El resto quedará descontado y registrado como devolución sin ingreso.</p>
           {availableLines.map((line) => (
@@ -153,7 +153,7 @@ export default function SaleAdjustmentPanel({ sale, accounts, onUpdated }) {
                   max={remainingFor(sale, line)}
                   step="0.000001"
                   value={lines[line.line_no]?.quantity ?? ''}
-                  disabled={kind === 'cancel'}
+                  disabled={kind === 'anulacion'}
                   onChange={(event) => setLines((current) => ({
                     ...current,
                     [line.line_no]: { ...current[line.line_no], quantity: event.target.value },
@@ -188,12 +188,12 @@ export default function SaleAdjustmentPanel({ sale, accounts, onUpdated }) {
             </button>
             <button type="button" className="button primary" disabled={!valid || busy}
               onClick={() => setConfirming(true)}>
-              Revisar {kind === 'cancel' ? 'anulación' : 'devolución'}
+              Revisar {kind === 'anulacion' ? 'anulación' : 'devolución'}
             </button>
           </div>
         </div>
       )}
-      {credit > 0 && can('finance', 'insert') && can('sales', 'update') && (
+      {credit > 0 && can('finanzas', 'crear') && can('ventas', 'editar') && (
         <form className="sales-adjustment-form" onSubmit={(event) => {
           event.preventDefault();
           if (/^\d+(?:\.\d{1,2})?$/.test(refundAmount)
@@ -212,7 +212,7 @@ export default function SaleAdjustmentPanel({ sale, accounts, onUpdated }) {
               <option value="">Seleccionar cuenta…</option>
               {accounts.map((account) => (
                 <option key={account.account_id} value={account.account_id}>
-                  {account.name} · {account.kind === 'cash' ? 'Efectivo' : 'Cuenta'}
+                  {account.name} · {account.kind === 'caja' ? 'Efectivo' : 'Cuenta'}
                 </option>
               ))}
             </select>
@@ -243,9 +243,9 @@ export default function SaleAdjustmentPanel({ sale, accounts, onUpdated }) {
       <ConfirmDeleteDialog
         open={confirming}
         busy={busy}
-        title={kind === 'cancel' ? '¿Seguro que querés anular esta venta?' : '¿Confirmás la devolución?'}
+        title={kind === 'anulacion' ? '¿Seguro que querés anular esta venta?' : '¿Confirmás la devolución?'}
         description={`Se registrará un crédito por ${chosen.length} producto(s). Solo se reingresará al stock la mercadería que marcaste como recibida y apta. El historial quedará disponible.`}
-        confirmLabel={kind === 'cancel' ? 'Anular venta' : 'Registrar devolución'}
+        confirmLabel={kind === 'anulacion' ? 'Anular venta' : 'Registrar devolución'}
         onCancel={() => setConfirming(false)}
         onConfirm={submitAdjustment}
       />

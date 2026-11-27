@@ -90,7 +90,7 @@ export default function ProductionJobCard({
     net.set(
       event.component_id,
       (net.get(event.component_id) ?? 0) +
-        (event.kind === "issue" ? 1 : -1) * Number(event.quantity),
+        (event.kind === "entrega" ? 1 : -1) * Number(event.quantity),
     );
   }
   const remaining = expected.filter(
@@ -100,7 +100,7 @@ export default function ProductionJobCard({
   const actualCost = events.reduce(
     (sum, entry) =>
       sum +
-      (entry.kind === "issue" ? 1 : -1) *
+      (entry.kind === "entrega" ? 1 : -1) *
         Number(entry.quantity) *
         Number(entry.unit_cost),
     0,
@@ -108,7 +108,7 @@ export default function ProductionJobCard({
   const chosen = items.find((item) => item.id === issue.componentId);
   const eligible = items.filter(
     (item) =>
-      ["raw_material", "semi_finished", "consumable"].includes(
+      ["materia_prima", "semielaborado", "insumo"].includes(
         item.item_type,
       ) && item.active !== false,
   );
@@ -147,7 +147,7 @@ export default function ProductionJobCard({
             (balance) => balance.warehouse_id === issue.warehouseId,
           )?.quantity ?? 0,
         );
-  const canDeliver = can("production_orders", "insert") && can("stock", "insert");
+  const canDeliver = can("produccion_ordenes", "crear") && can("stock", "crear");
 
   function requestFor(key, fingerprint) {
     const previous = requests.current.get(key);
@@ -242,7 +242,7 @@ export default function ProductionJobCard({
   async function saveReturn() {
     if (!returnEntry || !validQuantity(returnQuantity) || busy) return;
     const returned = events
-      .filter((row) => row.kind === "return" && row.issue_id === returnEntry.id)
+      .filter((row) => row.kind === "devolucion" && row.issue_id === returnEntry.id)
       .reduce((sum, row) => sum + Number(row.quantity), 0);
     if (Number(returnQuantity) > Number(returnEntry.quantity) - returned) {
       notifyError(new Error("La devolución supera lo entregado."));
@@ -303,7 +303,7 @@ export default function ProductionJobCard({
     }
   }
 
-  const active = ["queued", "in_progress"].includes(job.status);
+  const active = ["pendiente", "en_proceso"].includes(job.status);
   const options = eligible.filter((item) =>
     `${item.code} ${item.name}`
       .toLowerCase()
@@ -329,10 +329,10 @@ export default function ProductionJobCard({
         <span className={`production-badge ${job.status}`}>
           {
             {
-              queued: "En cola",
-              in_progress: "En proceso",
-              completed: "Terminada",
-              cancelled: "Cancelada",
+              pendiente: "En cola",
+              en_proceso: "En proceso",
+              terminada: "Terminada",
+              cancelada: "Cancelada",
             }[job.status]
           }
         </span>
@@ -365,7 +365,7 @@ export default function ProductionJobCard({
             {remaining} de {expected.length}
           </strong>
         </span>
-        {(role === "admin" || can("costs_production", "read")) && (
+        {(role === "administrador" || can("costos_produccion", "ver")) && (
           <span>
             Costo consumido <strong>$ {money(actualCost)}</strong>
           </span>
@@ -385,12 +385,12 @@ export default function ProductionJobCard({
           {remitos.map((note, index) => (
             <span key={note.id}>
               {index > 0 && " · "}
-              {can("stock_levels", "read") ? (
+              {can("stock_saldos", "ver") ? (
                 <Link to="/inventory/delivery-notes">Nº {note.number}</Link>
               ) : (
                 `Nº ${note.number}`
               )}
-              {note.status === "voided" && " (anulado)"}
+              {note.status === "anulado" && " (anulado)"}
             </span>
           ))}
         </p>
@@ -404,12 +404,12 @@ export default function ProductionJobCard({
       )}
       <div className="production-job-buttons">
         <CleanupButton
-          resource="jobs"
+          resource="ordenes"
           id={job.id}
           label={`OF ${job.number} · ${product?.name ?? "Producto"}`}
           onRemoved={onUpdated}
         />
-        {job.status !== "cancelled" && can("production_orders", "update") && (
+        {job.status !== "cancelada" && can("produccion_ordenes", "editar") && (
           <button
             type="button"
             className="button outline"
@@ -425,7 +425,7 @@ export default function ProductionJobCard({
         >
           <Download size={16} /> PDF del proceso
         </button>
-        {job.status === "queued" && can("production_orders", "update") && (
+        {job.status === "pendiente" && can("produccion_ordenes", "editar") && (
           <button
             type="button"
             className="button outline"
@@ -453,9 +453,9 @@ export default function ProductionJobCard({
             </button>
           </>
         )}
-        {job.status === "in_progress" &&
-          can("production_orders", "insert") &&
-          can("stock", "insert") && (
+        {job.status === "en_proceso" &&
+          can("produccion_ordenes", "crear") &&
+          can("stock", "crear") && (
             <button
               type="button"
               className="button outline"
@@ -464,7 +464,7 @@ export default function ProductionJobCard({
               <CheckCircle2 size={16} /> Terminar fabricación
             </button>
           )}
-        {active && can("production_orders", "update") && (
+        {active && can("produccion_ordenes", "editar") && (
           <button
             type="button"
             className="button outline"
@@ -479,14 +479,14 @@ export default function ProductionJobCard({
         {events.length === 0 && <p>Todavía no se entregaron materiales.</p>}
         {eventsPager.visible.map((entry) => {
           const returned = events
-            .filter((row) => row.kind === "return" && row.issue_id === entry.id)
+            .filter((row) => row.kind === "devolucion" && row.issue_id === entry.id)
             .reduce((sum, row) => sum + Number(row.quantity), 0);
           const open =
-            entry.kind === "issue" ? Number(entry.quantity) - returned : 0;
+            entry.kind === "entrega" ? Number(entry.quantity) - returned : 0;
           return (
             <div className="production-job-event" key={entry.id}>
               <span>
-                {entry.kind === "issue" ? "Entregado" : "Devuelto"} ·{" "}
+                {entry.kind === "entrega" ? "Entregado" : "Devuelto"} ·{" "}
                 {itemName(entry.component_id)}
                 {" · "}
                 {formatQuantity(entry.quantity)}
@@ -497,9 +497,9 @@ export default function ProductionJobCard({
                 {new Date(entry.created_at).toLocaleString("es-AR")}
               </small>
               {open > 0.000001 &&
-                job.status === "in_progress" &&
-                can("production_orders", "update") &&
-                can("stock", "insert") && (
+                job.status === "en_proceso" &&
+                can("produccion_ordenes", "editar") &&
+                can("stock", "crear") && (
                   <button
                     type="button"
                     className="production-link"
@@ -529,7 +529,7 @@ export default function ProductionJobCard({
             warehouses={warehouses}
             jobs={[job]}
             allocations={allocations}
-            initialKind="production"
+            initialKind="produccion"
             initialJobId={job.id}
             onCancel={() => {
               if (!issuing) setAction(null);

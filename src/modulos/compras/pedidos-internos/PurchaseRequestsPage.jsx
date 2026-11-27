@@ -22,9 +22,9 @@ import PurchasesShell from '../compartido/PurchasesShell';
 import '../compartido/suppliers.css';
 import '../compartido/purchases.css';
 
-const statusLabels = { pending: 'Pendiente', ordered: 'Ordenado', rejected: 'Rechazado', cancelled: 'Cancelado' };
-const statusSegments = [['pending', 'Pendientes'], ['', 'Todos'], ['ordered', 'Ordenados'],
-  ['rejected', 'Rechazados'], ['cancelled', 'Cancelados']];
+const statusLabels = { pendiente: 'Pendiente', ordenado: 'Ordenado', rechazado: 'Rechazado', cancelado: 'Cancelado' };
+const statusSegments = [['pendiente', 'Pendientes'], ['', 'Todos'], ['ordenado', 'Ordenados'],
+  ['rechazado', 'Rechazados'], ['cancelado', 'Cancelados']];
 const today = () => {
   const now = new Date();
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
@@ -77,11 +77,11 @@ export default function PurchaseRequestsPage() {
   const client = useQueryClient();
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
-  const manager = can('purchase_requests', 'manage');
-  const canRequest = can('purchase_requests', 'insert');
-  const canConvert = manager && can('purchases_orders', 'insert');
-  const canReject = manager && can('purchase_requests', 'update');
-  const [status, setStatus] = useState(manager ? 'pending' : '');
+  const manager = can('compras_pedidos', 'gestionar');
+  const canRequest = can('compras_pedidos', 'crear');
+  const canConvert = manager && can('compras_ordenes', 'crear');
+  const canReject = manager && can('compras_pedidos', 'editar');
+  const [status, setStatus] = useState(manager ? 'pendiente' : '');
   const [search, setSearch] = useState('');
   const term = useDebouncedValue(search);
   const [page, setPage] = useState(0);
@@ -114,7 +114,7 @@ export default function PurchaseRequestsPage() {
     enabled: Boolean(activeCompanyId),
   });
   const rows = query.data?.rows ?? [];
-  const hasFilters = Boolean(search) || status !== (manager ? 'pending' : '');
+  const hasFilters = Boolean(search) || status !== (manager ? 'pendiente' : '');
   const refresh = () => client.invalidateQueries({ queryKey: ['purchase-requests'] });
 
   const review = (event) => {
@@ -143,7 +143,7 @@ export default function PurchaseRequestsPage() {
       await refresh();
       notifySuccess(
         'Pedido enviado a Compras',
-        `${lines.length} línea${lines.length === 1 ? '' : 's'}${priority === 'urgent' ? ' · marcado como urgente' : ''}. Compras lo va a revisar.`,
+        `${lines.length} línea${lines.length === 1 ? '' : 's'}${priority === 'urgente' ? ' · marcado como urgente' : ''}. Compras lo va a revisar.`,
       );
       setConfirmCreate(false);
       setCreateOpen(false);
@@ -223,7 +223,7 @@ export default function PurchaseRequestsPage() {
           </label>
           {hasFilters && (
             <button type="button" className="button outline"
-              onClick={() => { setSearch(''); setStatus('pending'); }}>
+              onClick={() => { setSearch(''); setStatus('pendiente'); }}>
               <X size={15} aria-hidden="true" /> Limpiar filtros
             </button>
           )}
@@ -258,10 +258,10 @@ export default function PurchaseRequestsPage() {
       <div className="po-list">
         {rows.map((request) => {
           const mine = request.requested_by === user?.id;
-          const pending = request.status === 'pending';
+          const pending = request.status === 'pendiente';
           const lateNeeded = pending && request.needed_by && request.needed_by < today();
           return (
-            <article className={`po-order pr-${request.status} ${request.priority === 'urgent' && pending ? 'is-urgent-request' : ''}`} key={request.id}>
+            <article className={`po-order pr-${request.status} ${request.priority === 'urgente' && pending ? 'is-urgent-request' : ''}`} key={request.id}>
               <header className="po-order-head">
                 <div>
                   <strong>Pedido Nº {request.number} · {request.requester_label}</strong>
@@ -271,16 +271,16 @@ export default function PurchaseRequestsPage() {
                   </small>
                 </div>
                 <div className="pr-chips">
-                  {request.priority === 'urgent' && pending && <span className="mod-chip is-urgent">Urgente</span>}
+                  {request.priority === 'urgente' && pending && <span className="mod-chip is-urgent">Urgente</span>}
                   {lateNeeded && <span className="mod-chip is-urgent">Fecha vencida</span>}
                   <span className={`mod-chip pr-status-${request.status}`}>{statusLabels[request.status]}</span>
                 </div>
               </header>
               {request.note && <p className="mod-muted">“{request.note}”</p>}
-              {request.status === 'rejected' && (
+              {request.status === 'rechazado' && (
                 <p className="pr-resolution">Motivo del rechazo: {request.resolution_note}</p>
               )}
-              {request.status === 'ordered' && (
+              {request.status === 'ordenado' && (
                 <p className="pr-resolution is-ok">
                   Convertido en orden de compra{request.order?.number ? ` Nº ${request.order.number}` : ''}.
                   {manager && <> <Link to="/purchases/orders">Ver órdenes</Link></>}
@@ -300,7 +300,7 @@ export default function PurchaseRequestsPage() {
                       Rechazar
                     </button>
                   )}
-                  {mine && can('purchase_requests', 'update') && (
+                  {mine && can('compras_pedidos', 'editar') && (
                     <button type="button" className="button outline po-cancel" onClick={() => setCancelTarget(request)}>
                       Cancelar pedido
                     </button>
@@ -325,7 +325,7 @@ export default function PurchaseRequestsPage() {
                   Prioridad
                   <select value={priority} onChange={(event) => setPriority(event.target.value)}>
                     <option value="normal">Normal</option>
-                    <option value="urgent">Urgente (frena el trabajo)</option>
+                    <option value="urgente">Urgente (frena el trabajo)</option>
                   </select>
                 </label>
                 <label>
@@ -363,7 +363,7 @@ export default function PurchaseRequestsPage() {
       <ConfirmDeleteDialog
         open={confirmCreate} intent="primary" busy={busy}
         title="¿Enviar el pedido a Compras?"
-        description={`${lines.length} línea${lines.length === 1 ? '' : 's'}${priority === 'urgent' ? ', marcado como urgente' : ''}${neededBy ? `, para el ${dateEs(neededBy)}` : ''}. No se compra nada hasta que Compras lo apruebe.`}
+        description={`${lines.length} línea${lines.length === 1 ? '' : 's'}${priority === 'urgente' ? ', marcado como urgente' : ''}${neededBy ? `, para el ${dateEs(neededBy)}` : ''}. No se compra nada hasta que Compras lo apruebe.`}
         confirmLabel="Enviar pedido"
         onCancel={() => setConfirmCreate(false)} onConfirm={submit}
       />

@@ -10,6 +10,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../utilidades/supabase';
 import { queryClient } from '../utilidades/queryClient';
 import { beginSupportSession, getMemberships, getPermissions } from '../servicios/core';
+import { moduloHabilitado } from '../valores';
 
 const AuthContext = createContext(null);
 
@@ -84,7 +85,7 @@ export function AuthProvider({ children }) {
     ?? memberships[0]
     ?? null;
   const roleId = membership?.role_id;
-  const support = membership?.roles?.code === 'support';
+  const support = membership?.roles?.code === 'soporte';
   const supportActive = support && supportSession?.companyId === membership?.company_id
     && supportSession.expiresAt > clock;
 
@@ -101,7 +102,7 @@ export function AuthProvider({ children }) {
   const companyId = membership?.company_id ?? null;
 
   // Solo un administrador real puede mirar como otro rol, y solo dentro de la empresa donde empezó.
-  const viewAsActive = Boolean(viewAs && realRole === 'admin' && viewAs.companyId === companyId);
+  const viewAsActive = Boolean(viewAs && realRole === 'administrador' && viewAs.companyId === companyId);
   const viewAsQuery = useQuery({
     queryKey: ['view-as-permissions', user?.id, companyId, viewAs?.id],
     queryFn: () => getPermissions(viewAs.id, false),
@@ -111,12 +112,15 @@ export function AuthProvider({ children }) {
   const viewingAs = viewAsActive ? { id: viewAs.id, code: viewAs.code, name: viewAs.name, loading: viewAsQuery.isPending } : null;
   const permissions = viewAsActive ? (viewAsQuery.data ?? []) : realPermissions;
 
-  const can = (resource, action = 'read') => permissions.some(
+  // Un módulo no contratado por la empresa bloquea sus pantallas aunque el rol tenga el permiso.
+  const planIncluye = (resource) => moduloHabilitado(resource, membership?.companies?.modules);
+
+  const can = (resource, action = 'ver') => planIncluye(resource) && permissions.some(
     (permission) => permission.resource === resource && permission.action === action,
   );
 
   const startViewAs = (target) => {
-    if (realRole !== 'admin' || !target?.id || !companyId) return;
+    if (realRole !== 'administrador' || !target?.id || !companyId) return;
     setViewAs({ id: target.id, code: target.code, name: target.name, companyId });
     // Lo ya cargado con los permisos reales no debe quedar a la vista: se vuelve a pedir lo que la vista permita.
     queryClient.removeQueries({ predicate: (query) => query.queryKey[0] !== 'memberships' && query.queryKey[0] !== 'permissions' });
@@ -129,7 +133,7 @@ export function AuthProvider({ children }) {
 
   const setActiveCompanyId = (id) => {
     const target = memberships.find((item) => item.company_id === id);
-    if (!target || target.roles?.code === 'support') return;
+    if (!target || target.roles?.code === 'soporte') return;
 
     setViewAs(null);
     setActiveId(id);
@@ -138,7 +142,7 @@ export function AuthProvider({ children }) {
 
   const openSupportCompany = async (id, reason) => {
     if (!memberships.some((item) => item.company_id === id
-      && item.roles?.code === 'support')) {
+      && item.roles?.code === 'soporte')) {
       throw new Error('Empresa no disponible para soporte.');
     }
     const expires = await beginSupportSession(id, reason);
@@ -177,6 +181,7 @@ export function AuthProvider({ children }) {
     supportActive,
     permissions,
     can,
+    planIncluye,
     setActiveCompanyId,
     openSupportCompany,
     signOut,

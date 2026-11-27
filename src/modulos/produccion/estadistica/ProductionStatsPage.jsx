@@ -115,7 +115,7 @@ function Delta({ now, before }) {
 
 export default function ProductionStatsPage() {
   const { activeCompanyId, user, can } = useAuth();
-  const enabled = Boolean(activeCompanyId) && can("production_stats", "read");
+  const enabled = Boolean(activeCompanyId) && can("produccion_estadistica", "ver");
   const scope = [user?.id, activeCompanyId];
   const initial = presetRange("month");
 

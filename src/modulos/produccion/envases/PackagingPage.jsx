@@ -22,7 +22,7 @@ export default function PackagingPage() {
   const [unitSearch, setUnitSearch] = useState('');
   const [form, setForm] = useState(null);
   const [busy, setBusy] = useState(false);
-  const canEdit = can('production_packaging', 'update');
+  const canEdit = can('produccion_envasado', 'editar');
 
   const query = useQuery({
     queryKey: ['packaging-types', user?.id, company, page, search],

@@ -18,13 +18,13 @@ export async function listProductionItems(companyId, includeInactive = false) {
 export async function listFormulas(companyId) {
   return unwrap(
     await supabase
-      .from("production_formulas")
+      .from("produccion_formulas")
       .select(
-        "product_id, batch_quantity, version, updated_at, production_formula_lines(component_id, quantity)",
+        "product_id:producto_id, batch_quantity:cantidad_base, version, updated_at:actualizado_en, production_formula_lines:produccion_formulas_lineas(component_id:componente_id, quantity:cantidad)",
       )
-      .eq("company_id", companyId)
-      .eq("archived", false)
-      .order("updated_at", { ascending: false }),
+      .eq("empresa_id", companyId)
+      .eq("archivado", false)
+      .order("actualizado_en", { ascending: false }),
   );
 }
 
@@ -66,11 +66,11 @@ export async function getFormulaCost(companyId, productId) {
 export async function listProductionWarehouses(companyId) {
   return unwrap(
     await supabase
-      .from("warehouses")
-      .select("id, code, name")
-      .eq("company_id", companyId)
-      .eq("active", true)
-      .order("name")
+      .from("stock_depositos")
+      .select("id, code:codigo, name:nombre")
+      .eq("empresa_id", companyId)
+      .eq("activo", true)
+      .order("nombre")
       .limit(100),
   );
 }
@@ -79,9 +79,9 @@ export async function listProductionBalances(companyId, componentIds) {
   if (!componentIds.length) return [];
   return unwrap(
     await supabase
-      .from("stock_balances")
-      .select("item_id, warehouse_id, quantity")
-      .eq("company_id", companyId)
+      .from("stock_saldos")
+      .select("item_id, warehouse_id:deposito_id, quantity:cantidad")
+      .eq("empresa_id", companyId)
       .in("item_id", componentIds)
       .limit(1000),
   );
@@ -138,30 +138,6 @@ export async function cancelProductionPlan(companyId, planId) {
     await supabase.rpc("cancel_production_plan", {
       p_company: companyId,
       p_plan: planId,
-    }),
-  );
-}
-
-export async function completeProductionPlan(
-  companyId,
-  planId,
-  inputs,
-  outputLot,
-  expiresOn,
-  requestId,
-) {
-  return unwrap(
-    await supabase.rpc("complete_production_plan", {
-      p_company: companyId,
-      p_plan: planId,
-      p_request_id: requestId,
-      p_inputs: inputs.map((input) => ({
-        component_id: input.componentId,
-        warehouse_id: input.warehouseId,
-        lot_code: input.lotCode || null,
-      })),
-      p_output_lot: outputLot || null,
-      p_expires_on: expiresOn || null,
     }),
   );
 }
@@ -307,9 +283,9 @@ export async function checkManufacturingAvailability(
 export async function listProductionReservations(companyId) {
   return unwrap(
     await supabase
-      .from("production_job_reservations")
-      .select("job_id, component_id, required_quantity, reserved_quantity")
-      .eq("company_id", companyId)
+      .from("produccion_ordenes_reservas")
+      .select("job_id:orden_id, component_id:componente_id, required_quantity:cantidad_requerida, reserved_quantity:cantidad_reservada")
+      .eq("empresa_id", companyId)
       .limit(2000),
   );
 }
@@ -317,9 +293,9 @@ export async function listProductionReservations(companyId) {
 export async function listProductionReservationLocations(companyId) {
   return unwrap(
     await supabase
-      .from("production_reservation_locations")
-      .select("job_id, component_id, warehouse_id, lot_code, quantity")
-      .eq("company_id", companyId)
+      .from("produccion_reservas_ubicaciones")
+      .select("job_id:orden_id, component_id:componente_id, warehouse_id:deposito_id, lot_code:lote_codigo, quantity:cantidad")
+      .eq("empresa_id", companyId)
       .limit(3000),
   );
 }
@@ -334,7 +310,7 @@ export async function recalculateProductionReservations(companyId) {
 
 /*
  * Terminar la orden con ajustes de insumos y recuento de envases en una sola operación (migración 043).
- * adjustments: [{ kind: 'issue' | 'return', componentId, warehouseId?, lotCode?, quantity, note }]
+ * adjustments: [{ kind: 'entrega' | 'devolucion', componentId, warehouseId?, lotCode?, quantity, note }]
  * packaging: { [id de envasado de la orden]: cantidad real de envases }
  */
 export async function finishProductionJobAdjusted(

@@ -27,7 +27,7 @@ export default function ManufacturingAvailabilityPage() {
   const [error, setError] = useState('');
   const [lineFilter, setLineFilter] = useState('missing');
   const [lineSearch, setLineSearch] = useState('');
-  const allowed = can('stock_levels', 'read');
+  const allowed = can('stock_saldos', 'ver');
   const itemsQuery = useQuery({
     queryKey: ['production-items', user?.id, activeCompanyId],
     queryFn: () => listProductionItems(activeCompanyId),
@@ -58,7 +58,7 @@ export default function ManufacturingAvailabilityPage() {
 
   const items = itemsQuery.data ?? [];
   const jobs = (jobsQuery.data ?? []).filter((entry) =>
-    ['queued', 'in_progress'].includes(entry.status));
+    ['pendiente', 'en_proceso'].includes(entry.status));
   const reservations = (reservationsQuery.data ?? []).filter((entry) =>
     jobs.some((job) => job.id === entry.job_id));
   const formulaProducts = (formulasQuery.data ?? []).map((entry) =>
@@ -243,7 +243,7 @@ export default function ManufacturingAvailabilityPage() {
                 const consumed = (job.production_job_events ?? [])
                   .filter((event) => event.component_id === entry.component_id)
                   .reduce((sum, event) => sum + Number(event.quantity)
-                    * (event.kind === 'issue' ? 1 : -1), 0);
+                    * (event.kind === 'entrega' ? 1 : -1), 0);
                 return Number(entry.required_quantity) - consumed
                   > Number(entry.reserved_quantity) + 0.000001;
               });

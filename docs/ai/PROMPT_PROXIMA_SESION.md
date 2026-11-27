@@ -1,5 +1,4 @@
-/erp-retomar Objetivo: que la aplicación funcione con la base nueva en español. Leé docs/ai/ESTADO.md, docs/ai/PLAN_REORGANIZACION.md (sección «Próxima sesión»), supabase/base_nueva/LEEME.md y su registro/. Explicame todo en lenguaje simple (tengo pocos conocimientos de programación).
-Usá Opus para analizar y planificar la adaptación y Sonnet para ejecutarla. La base nueva está aplicada y verificada; la aplicación todavía usa la vieja. El cliente no usa el sistema hasta que yo le avise.
-Empezá por: comprobar que hice el commit, planificar por módulo (acceso y permisos, Stock, Producción) y adaptar; probar con `npm run dev:nueva`. Decime cuándo crear mi usuario y la empresa de prueba.
-Después: pruebas por pantalla y de roles, revisión crítica con Opus y recién entonces publicar. Cuando todo esté probado seguimos el ordenamiento (nombres en español, Excel, botones de eliminar).
+/erp-retomar Objetivo: terminar las pruebas de la aplicación con la base nueva. Leé docs/ai/ESTADO.md. Explicame todo en lenguaje simple (tengo pocos conocimientos de programación).
+Stock, Producción y roles ya se probaron con mi usuario. Falta: guardar el commit si no está, activar y probar Compras, Ventas, Finanzas y Reportes, y la etapa B (usuario operario, segunda empresa, revisión crítica con Opus y recién entonces publicar).
+Después: baja completa de empresa (borra todo lo asociado) y el ordenamiento (nombres en español, Excel, botones de eliminar).
 Reglas: los SQL los aplico yo y quedan registrados en supabase/base_nueva/cambios y registro; pedime confirmación antes de commit o publicar; si necesitás permisos extra pedímelos; no pases ni pidas contraseñas.

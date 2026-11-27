@@ -86,7 +86,7 @@ export default function ProductionPlanningPage() {
     enabled: Boolean(
       activeCompanyId &&
       formula &&
-      can("stock_levels", "read") &&
+      can("stock_saldos", "ver") &&
       Number(quantity) > 0 &&
       Number(quantity) < 1000000000000,
     ),
@@ -264,7 +264,7 @@ export default function ProductionPlanningPage() {
                         : "—"}{" "}
                       {byId[line.componentId]?.units?.symbol}
                     </span>
-                    {can("stock_levels", "read") && (
+                    {can("stock_saldos", "ver") && (
                       <small
                         className={
                           available >= line.quantity
@@ -305,7 +305,7 @@ export default function ProductionPlanningPage() {
             <span>Guardar el plan no modifica existencias.</span>
             <button
               className="button primary"
-              disabled={busy || !can("production_planning", "insert")}
+              disabled={busy || !can("produccion_planificacion", "crear")}
             >
               <Plus size={17} /> {busy ? "Guardando…" : "Crear plan"}
             </button>
@@ -338,9 +338,9 @@ export default function ProductionPlanningPage() {
                   <span className={`production-badge ${plan.status}`}>
                     {
                       {
-                        planned: "Pendiente",
-                        completed: "Completado",
-                        cancelled: "Cancelado",
+                        planificado: "Pendiente",
+                        terminado: "Completado",
+                        cancelado: "Cancelado",
                       }[plan.status]
                     }
                   </span>
@@ -354,7 +354,7 @@ export default function ProductionPlanningPage() {
                 </span>
                 <small>
                   Fórmula v{plan.formula_version}
-                  {(role === "admin" || can("costs_production", "read"))
+                  {(role === "administrador" || can("costos_produccion", "ver"))
                     ? ` · Costo previsto $ ${money(plan.estimated_cost)}`
                     : ""}
                 </small>
@@ -369,7 +369,7 @@ export default function ProductionPlanningPage() {
                     ))}
                   </div>
                 </details>
-                {plan.status === "planned" && (
+                {plan.status === "planificado" && (
                   <div className="production-plan-actions">
                     {job ? (
                       <Link
@@ -377,7 +377,7 @@ export default function ProductionPlanningPage() {
                         to={`/production/orders?job=${job.id}`}
                       >
                         Ver orden ·{" "}
-                        {job.status === "queued" ? "En cola" : "En proceso"}
+                        {job.status === "pendiente" ? "En cola" : "En proceso"}
                       </Link>
                     ) : changed ? (
                       <small className="production-error">
@@ -391,7 +391,7 @@ export default function ProductionPlanningPage() {
                         Crear orden de fabricación
                       </Link>
                     )}
-                    {!job && can("production_planning", "update") && (
+                    {!job && can("produccion_planificacion", "editar") && (
                       <button
                         type="button"
                         className="production-link"
@@ -403,7 +403,7 @@ export default function ProductionPlanningPage() {
                   </div>
                 )}
                 <CleanupButton
-                  resource="plans"
+                  resource="planes"
                   id={plan.id}
                   label={byId[plan.product_id]?.name ?? "Planificación"}
                 />

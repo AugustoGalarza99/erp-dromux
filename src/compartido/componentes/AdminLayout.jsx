@@ -19,7 +19,7 @@ import NotificationCenter from "../../modulos/inicio/avisos/NotificationCenter";
 import ActionDialog from "./ActionDialog";
 import CommandPalette from "./CommandPalette";
 import ViewAsBar from "./ViewAsBar";
-import { canSeeChild, locate, navGroups, pathOf } from "./navConfig";
+import { canSeeChild, fueraDelPlan, locate, navGroups, pathOf } from "./navConfig";
 
 export default function AdminLayout() {
   const {
@@ -27,6 +27,7 @@ export default function AdminLayout() {
     memberships,
     setActiveCompanyId,
     can,
+    planIncluye,
     role,
     viewingAs,
     user,
@@ -75,6 +76,9 @@ export default function AdminLayout() {
   const allowedChildren = (module) =>
     (module.children ?? []).filter((child) => canSeeChild(child, { can, role }));
 
+  const lockReason = (entry) =>
+    fueraDelPlan(entry, planIncluye) ? "No incluido en tu plan" : "Acceso restringido";
+
   const crumbModule = where?.module;
   const crumbLast = where?.page?.crumb ?? where?.page?.label;
   const pageTitle = crumbLast ?? crumbModule?.label ?? "Espacio de trabajo";
@@ -111,7 +115,7 @@ export default function AdminLayout() {
                 const target = memberships.find(
                   (item) => item.company_id === event.target.value,
                 );
-                if (target?.roles?.code === "support") {
+                if (target?.roles?.code === "soporte") {
                   setSupportTarget(target);
                 } else {
                   setActiveCompanyId(event.target.value);
@@ -157,9 +161,9 @@ export default function AdminLayout() {
                   const isActive = activeModuleId === module.id;
 
                   const moduleLocked = module.to
-                    ? !can(module.permission, "read")
+                    ? !can(module.permission, "ver")
                     : allowedChildren(module).length === 0 &&
-                      !can(module.permission, "read");
+                      !can(module.permission, "ver");
 
                   if (module.to) {
                     return (
@@ -170,8 +174,8 @@ export default function AdminLayout() {
                           className={({ isActive: current }) =>
                             `nav-item ${current ? "active" : ""} ${moduleLocked ? "is-locked" : ""}`
                           }
-                          aria-label={moduleLocked ? `${module.label} (acceso restringido)` : module.label}
-                          title={moduleLocked ? "Acceso restringido" : undefined}
+                          aria-label={moduleLocked ? `${module.label} (${lockReason(module)})` : module.label}
+                          title={moduleLocked ? lockReason(module) : undefined}
                         >
                           <Icon size={19} aria-hidden="true" />
                           <span>{module.label}</span>
@@ -189,7 +193,7 @@ export default function AdminLayout() {
                       <button
                         type="button"
                         className={`nav-item ${isActive ? "active" : ""} ${moduleLocked ? "is-locked" : ""}`}
-                        title={moduleLocked ? "Acceso restringido" : undefined}
+                        title={moduleLocked ? lockReason(module) : undefined}
                         aria-expanded={expanded}
                         aria-controls={panelId}
                         onClick={() =>
@@ -223,7 +227,7 @@ export default function AdminLayout() {
                                 key={child.to}
                                 to={child.to}
                                 end
-                                title={locked ? "Acceso restringido" : undefined}
+                                title={locked ? lockReason(child) : undefined}
                                 className={({ isActive: current }) =>
                                   `subnav-item ${
                                     current && sameSearch ? "selected" : ""
@@ -240,7 +244,7 @@ export default function AdminLayout() {
                                 {locked && (
                                   <>
                                     <Lock className="nav-lock" size={12} aria-hidden="true" />
-                                    <span className="sr-only">(acceso restringido)</span>
+                                    <span className="sr-only">({lockReason(child)})</span>
                                   </>
                                 )}
                               </NavLink>
@@ -372,7 +376,7 @@ export default function AdminLayout() {
             </nav>
           </div>
           <div className="topbar-right">
-            {role === "support" && (
+            {role === "soporte" && (
               <span className="support-readonly">Soporte · solo lectura</span>
             )}
             <button

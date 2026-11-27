@@ -48,7 +48,7 @@ export default function PriceListsPage() {
   const client = useQueryClient();
   const [params, setParams] = useSearchParams();
   const scope = [user?.id, activeCompanyId];
-  const isAdmin = role === "admin" && can("finance", "read") && can("sales", "update");
+  const isAdmin = role === "administrador" && can("finanzas", "ver") && can("ventas", "editar");
 
   const [selectedId, setSelectedId] = useState("");
   const [search, setSearch] = useState("");

@@ -16,18 +16,18 @@
 /* Lista de órdenes */
 .po-list { display: grid; gap: 12px; }
 .po-order { display: grid; gap: 12px; padding: 16px 18px; border: 1px solid var(--ui-line); border-left: 5px solid #cbd5e1; border-radius: 14px; background: #fff; }
-.po-order.is-open { border-left-color: var(--module-accent); }
-.po-order.is-partial { border-left-color: #b45309; }
-.po-order.is-received { border-left-color: #15803d; }
-.po-order.is-cancelled { border-left-color: #94a3b8; background: #f8f9fa; }
+.po-order.is-abierta { border-left-color: var(--module-accent); }
+.po-order.is-parcial { border-left-color: #b45309; }
+.po-order.is-recibida { border-left-color: #15803d; }
+.po-order.is-cancelada { border-left-color: #94a3b8; background: #f8f9fa; }
 .po-order:hover { border-color: var(--module-accent); }
 .po-order-head { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 8px 14px; }
 .po-order-head strong { display: block; font-size: 16px; line-height: 1.35; overflow-wrap: anywhere; }
 .po-order-head small { color: var(--ui-muted); font-size: 13px; }
-.po-status-open { border-color: #c4b5fd; background: var(--module-soft); color: var(--module-accent); }
-.po-status-partial { border-color: #f1c58a; background: #fff4e5; color: #92400e; }
-.po-status-received { border-color: #a7d7b4; background: #eaf7ee; color: #166534; }
-.po-status-cancelled { border-color: #cbd5e1; background: #f1f5f9; color: #475569; }
+.po-status-abierta { border-color: #c4b5fd; background: var(--module-soft); color: var(--module-accent); }
+.po-status-parcial { border-color: #f1c58a; background: #fff4e5; color: #92400e; }
+.po-status-recibida { border-color: #a7d7b4; background: #eaf7ee; color: #166534; }
+.po-status-cancelada { border-color: #cbd5e1; background: #f1f5f9; color: #475569; }
 .po-progress { display: grid; gap: 4px; }
 .po-progress small { color: var(--ui-muted); font-size: 12.5px; }
 .po-progress .job-progress-bar { margin: 0; }
@@ -68,14 +68,14 @@
 
 /* Pedidos internos */
 .pr-chips { display: flex; flex-wrap: wrap; gap: 6px; }
-.pr-status-pending { border-color: #c4b5fd; background: var(--module-soft); color: var(--module-accent); }
-.pr-status-ordered { border-color: #a7d7b4; background: #eaf7ee; color: #166534; }
-.pr-status-rejected { border-color: #e3a3a3; background: #fff1f1; color: #991b1b; }
-.pr-status-cancelled { border-color: #cbd5e1; background: #f1f5f9; color: #475569; }
-.po-order.pr-pending { border-left-color: var(--module-accent); }
-.po-order.pr-ordered { border-left-color: #15803d; }
-.po-order.pr-rejected { border-left-color: #b91c1c; }
-.po-order.pr-cancelled { border-left-color: #94a3b8; background: #f8f9fa; }
+.pr-status-pendiente { border-color: #c4b5fd; background: var(--module-soft); color: var(--module-accent); }
+.pr-status-ordenado { border-color: #a7d7b4; background: #eaf7ee; color: #166534; }
+.pr-status-rechazado { border-color: #e3a3a3; background: #fff1f1; color: #991b1b; }
+.pr-status-cancelado { border-color: #cbd5e1; background: #f1f5f9; color: #475569; }
+.po-order.pr-pendiente { border-left-color: var(--module-accent); }
+.po-order.pr-ordenado { border-left-color: #15803d; }
+.po-order.pr-rechazado { border-left-color: #b91c1c; }
+.po-order.pr-cancelado { border-left-color: #94a3b8; background: #f8f9fa; }
 .po-order.is-urgent-request { border-left-color: #b91c1c; }
 .pr-resolution { margin: 0; padding: 9px 12px; border-radius: 9px; background: #fff1f1; color: #991b1b; font-size: 13px; line-height: 1.5; }
 .pr-resolution.is-ok { background: #eaf7ee; color: #166534; }

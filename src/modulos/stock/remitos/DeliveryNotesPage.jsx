@@ -28,10 +28,10 @@ import { lotLabel } from "../../../compartido/utilidades/display";
 import "./deliveryNotes.css";
 
 const kinds = {
-  production: "Para fabricación",
-  materials: "Materiales",
-  products: "Productos y semielaborados",
-  sale: "Entrega de venta",
+  produccion: "Para fabricación",
+  materiales: "Materiales",
+  productos: "Productos y semielaborados",
+  venta: "Entrega de venta",
 };
 
 export default function DeliveryNotesPage() {
@@ -56,7 +56,7 @@ export default function DeliveryNotesPage() {
   const itemsQuery = useQuery({
     queryKey: ["delivery-items", user?.id, activeCompanyId],
     queryFn: () => listDeliveryItems(activeCompanyId),
-    enabled: Boolean(activeCompanyId && can("items", "read")),
+    enabled: Boolean(activeCompanyId && can("items", "ver")),
   });
   const warehousesQuery = useQuery({
     queryKey: ["production-warehouses", user?.id, activeCompanyId],
@@ -66,18 +66,18 @@ export default function DeliveryNotesPage() {
   const salesQuery = useQuery({
     queryKey: ["sales-history", user?.id, activeCompanyId],
     queryFn: () => listSales(activeCompanyId),
-    enabled: Boolean(activeCompanyId && can("sales", "read")),
+    enabled: Boolean(activeCompanyId && can("ventas", "ver")),
   });
   const jobsQuery = useQuery({
     queryKey: ["production-jobs", user?.id, activeCompanyId],
     queryFn: () => listProductionJobs(activeCompanyId),
-    enabled: Boolean(activeCompanyId && can("production_orders", "read")),
+    enabled: Boolean(activeCompanyId && can("produccion_ordenes", "ver")),
   });
   const allocationsQuery = useQuery({
     queryKey: ["production-reservation-locations", user?.id, activeCompanyId],
     queryFn: () => listProductionReservationLocations(activeCompanyId),
     enabled: Boolean(
-      activeCompanyId && can("production_orders", "read") && can("stock_levels", "read"),
+      activeCompanyId && can("produccion_ordenes", "ver") && can("stock_saldos", "ver"),
     ),
   });
   const items = itemsQuery.data ?? [];
@@ -88,7 +88,7 @@ export default function DeliveryNotesPage() {
   const rows = allNotes.filter(
     (entry) =>
       (statusFilter === "all" ||
-        (statusFilter === "voided") === (entry.status === "voided")) &&
+        (statusFilter === "anulado") === (entry.status === "anulado")) &&
       (kindFilter === "all" || entry.kind === kindFilter) &&
       `${entry.number} ${entry.recipient} ${entry.note} ${entry.delivery_note_lines
         ?.map((line) => line.item_name)
@@ -96,7 +96,7 @@ export default function DeliveryNotesPage() {
         .toLowerCase()
         .includes(search.toLowerCase()),
   );
-  const voidedCount = allNotes.filter((entry) => entry.status === "voided").length;
+  const voidedCount = allNotes.filter((entry) => entry.status === "anulado").length;
   const hasFilters = Boolean(search || statusFilter !== "all" || kindFilter !== "all");
   const clearFilters = () => {
     setSearch("");
@@ -167,7 +167,7 @@ export default function DeliveryNotesPage() {
       await refresh();
       notifySuccess(
         "Remito anulado",
-        voidTarget.kind === "sale"
+        voidTarget.kind === "venta"
           ? "Se anuló el documento. El stock de la venta no cambió."
           : "El stock volvió al depósito de origen.",
       );
@@ -184,10 +184,10 @@ export default function DeliveryNotesPage() {
       description="Documentá cada entrega: al confirmar se descuenta el stock, y si se anula vuelve al depósito. Las entregas para fabricación quedan asociadas a su orden."
       actions={(
         <>
-          <Link className="button outline" to="/archivados?type=delivery_notes">
+          <Link className="button outline" to="/archivados?type=remitos">
             Archivados
           </Link>
-          {can("stock", "insert") && can("items", "read") && (
+          {can("stock", "crear") && can("items", "ver") && (
             <button
               type="button"
               className="button primary"
@@ -214,8 +214,8 @@ export default function DeliveryNotesPage() {
           Estado
           <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
             <option value="all">Todos</option>
-            <option value="issued">Entregados</option>
-            <option value="voided">Anulados ({voidedCount})</option>
+            <option value="emitido">Entregados</option>
+            <option value="anulado">Anulados ({voidedCount})</option>
           </select>
         </label>
         <label>
@@ -258,7 +258,7 @@ export default function DeliveryNotesPage() {
       <div className="delivery-list">
         {rows.map((note) => (
           <article
-            className={`delivery-card ${note.status === "voided" ? "is-voided" : ""}`}
+            className={`delivery-card ${note.status === "anulado" ? "is-voided" : ""}`}
             key={note.id}
           >
             <div className="delivery-card-head">
@@ -272,7 +272,7 @@ export default function DeliveryNotesPage() {
                 </p>
               </div>
               <span className={`delivery-status ${note.status}`}>
-                {note.status === "voided" ? "Anulado" : "Entregado"}
+                {note.status === "anulado" ? "Anulado" : "Entregado"}
               </span>
             </div>
             {note.sale_id && (
@@ -282,7 +282,7 @@ export default function DeliveryNotesPage() {
                 {note.sale?.customer_name ?? note.recipient}
               </p>
             )}
-            {note.job_id && can("production_orders", "read") && (
+            {note.job_id && can("produccion_ordenes", "ver") && (
               <Link to={`/production/orders?job=${note.job_id}`}>
                 Ver orden de fabricación
               </Link>
@@ -311,7 +311,7 @@ export default function DeliveryNotesPage() {
             </details>
             <div className="delivery-card-actions">
               <CleanupButton
-                resource="delivery_notes"
+                resource="remitos"
                 id={note.id}
                 label={`Remito ${note.number} · ${note.recipient}`}
               />
@@ -322,7 +322,7 @@ export default function DeliveryNotesPage() {
               >
                 <FileDown size={16} /> Descargar PDF
               </button>
-              {note.status === "issued" && can("stock", "delete") && (
+              {note.status === "emitido" && can("stock", "eliminar") && (
                 <button
                   type="button"
                   className="button outline"
@@ -352,7 +352,7 @@ export default function DeliveryNotesPage() {
             jobs={jobs}
             allocations={allocationsQuery.data ?? []}
             initialKind={
-              linkedJobId ? "production" : linkedSaleId ? "sale" : "materials"
+              linkedJobId ? "produccion" : linkedSaleId ? "venta" : "materiales"
             }
             initialJobId={linkedJobId}
             initialSaleId={linkedSaleId}
@@ -372,7 +372,7 @@ export default function DeliveryNotesPage() {
         busy={busy}
         title={`¿Seguro que querés anular el remito Nº ${voidTarget?.number ?? ""}?`}
         description={
-          voidTarget?.kind === "sale"
+          voidTarget?.kind === "venta"
             ? "El remito se anula, pero la venta y su descuento de stock siguen vigentes."
             : "La anulación reingresa los ítems al depósito original y queda registrada en el historial."
         }
@@ -380,7 +380,7 @@ export default function DeliveryNotesPage() {
       >
         <form className="delivery-void-form" onSubmit={confirmVoid}>
           <p>
-            {voidTarget?.kind === "sale"
+            {voidTarget?.kind === "venta"
               ? "Para modificar la venta, usá su gestión de devoluciones. Este botón solo anula el remito."
               : "Si está vinculado a fabricación, la orden debe seguir en proceso y los ítems no pueden haber sido devueltos."}
           </p>
@@ -409,7 +409,7 @@ export default function DeliveryNotesPage() {
             >
               {busy
                 ? "Anulando…"
-                : voidTarget?.kind === "sale"
+                : voidTarget?.kind === "venta"
                   ? "Anular documento"
                   : "Anular y devolver stock"}
             </button>

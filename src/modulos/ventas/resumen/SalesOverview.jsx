@@ -24,8 +24,8 @@ const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
 export default function SalesOverview() {
   const { activeCompanyId, user, can, role } = useAuth();
   const scope = [user?.id, activeCompanyId];
-  const enabled = Boolean(activeCompanyId) && can("sales", "read");
-  const isAdmin = role === "admin" && can("finance", "read");
+  const enabled = Boolean(activeCompanyId) && can("ventas", "ver");
+  const isAdmin = role === "administrador" && can("finanzas", "ver");
 
   const summary = useQuery({
     queryKey: ["erp-dashboard", ...scope],
@@ -125,7 +125,7 @@ export default function SalesOverview() {
     <SalesShell
       title="Resumen de ventas"
       description="Cómo viene la venta, qué falta cobrar y qué precios conviene revisar. Desde acá llegás a cada pantalla del módulo."
-      actions={can("sales", "insert") && (
+      actions={can("ventas", "crear") && (
         <Link className="button primary" to="/sales/orders">
           <Plus size={17} aria-hidden="true" /> Registrar venta
         </Link>

@@ -58,8 +58,8 @@ export default function FinishJobDialog({
     const sorted = [...events].sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
     for (const event of sorted) {
       net.set(event.component_id, (net.get(event.component_id) ?? 0)
-        + (event.kind === "issue" ? 1 : -1) * Number(event.quantity));
-      if (event.kind === "issue") {
+        + (event.kind === "entrega" ? 1 : -1) * Number(event.quantity));
+      if (event.kind === "entrega") {
         last.set(event.component_id, { warehouseId: event.warehouse_id, lotCode: event.lot_code ?? "" });
       }
     }
@@ -116,7 +116,7 @@ export default function FinishJobDialog({
         const allocation = allocations.find((entry) => entry.component_id === row.id);
         const lotCode = previous?.lotCode ?? allocation?.lot_code ?? "";
         adjustments.push({
-          kind: "issue",
+          kind: "entrega",
           componentId: row.id,
           warehouseId: sources[row.id] ?? previous?.warehouseId ?? allocation?.warehouse_id ?? job.warehouse_id,
           lotCode,
@@ -127,7 +127,7 @@ export default function FinishJobDialog({
         if (row.trackLots && !lotCode) invalid.push(row.id);
       } else if (delta < -EPS) {
         adjustments.push({
-          kind: "return",
+          kind: "devolucion",
           componentId: row.id,
           quantity: String(round6(-delta)),
           note: "se usó menos de lo entregado",
@@ -138,8 +138,8 @@ export default function FinishJobDialog({
     return { adjustments, invalid, mismatch };
   }, [rows, used, sources, actual, expectedOutput, origin, allocations, job.warehouse_id]);
 
-  const issues = analysis.adjustments.filter((entry) => entry.kind === "issue");
-  const returns = analysis.adjustments.filter((entry) => entry.kind === "return");
+  const issues = analysis.adjustments.filter((entry) => entry.kind === "entrega");
+  const returns = analysis.adjustments.filter((entry) => entry.kind === "devolucion");
   const differing = rows.filter((row) => {
     const text = used[row.id] ?? String(row.delivered);
     return validNumber(text) && Math.abs(Number(text) - row.planned) > EPS;

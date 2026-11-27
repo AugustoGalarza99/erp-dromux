@@ -21,10 +21,10 @@ const newLine = (itemId = '', quantity = '', warehouseId = '', lotCode = '') => 
   search: '',
 });
 const kindOptions = [
-  { value: 'materials', title: 'Materiales', hint: 'Materias primas, insumos o semielaborados que salen del depósito.' },
-  { value: 'products', title: 'Productos o semielaborados', hint: 'Mercadería terminada que se entrega.' },
-  { value: 'production', title: 'Para fabricación', hint: 'Insumos para una orden activa; queda como consumo real.' },
-  { value: 'sale', title: 'De una venta', hint: 'Documenta lo entregado de una venta; no vuelve a descontar stock.' },
+  { value: 'materiales', title: 'Materiales', hint: 'Materias primas, insumos o semielaborados que salen del depósito.' },
+  { value: 'productos', title: 'Productos o semielaborados', hint: 'Mercadería terminada que se entrega.' },
+  { value: 'produccion', title: 'Para fabricación', hint: 'Insumos para una orden activa; queda como consumo real.' },
+  { value: 'venta', title: 'De una venta', hint: 'Documenta lo entregado de una venta; no vuelve a descontar stock.' },
 ];
 const validAmount = (value) =>
   /^\d+(?:\.\d{1,6})?$/.test(String(value)) && Number(value) > 0 && Number(value) < 1000000000000;
@@ -177,7 +177,7 @@ export default function DeliveryNoteComposer({
   allocations = [],
   sales = [],
   notes = [],
-  initialKind = 'materials',
+  initialKind = 'materiales',
   initialJobId = '',
   initialSaleId = '',
   onIssued,
@@ -190,10 +190,10 @@ export default function DeliveryNoteComposer({
   const [saleId, setSaleId] = useState(initialSaleId);
   const [saleQuantities, setSaleQuantities] = useState({});
   const [recipient, setRecipient] = useState(
-    initialKind === 'production' ? 'Sector de producción' : '',
+    initialKind === 'produccion' ? 'Sector de producción' : '',
   );
   const [note, setNote] = useState(
-    initialKind === 'production' ? 'Entrega para fabricación' : 'Entrega de mercadería',
+    initialKind === 'produccion' ? 'Entrega para fabricación' : 'Entrega de mercadería',
   );
   const [lines, setLines] = useState([newLine()]);
   const [busy, setBusy] = useState(false);
@@ -209,20 +209,20 @@ export default function DeliveryNoteComposer({
     setSaleId('');
     setSaleQuantities({});
     setLines([newLine()]);
-    setRecipient(value === 'production' ? 'Sector de producción' : '');
-    setNote(value === 'production' ? 'Entrega para fabricación' : 'Entrega de mercadería');
+    setRecipient(value === 'produccion' ? 'Sector de producción' : '');
+    setNote(value === 'produccion' ? 'Entrega para fabricación' : 'Entrega de mercadería');
   }
   const initializedJob = useRef(null);
   const initializedSale = useRef(null);
-  const activeJobs = jobs.filter((job) => ['queued', 'in_progress'].includes(job.status));
+  const activeJobs = jobs.filter((job) => ['pendiente', 'en_proceso'].includes(job.status));
   const selectedJob = activeJobs.find((job) => job.id === jobId);
   const selectedSale = sales.find((sale) => sale.id === saleId);
   const allowedItems = items.filter((item) =>
-    kind === 'products'
-      ? ['semi_finished', 'finished_product'].includes(item.item_type)
-      : kind === 'materials'
-        ? ['raw_material', 'semi_finished', 'consumable'].includes(item.item_type)
-        : ['raw_material', 'semi_finished', 'consumable'].includes(item.item_type),
+    kind === 'productos'
+      ? ['semielaborado', 'producto_terminado'].includes(item.item_type)
+      : kind === 'materiales'
+        ? ['materia_prima', 'semielaborado', 'insumo'].includes(item.item_type)
+        : ['materia_prima', 'semielaborado', 'insumo'].includes(item.item_type),
   );
 
   useEffect(() => {
@@ -258,7 +258,7 @@ export default function DeliveryNoteComposer({
       .filter((entry) => entry.sale_line_no === line.line_no)
       .reduce((sum, entry) => sum + Number(entry.quantity), 0);
     const delivered = notes
-      .filter((entry) => entry.sale_id === sale.id && entry.status === 'issued')
+      .filter((entry) => entry.sale_id === sale.id && entry.status === 'emitido')
       .flatMap((entry) => entry.delivery_note_lines ?? [])
       .filter((entry) => entry.sale_line_no === line.line_no)
       .reduce((sum, entry) => sum + Number(entry.quantity), 0);
@@ -295,7 +295,7 @@ export default function DeliveryNoteComposer({
       consumed.set(
         entry.component_id,
         (consumed.get(entry.component_id) ?? 0) +
-          Number(entry.quantity) * (entry.kind === 'issue' ? 1 : -1),
+          Number(entry.quantity) * (entry.kind === 'entrega' ? 1 : -1),
       );
     }
     const pending = (job.formula_snapshot ?? [])
@@ -330,7 +330,7 @@ export default function DeliveryNoteComposer({
   }
 
   const reviewRows = reviewing
-    ? kind === 'sale'
+    ? kind === 'venta'
       ? (selectedSale?.sale_lines ?? [])
           .filter((line) => Number(saleQuantities[line.line_no]) > 0)
           .map((line) => ({
@@ -363,7 +363,7 @@ export default function DeliveryNoteComposer({
         })) ?? [];
     if (
       busy ||
-      (kind === 'sale' &&
+      (kind === 'venta' &&
         (!selectedSale ||
           !saleLines.length ||
           saleLines.some(
@@ -375,8 +375,8 @@ export default function DeliveryNoteComposer({
                   selectedSale.sale_lines.find((entry) => entry.line_no === line.line_no),
                 ),
           ))) ||
-      (kind === 'production' && !selectedJob) ||
-      (kind !== 'sale' &&
+      (kind === 'produccion' && !selectedJob) ||
+      (kind !== 'venta' &&
         (!lines.length ||
           lines.some(
             (line) =>
@@ -397,7 +397,7 @@ export default function DeliveryNoteComposer({
     setBusy(true);
     try {
       const id =
-        kind === 'sale'
+        kind === 'venta'
           ? await issueSaleDeliveryNote(
               activeCompanyId,
               {
@@ -412,7 +412,7 @@ export default function DeliveryNoteComposer({
               activeCompanyId,
               {
                 kind,
-                jobId: kind === 'production' ? jobId : null,
+                jobId: kind === 'produccion' ? jobId : null,
                 recipient,
                 note,
                 lines,
@@ -422,7 +422,7 @@ export default function DeliveryNoteComposer({
       setRequestId(crypto.randomUUID());
       notifySuccess(
         'Remito emitido',
-        kind === 'sale'
+        kind === 'venta'
           ? 'Se documentó la entrega; la venta ya había descontado el stock.'
           : 'Se registró la entrega y se descontó el stock una sola vez.',
       );
@@ -440,7 +440,7 @@ export default function DeliveryNoteComposer({
         <legend>¿Qué vas a entregar?</legend>
         <div>
           {kindOptions
-            .filter((option) => option.value !== 'sale' || sales.length > 0)
+            .filter((option) => option.value !== 'venta' || sales.length > 0)
             .map(({ value, title, hint }) => (
               <label key={value} className={`delivery-kind ${kind === value ? 'is-selected' : ''}`}>
                 <input
@@ -457,7 +457,7 @@ export default function DeliveryNoteComposer({
         </div>
       </fieldset>
       <div className="delivery-edit" hidden={reviewing}>
-      {kind === 'production' && (
+      {kind === 'produccion' && (
         <label>
           Orden de fabricación
           <select
@@ -477,7 +477,7 @@ export default function DeliveryNoteComposer({
           </select>
         </label>
       )}
-      {kind === 'sale' && (
+      {kind === 'venta' && (
         <label>
           Venta registrada
           <select
@@ -518,7 +518,7 @@ export default function DeliveryNoteComposer({
           />
         </label>
       </div>
-      {kind === 'production' && selectedJob && (
+      {kind === 'produccion' && selectedJob && (
         <p className="delivery-composer-tip">
           Se sugieren depósitos y lotes con stock asignado a esta orden. Podés entregar solo una
           parte, cambiar cantidades o agregar otros insumos. Si hay faltantes sin asignación, esperá
@@ -526,13 +526,13 @@ export default function DeliveryNoteComposer({
           esta orden.
         </p>
       )}
-      {kind === 'products' && (
+      {kind === 'productos' && (
         <p className="delivery-composer-tip">
           La entrega descuenta el stock del semielaborado o producto elegido. Sus componentes ya se
           consumieron al fabricarlo.
         </p>
       )}
-      {kind === 'sale' && selectedSale && (
+      {kind === 'venta' && selectedSale && (
         <>
           <p className="delivery-composer-tip">
             La venta ya descontó el stock. Este remito documenta cuánto entregás sin registrar otra
@@ -569,7 +569,7 @@ export default function DeliveryNoteComposer({
           })}
         </>
       )}
-      {kind !== 'sale' &&
+      {kind !== 'venta' &&
         lines.map((line, index) => (
           <LineEditor
             key={line.key}
@@ -590,7 +590,7 @@ export default function DeliveryNoteComposer({
             }
           />
         ))}
-      {kind !== 'sale' && (
+      {kind !== 'venta' && (
         <button
           type="button"
           className="button outline"
@@ -607,8 +607,8 @@ export default function DeliveryNoteComposer({
           <h3>Revisá antes de emitir</h3>
           <p>
             Para <strong>{recipient}</strong> · {note}
-            {kind === 'production' && selectedJob && ' · Orden de fabricación vinculada'}
-            {kind === 'sale' && selectedSale && ` · Venta Nº ${selectedSale.number}`}
+            {kind === 'produccion' && selectedJob && ' · Orden de fabricación vinculada'}
+            {kind === 'venta' && selectedSale && ` · Venta Nº ${selectedSale.number}`}
           </p>
           <ul>
             {reviewRows.map((row) => (
@@ -622,7 +622,7 @@ export default function DeliveryNoteComposer({
             ))}
           </ul>
           <p className="delivery-review-effect">
-            {kind === 'sale'
+            {kind === 'venta'
               ? 'No se descuenta stock: la venta ya lo hizo. Solo queda documentada la entrega.'
               : 'Al confirmar se descuenta el stock una sola vez. Si hay un error, el remito se anula y el stock vuelve.'}
           </p>
@@ -642,16 +642,16 @@ export default function DeliveryNoteComposer({
           className="button primary"
           disabled={
             busy ||
-            !can('stock', 'insert') ||
-            (kind === 'production' && !can('production_orders', 'insert')) ||
-            (kind === 'sale' && !can('sales', 'read'))
+            !can('stock', 'crear') ||
+            (kind === 'produccion' && !can('produccion_ordenes', 'crear')) ||
+            (kind === 'venta' && !can('ventas', 'ver'))
           }
         >
           {busy
             ? 'Emitiendo…'
             : !reviewing
               ? 'Revisar entrega'
-              : kind === 'sale'
+              : kind === 'venta'
                 ? 'Emitir remito (sin descontar de nuevo)'
                 : 'Confirmar y descontar stock'}
         </button>

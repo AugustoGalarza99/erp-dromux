@@ -22,7 +22,7 @@ export const navGroups = [
         id: "home",
         label: "Inicio",
         icon: LayoutDashboard,
-        permission: "dashboard",
+        permission: "inicio",
         to: "/",
         shortcut: "i",
         keywords: "tablero resumen panel",
@@ -36,35 +36,35 @@ export const navGroups = [
         id: "stock",
         label: "Stock",
         icon: Boxes,
-        permission: "inventory",
+        permission: "inventario",
         shortcut: "s",
         keywords: "inventario depósito existencias",
         children: [
-          { label: "Resumen de stock", to: "/inventory", permission: "inventory", crumb: "Resumen", keywords: "panel general" },
+          { label: "Resumen de stock", to: "/inventory", permission: "inventario", crumb: "Resumen", keywords: "panel general" },
           { label: "Todos los ítems", to: "/inventory/items", permission: "items", crumb: "Ítems", keywords: "productos materiales articulos" },
-          { label: "Materias primas", to: "/inventory/items?type=raw_material", permission: "items", crumb: "Materias primas", keywords: "insumos" },
-          { label: "Productos", to: "/inventory/items?type=finished_product", permission: "items", crumb: "Productos", keywords: "terminados" },
-          { label: "Stock por depósito", to: "/inventory/stock", permission: "stock_levels", keywords: "existencias saldo" },
-          { label: "Movimientos", to: "/inventory/movements", permission: "stock_movements", keywords: "historial entradas salidas" },
-          { label: "Remitos de entrega", to: "/inventory/delivery-notes", permission: "stock_delivery_notes", crumb: "Remitos", keywords: "remito entrega" },
+          { label: "Materias primas", to: "/inventory/items?type=materia_prima", permission: "items", crumb: "Materias primas", keywords: "insumos" },
+          { label: "Productos", to: "/inventory/items?type=producto_terminado", permission: "items", crumb: "Productos", keywords: "terminados" },
+          { label: "Stock por depósito", to: "/inventory/stock", permission: "stock_saldos", keywords: "existencias saldo" },
+          { label: "Movimientos", to: "/inventory/movements", permission: "stock_movimientos", keywords: "historial entradas salidas" },
+          { label: "Remitos de entrega", to: "/inventory/delivery-notes", permission: "stock_remitos", crumb: "Remitos", keywords: "remito entrega" },
         ],
       },
       {
         id: "production",
         label: "Producción",
         icon: Factory,
-        permission: "production",
+        permission: "produccion",
         shortcut: "p",
         keywords: "fabricación",
         children: [
-          { label: "Resumen de producción", to: "/production", permission: "production_overview", crumb: "Resumen", keywords: "panel general" },
-          { label: "Órdenes de fabricación", to: "/production/orders", permission: "production_orders", keywords: "orden produccion fabricar" },
-          { label: "Fórmulas", to: "/production/formulas", permission: "production_formulas", keywords: "receta" },
-          { label: "Planificación", to: "/production/planning", permission: "production_planning", keywords: "plan" },
-          { label: "¿Alcanza el stock para fabricar?", to: "/production/availability", permission: "production_availability", crumb: "¿Alcanza el stock?", keywords: "faltantes disponibilidad tengo stock" },
-          { label: "Pronóstico y reposición", to: "/production/replenishment", permission: "production_replenishment", crumb: "Reposición", keywords: "reponer comprar" },
-          { label: "Envases y presentaciones", to: "/production/packaging", permission: "production_packaging", crumb: "Envases", keywords: "envasado envase presentación embalaje" },
-          { label: "Estadística de producción", to: "/production/stats", permission: "production_stats", crumb: "Estadística", keywords: "producido mes semana rango cuánto se produjo informe" },
+          { label: "Resumen de producción", to: "/production", permission: "produccion_resumen", crumb: "Resumen", keywords: "panel general" },
+          { label: "Órdenes de fabricación", to: "/production/orders", permission: "produccion_ordenes", keywords: "orden produccion fabricar" },
+          { label: "Fórmulas", to: "/production/formulas", permission: "produccion_formulas", keywords: "receta" },
+          { label: "Planificación", to: "/production/planning", permission: "produccion_planificacion", keywords: "plan" },
+          { label: "¿Alcanza el stock para fabricar?", to: "/production/availability", permission: "produccion_disponibilidad", crumb: "¿Alcanza el stock?", keywords: "faltantes disponibilidad tengo stock" },
+          { label: "Pronóstico y reposición", to: "/production/replenishment", permission: "produccion_reposicion", crumb: "Reposición", keywords: "reponer comprar" },
+          { label: "Envases y presentaciones", to: "/production/packaging", permission: "produccion_envasado", crumb: "Envases", keywords: "envasado envase presentación embalaje" },
+          { label: "Estadística de producción", to: "/production/stats", permission: "produccion_estadistica", crumb: "Estadística", keywords: "producido mes semana rango cuánto se produjo informe" },
         ],
       },
     ],
@@ -76,30 +76,30 @@ export const navGroups = [
         id: "sales",
         label: "Ventas",
         icon: ShoppingBag,
-        permission: "sales",
+        permission: "ventas",
         shortcut: "v",
         keywords: "vender clientes",
         children: [
-          { label: "Resumen de ventas", to: "/sales", permission: "sales", crumb: "Resumen", keywords: "panel general" },
-          { label: "Presupuestos", to: "/sales/quotes", permission: "sales", keywords: "cotizacion cotizar presupuestar pdf cliente" },
-          { label: "Clientes", to: "/sales/customers", permission: "sales" },
-          { label: "Listas de precios", to: "/sales/lista-precios", permission: "sales", crumb: "Listas de precios", keywords: "precios margen costo mayorista minorista descuento iva importar" },
-          { label: "Registrar venta", to: "/sales/orders", permission: "sales", crumb: "Ventas", keywords: "nueva venta cobrar" },
+          { label: "Resumen de ventas", to: "/sales", permission: "ventas", crumb: "Resumen", keywords: "panel general" },
+          { label: "Presupuestos", to: "/sales/quotes", permission: "ventas", keywords: "cotizacion cotizar presupuestar pdf cliente" },
+          { label: "Clientes", to: "/sales/customers", permission: "ventas" },
+          { label: "Listas de precios", to: "/sales/lista-precios", permission: "ventas", crumb: "Listas de precios", keywords: "precios margen costo mayorista minorista descuento iva importar" },
+          { label: "Registrar venta", to: "/sales/orders", permission: "ventas", crumb: "Ventas", keywords: "nueva venta cobrar" },
         ],
       },
       {
         id: "purchases",
         label: "Compras",
         icon: ShoppingCart,
-        permission: "purchases",
+        permission: "compras",
         shortcut: "c",
         keywords: "proveedores comprar",
         children: [
-          { label: "Resumen de compras", to: "/purchases", permission: "purchases_overview", crumb: "Resumen", keywords: "panel general" },
-          { label: "Pedidos internos", to: "/purchases/requests", permission: "purchase_requests", crumb: "Pedidos internos", keywords: "solicitud pedir necesito falta material operario" },
-          { label: "Órdenes de compra", to: "/purchases/orders", permission: "purchases_orders", keywords: "recepción recibir comprar pedido" },
-          { label: "Proveedores", to: "/purchases/suppliers", permission: "purchases_suppliers", keywords: "cotización precios" },
-          { label: "Compras y cuentas", to: "/purchases/accounts", permission: "purchases_accounts", crumb: "Compras y cuentas", keywords: "deuda pagos proveedor estadísticas" },
+          { label: "Resumen de compras", to: "/purchases", permission: "compras_resumen", crumb: "Resumen", keywords: "panel general" },
+          { label: "Pedidos internos", to: "/purchases/requests", permission: "compras_pedidos", crumb: "Pedidos internos", keywords: "solicitud pedir necesito falta material operario" },
+          { label: "Órdenes de compra", to: "/purchases/orders", permission: "compras_ordenes", keywords: "recepción recibir comprar pedido" },
+          { label: "Proveedores", to: "/purchases/suppliers", permission: "compras_proveedores", keywords: "cotización precios" },
+          { label: "Compras y cuentas", to: "/purchases/accounts", permission: "compras_cuentas", crumb: "Compras y cuentas", keywords: "deuda pagos proveedor estadísticas" },
         ],
       },
     ],
@@ -111,13 +111,13 @@ export const navGroups = [
         id: "finance",
         label: "Finanzas",
         icon: Wallet,
-        permission: "finance",
+        permission: "finanzas",
         shortcut: "f",
         keywords: "tesorería dinero caja",
         children: [
-          { label: "Cuentas por cobrar", to: "/finance/receivables", permission: "finance", keywords: "cobros deudores" },
-          { label: "Tesorería", to: "/finance/treasury", permission: "finance", keywords: "caja bancos saldos" },
-          { label: "Rentabilidad y precios", to: "/finance/costs", permission: "finance", adminOnly: true, keywords: "margen ganancia costos" },
+          { label: "Cuentas por cobrar", to: "/finance/receivables", permission: "finanzas", keywords: "cobros deudores" },
+          { label: "Tesorería", to: "/finance/treasury", permission: "finanzas", keywords: "caja bancos saldos" },
+          { label: "Rentabilidad y precios", to: "/finance/costs", permission: "finanzas", adminOnly: true, keywords: "margen ganancia costos" },
         ],
       },
     ],
@@ -129,11 +129,11 @@ export const navGroups = [
         id: "reports",
         label: "Reportes",
         icon: BarChart3,
-        permission: "reports",
+        permission: "reportes",
         shortcut: "r",
         keywords: "informes estadísticas",
         children: [
-          { label: "Resumen por período", to: "/reports", permission: "reports", crumb: "Reportes" },
+          { label: "Resumen por período", to: "/reports", permission: "reportes", crumb: "Reportes" },
         ],
       },
     ],
@@ -145,17 +145,17 @@ export const navGroups = [
         id: "settings",
         label: "Ajustes",
         icon: Settings2,
-        permission: "settings",
+        permission: "ajustes",
         shortcut: "a",
         keywords: "configuración",
         children: [
-          { label: "Documentos de producción", to: "/settings/production-documents", permission: "production_documents", keywords: "pdf hoja" },
-          { label: "Archivados", to: "/archivados", permission: "settings" },
-          { label: "Usuarios", to: "/settings/users", permission: "users", adminOnly: true },
+          { label: "Documentos de producción", to: "/settings/production-documents", permission: "produccion_documentos", keywords: "pdf hoja" },
+          { label: "Archivados", to: "/archivados", permission: "ajustes" },
+          { label: "Usuarios", to: "/settings/users", permission: "usuarios", adminOnly: true },
           { label: "Roles y permisos", to: "/settings/roles", permission: "roles", keywords: "accesos", adminOnly: true },
-          { label: "Unidades", to: "/settings/units", permission: "units" },
-          { label: "Categorías", to: "/settings/categories", permission: "categories" },
-          { label: "Depósitos", to: "/settings/warehouses", permission: "warehouses", keywords: "almacén" },
+          { label: "Unidades", to: "/settings/units", permission: "unidades" },
+          { label: "Categorías", to: "/settings/categories", permission: "categorias" },
+          { label: "Depósitos", to: "/settings/warehouses", permission: "depositos", keywords: "almacén" },
         ],
       },
     ],
@@ -206,13 +206,19 @@ export function locate(pathname) {
 
 /* Una pantalla puede habilitarla uno o varios recursos (`permission` o `any: [...]`). */
 export function canSeeChild(child, { can, role }) {
-  if (child.adminOnly && role !== "admin") return false;
+  if (child.adminOnly && role !== "administrador") return false;
   const resources = child.any ?? [child.permission];
-  return resources.some((resource) => can(resource, "read"));
+  return resources.some((resource) => can(resource, "ver"));
+}
+
+/* true si la empresa no contrató ningún módulo que habilite la entrada. */
+export function fueraDelPlan(entry, planIncluye) {
+  const resources = entry.any ?? [entry.permission];
+  return !resources.some((resource) => planIncluye(resource));
 }
 
 /* Entradas planas para la búsqueda global. Lo que el rol no puede abrir se lista igual, bloqueado (`locked`), y va después. */
-export function searchEntries({ can, role }) {
+export function searchEntries({ can, role, planIncluye }) {
   const entries = [];
   for (const group of navGroups) {
     for (const module of group.modules) {
@@ -221,7 +227,8 @@ export function searchEntries({ can, role }) {
       );
       if (module.to) {
         entries.push({
-          locked: !can(module.permission, "read"),
+          locked: !can(module.permission, "ver"),
+          planLocked: fueraDelPlan(module, planIncluye),
           label: module.label,
           to: module.to,
           module: module.id,
@@ -235,6 +242,7 @@ export function searchEntries({ can, role }) {
         const index = allowedChildren.indexOf(child);
         entries.push({
           locked: index < 0,
+          planLocked: fueraDelPlan(child, planIncluye),
           label: child.label,
           to: child.to,
           module: module.id,

@@ -19,10 +19,10 @@ const dateOnly = (iso) => {
   return `${d}/${m}/${y}`;
 };
 const dateTime = (iso) => new Date(iso).toLocaleDateString("es-AR", { timeZone: "America/Argentina/Buenos_Aires" });
-const label = { open: "Abierto", expired: "Vencido", accepted: "Aceptado", rejected: "Rechazado", cancelled: "Cancelado" };
-const chipClass = { open: "", expired: "is-warn", accepted: "is-ok", rejected: "is-bad", cancelled: "" };
+const label = { abierto: "Abierto", vencido: "Vencido", aceptado: "Aceptado", rechazado: "Rechazado", cancelado: "Cancelado" };
+const chipClass = { abierto: "", vencido: "is-warn", aceptado: "is-ok", rechazado: "is-bad", cancelado: "" };
 const FILTERS = [
-  ["all", "Todos"], ["open", "Abiertos"], ["expired", "Vencidos"], ["accepted", "Aceptados"], ["rejected", "Rechazados"], ["cancelled", "Cancelados"],
+  ["all", "Todos"], ["abierto", "Abiertos"], ["vencido", "Vencidos"], ["aceptado", "Aceptados"], ["rechazado", "Rechazados"], ["cancelado", "Cancelados"],
 ];
 const SIZE = 25;
 /* Si el perfil del autor guarda un identificador interno en lugar de un nombre, no se muestra. */
@@ -43,7 +43,7 @@ export default function QuotesPage() {
   const client = useQueryClient();
   const [params, setParams] = useSearchParams();
   const scope = [user?.id, activeCompanyId];
-  const isAdmin = role === "admin" && can("sales", "update");
+  const isAdmin = role === "administrador" && can("ventas", "editar");
   const [search, setSearch] = useState("");
   const term = useDebouncedValue(search);
   const [status, setStatus] = useState("all");
@@ -64,7 +64,7 @@ export default function QuotesPage() {
   const profile = useQuery({
     queryKey: ["company-profile", ...scope],
     queryFn: () => getCompanyProfile(activeCompanyId),
-    enabled: Boolean(activeCompanyId) && can("sales", "read"),
+    enabled: Boolean(activeCompanyId) && can("ventas", "ver"),
     retry: false, staleTime: 60_000,
   });
   const rows = query.data ?? [];
@@ -122,7 +122,7 @@ export default function QuotesPage() {
               <Building2 size={16} aria-hidden="true" /> Datos de la empresa
             </button>
           )}
-          {can("sales", "insert") && !editing && (
+          {can("ventas", "crear") && !editing && (
             <button type="button" className="button primary" onClick={() => setEditing(true)}>
               <FilePlus2 size={16} aria-hidden="true" /> Nuevo presupuesto
             </button>
@@ -188,13 +188,13 @@ export default function QuotesPage() {
                           <button type="button" className="button outline" disabled={busyId === row.id} onClick={() => print(row.id)}>
                             <FileDown size={15} aria-hidden="true" /> PDF
                           </button>
-                          {can("sales", "update") && row.status === "open" && <>
-                            <button type="button" className="button outline" disabled={busyId === row.id} onClick={() => setConfirm({ row, next: "accepted" })}>Aceptado</button>
-                            <button type="button" className="button outline" disabled={busyId === row.id} onClick={() => setConfirm({ row, next: "rejected" })}>Rechazado</button>
-                            <button type="button" className="button outline" disabled={busyId === row.id} onClick={() => setConfirm({ row, next: "cancelled" })}>Cancelar</button>
+                          {can("ventas", "editar") && row.status === "abierto" && <>
+                            <button type="button" className="button outline" disabled={busyId === row.id} onClick={() => setConfirm({ row, next: "aceptado" })}>Aceptado</button>
+                            <button type="button" className="button outline" disabled={busyId === row.id} onClick={() => setConfirm({ row, next: "rechazado" })}>Rechazado</button>
+                            <button type="button" className="button outline" disabled={busyId === row.id} onClick={() => setConfirm({ row, next: "cancelado" })}>Cancelar</button>
                           </>}
-                          {isAdmin && row.status !== "open" && (
-                            <button type="button" className="button outline" disabled={busyId === row.id} onClick={() => setConfirm({ row, next: "open" })}>Reabrir</button>
+                          {isAdmin && row.status !== "abierto" && (
+                            <button type="button" className="button outline" disabled={busyId === row.id} onClick={() => setConfirm({ row, next: "abierto" })}>Reabrir</button>
                           )}
                         </td>
                       </tr>
@@ -213,8 +213,8 @@ export default function QuotesPage() {
                     <span className={`pl-chip ${chipClass[row.effective_status]}`}>{label[row.effective_status]}</span>
                     <div className="qs-actions">
                       <button type="button" className="button outline" disabled={busyId === row.id} onClick={() => print(row.id)}>Descargar PDF</button>
-                      {can("sales", "update") && row.status === "open" && (
-                        <button type="button" className="button outline" onClick={() => setConfirm({ row, next: "accepted" })}>Aceptado</button>
+                      {can("ventas", "editar") && row.status === "abierto" && (
+                        <button type="button" className="button outline" onClick={() => setConfirm({ row, next: "aceptado" })}>Aceptado</button>
                       )}
                     </div>
                   </li>
@@ -236,9 +236,9 @@ export default function QuotesPage() {
       <CompanyProfileDialog open={profileOpen} onClose={() => setProfileOpen(false)}
         onSaved={() => client.invalidateQueries({ queryKey: ["company-profile", ...scope] })} />
       <ConfirmDeleteDialog open={Boolean(confirm)} busy={Boolean(busyId)}
-        intent={confirm?.next === "accepted" || confirm?.next === "open" ? "primary" : "danger"}
-        confirmLabel={confirm ? { accepted: "Marcar aceptado", rejected: "Marcar rechazado", cancelled: "Cancelar presupuesto", open: "Reabrir" }[confirm.next] : ""}
-        title={confirm ? `¿${{ accepted: "Marcar como aceptado", rejected: "Marcar como rechazado", cancelled: "Cancelar", open: "Reabrir" }[confirm.next]} el presupuesto Nº ${String(confirm.row.number).padStart(5, "0")}?` : ""}
+        intent={confirm?.next === "aceptado" || confirm?.next === "abierto" ? "primary" : "danger"}
+        confirmLabel={confirm ? { aceptado: "Marcar aceptado", rechazado: "Marcar rechazado", cancelado: "Cancelar presupuesto", abierto: "Reabrir" }[confirm.next] : ""}
+        title={confirm ? `¿${{ aceptado: "Marcar como aceptado", rechazado: "Marcar como rechazado", cancelado: "Cancelar", abierto: "Reabrir" }[confirm.next]} el presupuesto Nº ${String(confirm.row.number).padStart(5, "0")}?` : ""}
         description={confirm ? `${confirm.row.customer_name}. Un presupuesto no mueve stock ni dinero: solo cambia su estado.` : ""}
         onCancel={() => setConfirm(null)} onConfirm={changeStatus} />
     </SalesShell>

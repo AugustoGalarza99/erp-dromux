@@ -16,7 +16,7 @@ export const guideSections = [
   {
     title: 'Compras',
     path: '/purchases/orders',
-    resource: 'purchases',
+    resource: 'compras',
     description: 'Registrá proveedores y recibí la mercadería sin duplicar entradas.',
     steps: [
       'Pedidos internos: el equipo pide lo que le falta. Convertí el pedido en una orden de compra o rechazalo con un motivo.',
@@ -31,7 +31,7 @@ export const guideSections = [
   {
     title: 'Producción',
     path: '/production/orders',
-    resource: 'production',
+    resource: 'produccion',
     description: 'Planificá, retirás insumos y cerrás con la cantidad realmente fabricada.',
     steps: [
       'Definí la fórmula del producto y creá una orden en cola o completala al momento.',
@@ -46,7 +46,7 @@ export const guideSections = [
   {
     title: 'Ventas',
     path: '/sales/orders',
-    resource: 'sales',
+    resource: 'ventas',
     description: 'Elegí cliente y productos; el stock se descuenta al confirmar.',
     steps: [
       'Verificá los precios en Lista de precios y el stock del depósito.',
@@ -59,7 +59,7 @@ export const guideSections = [
   {
     title: 'Finanzas',
     path: '/finance/treasury',
-    resource: 'finance',
+    resource: 'finanzas',
     description: 'Consultá saldos, movimientos y pagos.',
     steps: [
       'Revisá Cuentas por cobrar para registrar pagos de ventas pendientes.',
@@ -72,7 +72,7 @@ export const guideSections = [
   {
     title: 'Reportes',
     path: '/reports',
-    resource: 'reports',
+    resource: 'reportes',
     description: 'Analizá ventas, producción y compras en un período.',
     steps: [
       'Elegí un rango de fechas de hasta un año.',
@@ -85,7 +85,7 @@ export const guideSections = [
   {
     title: 'Configuración',
     path: '/settings/warehouses',
-    resource: 'settings',
+    resource: 'ajustes',
     description: 'Organizá depósitos, catálogos, usuarios y permisos.',
     steps: [
       'Creá los depósitos y las unidades antes de cargar los productos.',

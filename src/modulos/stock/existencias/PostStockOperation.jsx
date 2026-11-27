@@ -15,9 +15,9 @@ import {
 } from '../compartido/stock';
 
 const kinds = [
-  { value: 'receipt', label: 'Entrada', icon: ArrowDownToLine },
-  { value: 'issue', label: 'Salida', icon: ArrowUpFromLine },
-  { value: 'transfer', label: 'Transferencia', icon: ArrowRightLeft },
+  { value: 'ingreso', label: 'Entrada', icon: ArrowDownToLine },
+  { value: 'egreso', label: 'Salida', icon: ArrowUpFromLine },
+  { value: 'transferencia', label: 'Transferencia', icon: ArrowRightLeft },
 ];
 
 function newRequestId() {
@@ -28,7 +28,7 @@ export default function PostStockOperation({ initialItem = null }) {
   const { activeCompanyId, user, can } = useAuth();
   const queryClient = useQueryClient();
   const requestId = useRef(newRequestId());
-  const [kind, setKind] = useState('receipt');
+  const [kind, setKind] = useState('ingreso');
   const [itemId, setItemId] = useState(initialItem?.item_id ?? '');
   const [selectedItem, setSelectedItem] = useState(null);
   const [itemSearch, setItemSearch] = useState('');
@@ -74,14 +74,14 @@ export default function PostStockOperation({ initialItem = null }) {
   const itemsQuery = useQuery({
     queryKey: ['stock-options', user?.id, activeCompanyId, 'items', itemTerm],
     queryFn: () => findStockItems(activeCompanyId, itemTerm),
-    enabled: Boolean(activeCompanyId && can('stock', 'insert')),
+    enabled: Boolean(activeCompanyId && can('stock', 'crear')),
     staleTime: 60_000,
   });
 
   const warehousesQuery = useQuery({
     queryKey: ['stock-options', user?.id, activeCompanyId, 'warehouses', warehouseTerm],
     queryFn: () => findStockWarehouses(activeCompanyId, warehouseTerm),
-    enabled: Boolean(activeCompanyId && can('stock', 'insert')),
+    enabled: Boolean(activeCompanyId && can('stock', 'crear')),
     staleTime: 60_000,
   });
 
@@ -91,15 +91,15 @@ export default function PostStockOperation({ initialItem = null }) {
   const requiresLots = Boolean(trackedItem?.track_lots);
   const lotsQuery = useQuery({
     queryKey: ['stock-lots', user?.id, activeCompanyId, itemId,
-      kind === 'receipt' ? null : warehouseId],
+      kind === 'ingreso' ? null : warehouseId],
     queryFn: () => listStockLots(activeCompanyId, itemId,
-      kind === 'receipt' ? null : warehouseId),
+      kind === 'ingreso' ? null : warehouseId),
     enabled: Boolean(activeCompanyId && itemId && requiresLots
-      && (kind === 'receipt' || warehouseId)),
+      && (kind === 'ingreso' || warehouseId)),
     staleTime: 0,
   });
 
-  if (!can('stock', 'insert')) return null;
+  if (!can('stock', 'crear')) return null;
 
   const items = itemsQuery.data ?? [];
   const warehouses = warehousesQuery.data ?? [];
@@ -128,7 +128,7 @@ export default function PostStockOperation({ initialItem = null }) {
       setError(notifyError(new Error('Esperá a que se carguen los lotes del ítem.')));
       return;
     }
-    if (kind === 'receipt') execute();
+    if (kind === 'ingreso') execute();
     else setConfirmOpen(true);
   };
 
@@ -147,22 +147,22 @@ export default function PostStockOperation({ initialItem = null }) {
         quantity,
         note,
         lotCode: requiresLots ? lotCode.trim() : '',
-        expiresOn: requiresLots && kind === 'receipt'
+        expiresOn: requiresLots && kind === 'ingreso'
           ? (chosenLot ? chosenLot.expires_on ?? '' : expiresOn) : '',
       }, requestId.current);
 
       requestId.current = newRequestId();
       setQuantity('');
       setNote('');
-      if (kind === 'receipt') {
+      if (kind === 'ingreso') {
         setLotCode('');
         setExpiresOn('');
       }
       const quantityText = `${formatQuantity(quantity)} ${currentItem?.unit_symbol ?? ''}`.trim();
       setMessage('Movimiento registrado correctamente. Ya figura en el historial.');
       notifySuccess(
-        kind === 'receipt' ? 'Entrada registrada'
-          : kind === 'issue' ? 'Salida registrada' : 'Transferencia registrada',
+        kind === 'ingreso' ? 'Entrada registrada'
+          : kind === 'egreso' ? 'Salida registrada' : 'Transferencia registrada',
         currentItem ? `${currentItem.name} · ${quantityText}` : undefined,
       );
       await Promise.allSettled([
@@ -248,7 +248,7 @@ export default function PostStockOperation({ initialItem = null }) {
         </label>
         <div className="stock-form-pair">
           <label>
-            {kind === 'transfer' ? 'Depósito origen *' : 'Depósito *'}
+            {kind === 'transferencia' ? 'Depósito origen *' : 'Depósito *'}
             <select
               required
               value={warehouseId}
@@ -267,7 +267,7 @@ export default function PostStockOperation({ initialItem = null }) {
               ))}
             </select>
           </label>
-          {kind === 'transfer' && (
+          {kind === 'transferencia' && (
             <label>
               Depósito destino *
               <select
@@ -294,7 +294,7 @@ export default function PostStockOperation({ initialItem = null }) {
         )}
         {requiresLots && (
           <div className="stock-lot-fields">
-            {kind === 'receipt' ? (
+            {kind === 'ingreso' ? (
               <>
                 <label>
                   Código del lote *
@@ -352,7 +352,7 @@ export default function PostStockOperation({ initialItem = null }) {
               </label>
             )}
             {lotsQuery.error && <small className="error">{friendlyError(lotsQuery.error)}</small>}
-            {kind !== 'receipt' && warehouseId && !lotsQuery.isPending
+            {kind !== 'ingreso' && warehouseId && !lotsQuery.isPending
               && availableLots.length === 0 && (
                 <small>Este depósito no tiene existencias por lote para el ítem.</small>
               )}
@@ -382,9 +382,9 @@ export default function PostStockOperation({ initialItem = null }) {
             rows={3}
             value={note}
             onChange={(event) => setNote(event.target.value)}
-            placeholder={kind === 'receipt'
+            placeholder={kind === 'ingreso'
               ? 'Ej.: Stock inicial según conteo físico'
-              : kind === 'issue'
+              : kind === 'egreso'
                 ? 'Ej.: Consumo en orden de prueba'
                 : 'Ej.: Reubicación entre depósitos'}
           />
@@ -416,15 +416,15 @@ export default function PostStockOperation({ initialItem = null }) {
             || lotsQuery.isFetching || Boolean(lotsQuery.error)))}
           data-busy={busy}
         >
-          {busy ? 'Registrando…' : kind === 'transfer'
-            ? 'Revisar transferencia' : kind === 'issue' ? 'Revisar salida' : 'Registrar entrada'}
+          {busy ? 'Registrando…' : kind === 'transferencia'
+            ? 'Revisar transferencia' : kind === 'egreso' ? 'Revisar salida' : 'Registrar entrada'}
         </button>
       </form>
 
       <ActionDialog
         open={confirmOpen}
         busy={busy}
-        title={kind === 'transfer' ? '¿Confirmás la transferencia?' : '¿Confirmás la salida de stock?'}
+        title={kind === 'transferencia' ? '¿Confirmás la transferencia?' : '¿Confirmás la salida de stock?'}
         description="Va a quedar en el historial con tu usuario. Si te equivocás, se corrige con un movimiento contrario, no se borra."
         onClose={() => setConfirmOpen(false)}
       >
@@ -432,10 +432,10 @@ export default function PostStockOperation({ initialItem = null }) {
           <div><dt>Ítem</dt><dd>{currentItem ? `${currentItem.code} · ${currentItem.name}` : '—'}</dd></div>
           <div><dt>Cantidad</dt><dd>{quantity} {currentItem?.unit_symbol ?? ''}</dd></div>
           <div>
-            <dt>{kind === 'transfer' ? 'Desde' : 'Depósito'}</dt>
+            <dt>{kind === 'transferencia' ? 'Desde' : 'Depósito'}</dt>
             <dd>{selectedSource?.name ?? visibleWarehouses.find((entry) => entry.id === warehouseId)?.name ?? '—'}</dd>
           </div>
-          {kind === 'transfer' && (
+          {kind === 'transferencia' && (
             <div>
               <dt>Hacia</dt>
               <dd>{selectedTarget?.name ?? visibleWarehouses.find((entry) => entry.id === targetId)?.name ?? '—'}</dd>
@@ -450,7 +450,7 @@ export default function PostStockOperation({ initialItem = null }) {
             Volver y revisar
           </button>
           <button type="button" className="button primary" disabled={busy} onClick={execute}>
-            {busy ? 'Registrando…' : kind === 'transfer' ? 'Sí, transferir' : 'Sí, registrar salida'}
+            {busy ? 'Registrando…' : kind === 'transferencia' ? 'Sí, transferir' : 'Sí, registrar salida'}
           </button>
         </div>
       </ActionDialog>

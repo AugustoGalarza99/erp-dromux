@@ -35,7 +35,7 @@ export default function CustomersPage() {
   });
   const priceLists = (listsQuery.data ?? []).filter((list) => !list.archived);
   const assigned = new Map((assignQuery.data ?? []).map((row) => [row.customer_id, row.price_list_id]));
-  const canAssign = role === 'admin' && can('sales', 'update') && listsQuery.isSuccess;
+  const canAssign = role === 'administrador' && can('ventas', 'editar') && listsQuery.isSuccess;
   async function assignList(customer, listId) {
     setBusy(true);
     try {
@@ -133,7 +133,7 @@ export default function CustomersPage() {
               setEditing(null);
               setForm(empty);
             }}>Cancelar edición</button>}
-            <button className="button primary" disabled={busy || !can('sales', editing ? 'update' : 'insert')}>
+            <button className="button primary" disabled={busy || !can('ventas', editing ? 'editar' : 'crear')}>
               <Plus size={16} /> {busy ? 'Guardando…' : editing ? 'Guardar cambios' : 'Crear cliente'}
             </button>
           </div>
@@ -160,7 +160,7 @@ export default function CustomersPage() {
               </label>}
             </div>
             <div className="sales-row-actions">
-              {can('sales', 'update') && <>
+              {can('ventas', 'editar') && <>
                 <button type="button" onClick={() => edit(customer)}>Editar</button>
                 <button type="button" disabled={busy} onClick={() => toggle(customer)}>
                   {customer.active ? 'Desactivar' : 'Activar'}

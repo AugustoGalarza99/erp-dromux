@@ -33,9 +33,9 @@ async function rpc(name, companyId) {
 /* Lo que el servidor devuelve ya viene filtrado por permiso: una clave ausente
    significa "este rol no la ve", no cero. */
 export default function Dashboard() {
-  const { activeCompany, activeCompanyId, user, can, role } = useAuth();
-  const hasProduction = can('production_overview', 'read') || can('production_orders', 'read');
-  const hasFinance = can('finance', 'read');
+  const { activeCompany, activeCompanyId, user, can, role, planIncluye } = useAuth();
+  const hasProduction = can('produccion_resumen', 'ver') || can('produccion_ordenes', 'ver');
+  const hasFinance = can('finanzas', 'ver');
   const enabled = Boolean(activeCompanyId);
   const scope = [user?.id, activeCompanyId];
 
@@ -76,7 +76,7 @@ export default function Dashboard() {
     ? balances.data.filter((row) => row.active !== false)
       .reduce((total, row) => total + Number(row.balance ?? 0), 0)
     : null;
-  const isAdmin = role === 'admin';
+  const isAdmin = role === 'administrador';
 
   /* Decisiones: cada una dice qué pasa, qué hay que resolver y a dónde ir. */
   const decisions = [];
@@ -153,8 +153,9 @@ export default function Dashboard() {
   ].map((entry) => ({
     ...entry,
     // Lo que el rol no puede ver se muestra bloqueado (candado), no se esconde.
-    locked: entry.key === 'revenue' ? !can('sales', 'read')
+    locked: entry.key === 'revenue' ? !can('ventas', 'ver')
       : entry.key === 'profit' ? !isAdmin : !hasFinance,
+    outOfPlan: !planIncluye(entry.key === 'revenue' ? 'ventas' : 'finanzas'),
   })).filter((entry) => entry.locked || entry.value != null || entry.key === 'revenue'
     || (entry.key === 'cash' && balances.isPending));
 
@@ -166,13 +167,13 @@ export default function Dashboard() {
   ];
 
   const shortcuts = [
-    { label: 'Registrar venta', to: '/sales/orders', resource: 'sales', action: 'insert' },
-    { label: 'Nueva orden de fabricación', to: '/production/orders', resource: 'production_orders', action: 'insert' },
-    { label: '¿Tengo stock para fabricar?', to: '/production/availability', resource: 'production_availability', action: 'read' },
-    { label: 'Emitir remito', to: '/inventory/delivery-notes', resource: 'stock_delivery_notes', action: 'insert', icon: Truck },
-    { label: 'Consultar stock', to: '/inventory/stock', resource: 'stock_levels', action: 'read' },
-    { label: 'Órdenes de compra', to: '/purchases/orders', resource: 'purchases_orders', action: 'read' },
-    { label: 'Cobrar a un cliente', to: '/finance/receivables', resource: 'finance', action: 'read', icon: Banknote },
+    { label: 'Registrar venta', to: '/sales/orders', resource: 'ventas', action: 'crear' },
+    { label: 'Nueva orden de fabricación', to: '/production/orders', resource: 'produccion_ordenes', action: 'crear' },
+    { label: '¿Tengo stock para fabricar?', to: '/production/availability', resource: 'produccion_disponibilidad', action: 'ver' },
+    { label: 'Emitir remito', to: '/inventory/delivery-notes', resource: 'stock_remitos', action: 'crear', icon: Truck },
+    { label: 'Consultar stock', to: '/inventory/stock', resource: 'stock_saldos', action: 'ver' },
+    { label: 'Órdenes de compra', to: '/purchases/orders', resource: 'compras_ordenes', action: 'ver' },
+    { label: 'Cobrar a un cliente', to: '/finance/receivables', resource: 'finanzas', action: 'ver', icon: Banknote },
   ].map((entry) => ({ ...entry, locked: !can(entry.resource, entry.action) }))
     .sort((a, b) => Number(a.locked) - Number(b.locked));
 
@@ -246,14 +247,16 @@ export default function Dashboard() {
       {kpis.length > 0 && (
         <section aria-label="Resumen del negocio">
           <div className="home-kpis">
-            {kpis.map(({ key, label, icon: Icon, value, note, to, locked }) => (locked ? (
+            {kpis.map(({ key, label, icon: Icon, value, note, to, locked, outOfPlan }) => (locked ? (
               <div className="home-kpi is-locked" key={key} aria-label={`${label}: acceso restringido`}>
                 <span className="home-kpi-top">
                   <span className="home-kpi-icon"><Icon size={18} aria-hidden="true" /></span>
                   <span>{label}</span>
                 </span>
-                <strong><Lock size={16} aria-hidden="true" /> Acceso restringido</strong>
-                <small>Tu rol no incluye este dato.</small>
+                <strong>
+                  <Lock size={16} aria-hidden="true" /> {outOfPlan ? 'No incluido en tu plan' : 'Acceso restringido'}
+                </strong>
+                <small>{outOfPlan ? 'Tu empresa no tiene activado este módulo.' : 'Tu rol no incluye este dato.'}</small>
               </div>
             ) : (
               <Link to={to} className="home-kpi" key={key}>
@@ -273,7 +276,11 @@ export default function Dashboard() {
         {!hasProduction && (
           <section className="home-panel is-locked" aria-label="Producción: acceso restringido">
             <div className="home-panel-head"><h2><Lock size={16} aria-hidden="true" /> Producción</h2></div>
-            <p className="home-empty">Acceso restringido: tu rol no incluye Producción.</p>
+            <p className="home-empty">
+              {planIncluye('produccion')
+                ? 'Acceso restringido: tu rol no incluye Producción.'
+                : 'No incluido en tu plan: tu empresa no tiene activado Producción.'}
+            </p>
           </section>
         )}
         {hasProduction && (
@@ -300,7 +307,7 @@ export default function Dashboard() {
                   <span>
                     <strong>{job.product_name} · {job.planned_quantity}</strong>
                     <small>
-                      {job.status === 'queued' ? 'En cola' : 'En fabricación'} ·{' '}
+                      {job.status === 'pendiente' ? 'En cola' : 'En fabricación'} ·{' '}
                       {job.due_on ? `Entrega ${day(job.due_on)}` : 'Sin fecha límite'}
                     </small>
                   </span>

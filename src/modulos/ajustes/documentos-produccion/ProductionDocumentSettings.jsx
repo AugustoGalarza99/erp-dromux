@@ -34,7 +34,7 @@ export default function ProductionDocumentSettings() {
   const [form, setForm] = useState(empty);
   const [saved, setSaved] = useState(JSON.stringify(empty));
   const [busy, setBusy] = useState(false);
-  const canEdit = role === 'admin';
+  const canEdit = role === 'administrador';
 
   const query = useQuery({
     queryKey: ['production-document-settings', user?.id, company],

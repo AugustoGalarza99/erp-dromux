@@ -49,7 +49,7 @@ function Summary({ items }) {
 /* Subir o bajar toda la lista un porcentaje, o recalcular desde el costo vigente. Siempre con vista previa. */
 export function BulkDialog({ open, list, onClose, onApplied }) {
   const { activeCompanyId } = useAuth();
-  const [mode, setMode] = useState("percent");
+  const [mode, setMode] = useState("porcentaje");
   const [pct, setPct] = useState("");
   const [reason, setReason] = useState("");
   const [preview, setPreview] = useState(null);
@@ -59,13 +59,13 @@ export function BulkDialog({ open, list, onClose, onApplied }) {
 
   useEffect(() => {
     if (!open) return;
-    setMode("percent"); setPct(""); setReason(""); setPreview(null); setConfirming(false);
+    setMode("porcentaje"); setPct(""); setReason(""); setPreview(null); setConfirming(false);
     requestId.current = newId();
   }, [open]);
 
   const reset = () => { setPreview(null); setConfirming(false); requestId.current = newId(); };
   const percentValue = parseAmount(pct);
-  const ready = mode === "recalc" || (percentValue != null && percentValue > -100 && percentValue <= 1000 && percentValue !== 0);
+  const ready = mode === "recalculo" || (percentValue != null && percentValue > -100 && percentValue <= 1000 && percentValue !== 0);
 
   async function run(apply) {
     setBusy(true);
@@ -93,20 +93,20 @@ export function BulkDialog({ open, list, onClose, onApplied }) {
       <div className="pl-form">
         <fieldset className="pl-derived">
           <legend>¿Qué querés hacer?</legend>
-          <label className="pl-check"><input type="radio" name="bulk-mode" checked={mode === "percent"}
-            onChange={() => { setMode("percent"); reset(); }} />
+          <label className="pl-check"><input type="radio" name="bulk-mode" checked={mode === "porcentaje"}
+            onChange={() => { setMode("porcentaje"); reset(); }} />
             Subir o bajar todos los precios un porcentaje</label>
-          <label className="pl-check"><input type="radio" name="bulk-mode" checked={mode === "recalc"}
-            onChange={() => { setMode("recalc"); reset(); }} />
+          <label className="pl-check"><input type="radio" name="bulk-mode" checked={mode === "recalculo"}
+            onChange={() => { setMode("recalculo"); reset(); }} />
             Recalcular desde el costo vigente (productos con margen o recargo)</label>
         </fieldset>
-        {mode === "percent" && (
+        {mode === "porcentaje" && (
           <label>Porcentaje (usá negativo para bajar)
             <input inputMode="decimal" value={pct} placeholder="Ej.: 8 o -5" aria-label="Porcentaje de cambio"
               onChange={(event) => { setPct(event.target.value); reset(); }} />
           </label>
         )}
-        {mode === "percent" && <p className="pl-note">Los productos afectados pasan a precio fijo con el nuevo valor.</p>}
+        {mode === "porcentaje" && <p className="pl-note">Los productos afectados pasan a precio fijo con el nuevo valor.</p>}
         <label>Motivo (opcional)
           <input maxLength={200} value={reason} onChange={(event) => setReason(event.target.value)} placeholder="Ej.: aumento general de noviembre" />
         </label>
@@ -115,7 +115,7 @@ export function BulkDialog({ open, list, onClose, onApplied }) {
           <>
             <Summary items={[
               ["Productos con precio", preview.total], ["Cambiarían", preview.changed],
-              ...(mode === "recalc" ? [["Omitidos (sin costo o precio fijo)", preview.skipped]] : []),
+              ...(mode === "recalculo" ? [["Omitidos (sin costo o precio fijo)", preview.skipped]] : []),
             ]} />
             <ChangesTable rows={preview.sample ?? []} currency={list?.currency} />
             {preview.changed > (preview.sample?.length ?? 0) && (
@@ -279,7 +279,7 @@ export function ImportDialog({ open, list, onClose, onApplied }) {
   );
 }
 
-const sourceText = { manual: "Manual", bulk: "Cambio masivo", recalc: "Recálculo", import: "Importación", remove: "Quitado" };
+const sourceText = { manual: "Manual", masivo: "Cambio masivo", recalculo: "Recálculo", importacion: "Importación", quitado: "Quitado" };
 
 /* Quién cambió qué precio y cuándo (solo administración). */
 export function HistoryDialog({ open, list, onClose }) {

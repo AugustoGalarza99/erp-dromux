@@ -57,15 +57,15 @@ export function roundToStep(value, step) {
   return s > 0 ? Math.round(Math.round(value / s) * s * 100) / 100 : Math.round(value * 100) / 100;
 }
 
-/* method: margin (sobre precio de venta), markup (sobre costo) o fixed. */
+/* method: margen (sobre precio de venta), recargo (sobre costo) o fijo. */
 export function previewPrice(method, value, cost, step = 0) {
   const v = Number(value);
   if (value === "" || value == null || !Number.isFinite(v) || v < 0) return null;
-  if (method === "fixed") return roundToStep(v, step);
+  if (method === "fijo") return roundToStep(v, step);
   const c = Number(cost);
   if (cost == null || cost === "" || !Number.isFinite(c) || c < 0) return null;
-  if (method === "margin") return v >= 100 ? null : roundToStep(c / (1 - v / 100), step);
-  if (method === "markup") return roundToStep(c * (1 + v / 100), step);
+  if (method === "margen") return v >= 100 ? null : roundToStep(c / (1 - v / 100), step);
+  if (method === "recargo") return roundToStep(c * (1 + v / 100), step);
   return null;
 }
 
@@ -79,9 +79,9 @@ export const percent = (value) =>
   value == null ? "—" : `${Number(value).toLocaleString("es-AR", { maximumFractionDigits: 2 })} %`;
 
 export const methodLabels = {
-  margin: "Margen sobre precio",
-  markup: "Recargo sobre costo",
-  fixed: "Precio fijo",
+  margen: "Margen sobre precio",
+  recargo: "Recargo sobre costo",
+  fijo: "Precio fijo",
 };
 
 /* La función no existe todavía en la base (migración 039 sin aplicar). */

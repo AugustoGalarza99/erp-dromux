@@ -7,22 +7,22 @@ function unwrap({ data, error }) {
 
 export async function listItems(companyId, { page, search, type, status }) {
   let query = supabase
-    .from("items")
+    .from("stock_items")
     .select(
-      "id, code, name, item_type, category_id, unit_id, minimum_stock, infinite_stock, active",
+      "id, code:codigo, name:nombre, item_type:tipo_item, category_id:categoria_id, unit_id:unidad_id, minimum_stock:stock_minimo, infinite_stock:stock_infinito, active:activo",
       {
         count: "exact",
       },
     )
-    .eq("company_id", companyId)
-    .eq("archived", false)
-    .order("name", { ascending: true })
+    .eq("empresa_id", companyId)
+    .eq("archivado", false)
+    .order("nombre", { ascending: true })
     .order("id", { ascending: true })
     .range(page * 25, page * 25 + 24);
 
-  if (search.trim()) query = query.ilike("name", `%${search.trim()}%`);
-  if (type) query = query.eq("item_type", type);
-  if (status !== "all") query = query.eq("active", status === "active");
+  if (search.trim()) query = query.ilike("nombre", `%${search.trim()}%`);
+  if (type) query = query.eq("tipo_item", type);
+  if (status !== "all") query = query.eq("activo", status === "active");
 
   const { data, count, error } = await query;
   if (error) throw error;
@@ -41,16 +41,16 @@ export async function getItem(companyId, itemId) {
 export async function getUntrackedStock(companyId, itemId) {
   return unwrap(
     await supabase
-      .from("stock_balances")
+      .from("stock_saldos")
       .select(
         `
-      quantity,
-      warehouse:warehouses!stock_balances_warehouse_company_fk(name)
+      quantity:cantidad,
+      warehouse:stock_depositos!stock_saldos_warehouse_company_fk(name:nombre)
     `,
       )
-      .eq("company_id", companyId)
+      .eq("empresa_id", companyId)
       .eq("item_id", itemId)
-      .gt("quantity", 0)
+      .gt("cantidad", 0)
       .limit(10),
   );
 }
@@ -67,21 +67,21 @@ export async function activateItemLots(companyId, itemId) {
 export async function searchItemOptions(companyId, resource, term) {
   const table =
     resource === "category"
-      ? "item_categories"
+      ? "stock_categorias"
       : resource === "unit"
-        ? "units"
+        ? "stock_unidades"
         : null;
   if (!table) throw new Error("Catálogo desconocido");
 
   let query = supabase
     .from(table)
-    .select(resource === "unit" ? "id, name, symbol" : "id, name")
-    .eq("company_id", companyId)
-    .eq("active", true)
-    .order("name", { ascending: true })
+    .select(resource === "unit" ? "id, name:nombre, symbol:simbolo" : "id, name:nombre")
+    .eq("empresa_id", companyId)
+    .eq("activo", true)
+    .order("nombre", { ascending: true })
     .limit(30);
 
-  if (term.trim()) query = query.ilike("name", `%${term.trim()}%`);
+  if (term.trim()) query = query.ilike("nombre", `%${term.trim()}%`);
   return unwrap(await query);
 }
 
@@ -129,23 +129,23 @@ export async function getItemCostContext(companyId, itemId) {
 
 export async function searchActiveSuppliers(companyId, term) {
   let query = supabase
-    .from("suppliers")
-    .select("id, name")
-    .eq("company_id", companyId)
-    .eq("active", true)
-    .order("name")
+    .from("compras_proveedores")
+    .select("id, name:nombre")
+    .eq("empresa_id", companyId)
+    .eq("activo", true)
+    .order("nombre")
     .order("id")
     .limit(30);
-  if (term.trim()) query = query.ilike("name", `%${term.trim()}%`);
+  if (term.trim()) query = query.ilike("nombre", `%${term.trim()}%`);
   return unwrap(await query);
 }
 
 export async function setItemActive(companyId, itemId, active) {
   return unwrap(
     await supabase
-      .from("items")
-      .update({ active })
-      .eq("company_id", companyId)
+      .from("stock_items")
+      .update({ activo: active })
+      .eq("empresa_id", companyId)
       .eq("id", itemId)
       .select("id")
       .single(),

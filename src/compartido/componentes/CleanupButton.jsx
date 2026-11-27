@@ -25,7 +25,7 @@ export default function CleanupButton({ resource, id, label, onRemoved }) {
   const permission = cleanupResources.find(
     (entry) => entry.value === resource,
   )?.permission;
-  if (!permission || !can(permission, "delete")) return null;
+  if (!permission || !can(permission, "eliminar")) return null;
 
   async function review(event) {
     event.preventDefault();

@@ -14,14 +14,14 @@ import "./production.css";
 
 /* Pantallas de Producción. Los nombres son neutros: sirven a cualquier rubro que fabrique. */
 const tabs = [
-  { to: "/production", label: "Resumen", icon: LayoutGrid, end: true, any: ["production_overview"] },
-  { to: "/production/orders", label: "Órdenes", icon: ClipboardList, any: ["production_orders"] },
-  { to: "/production/formulas", label: "Fórmulas", icon: FlaskConical, any: ["production_formulas"] },
-  { to: "/production/planning", label: "Planificación", icon: CalendarRange, any: ["production_planning"] },
-  { to: "/production/availability", label: "¿Alcanza el stock?", icon: PackageCheck, any: ["production_availability"] },
-  { to: "/production/replenishment", label: "Reposición", icon: TrendingUp, any: ["production_replenishment"] },
-  { to: "/production/packaging", label: "Envases", icon: PackageOpen, any: ["production_packaging"] },
-  { to: "/production/stats", label: "Estadística", icon: BarChart3, any: ["production_stats"] },
+  { to: "/production", label: "Resumen", icon: LayoutGrid, end: true, any: ["produccion_resumen"] },
+  { to: "/production/orders", label: "Órdenes", icon: ClipboardList, any: ["produccion_ordenes"] },
+  { to: "/production/formulas", label: "Fórmulas", icon: FlaskConical, any: ["produccion_formulas"] },
+  { to: "/production/planning", label: "Planificación", icon: CalendarRange, any: ["produccion_planificacion"] },
+  { to: "/production/availability", label: "¿Alcanza el stock?", icon: PackageCheck, any: ["produccion_disponibilidad"] },
+  { to: "/production/replenishment", label: "Reposición", icon: TrendingUp, any: ["produccion_reposicion"] },
+  { to: "/production/packaging", label: "Envases", icon: PackageOpen, any: ["produccion_envasado"] },
+  { to: "/production/stats", label: "Estadística", icon: BarChart3, any: ["produccion_estadistica"] },
 ];
 
 export default function ProductionShell({ title, description, actions, children }) {

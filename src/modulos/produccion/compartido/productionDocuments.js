@@ -8,9 +8,9 @@ function unwrap({ data, error }) {
 export async function documentSettings(company) {
   return unwrap(
     await supabase
-      .from('production_document_settings')
-      .select('*')
-      .eq('company_id', company)
+      .from('produccion_documentos_config')
+      .select('logo_data:logo, document_code:documento_codigo, revision, observation_labels:observaciones_etiquetas, updated_at:actualizado_en')
+      .eq('empresa_id', company)
       .maybeSingle(),
   );
 }
@@ -32,15 +32,15 @@ export async function saveDocumentSettings(company, form) {
 
 export async function packagingTypes(company, page = 0, search = '') {
   let query = supabase
-    .from('production_packaging_types')
-    .select('*, unit:units!production_packaging_types_company_id_unit_id_fkey(id,name,symbol)', {
+    .from('produccion_tipos_envase')
+    .select('id, name:nombre, capacity:capacidad, unit_id:unidad_id, active:activo, unit:stock_unidades!produccion_tipos_envase_empresa_id_unidad_id_fkey(id,name:nombre,symbol:simbolo)', {
       count: 'exact',
     })
-    .eq('company_id', company)
-    .order('name')
+    .eq('empresa_id', company)
+    .order('nombre')
     .order('id')
     .range(page * 25, page * 25 + 24);
-  if (search.trim()) query = query.ilike('name', `%${search.trim()}%`);
+  if (search.trim()) query = query.ilike('nombre', `%${search.trim()}%`);
   const { data, count, error } = await query;
   if (error) throw error;
   return { rows: data ?? [], count: count ?? 0 };

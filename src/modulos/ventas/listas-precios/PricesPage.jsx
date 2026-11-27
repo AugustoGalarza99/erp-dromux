@@ -68,7 +68,7 @@ export default function PricesPage() {
         <input aria-label="Buscar producto" placeholder="Buscar producto…" value={search}
           onChange={(event) => setSearch(event.target.value)} />
       </div>
-      {!can('items', 'update') && <p className="sales-muted">
+      {!can('items', 'editar') && <p className="sales-muted">
         Para editar precios necesitás el permiso Ítems → Editar.
       </p>}
       {query.isError && <p className="sales-error">{friendlyError(query.error)}</p>}
@@ -76,7 +76,7 @@ export default function PricesPage() {
         No hay productos terminados para mostrar.
       </p>}
       {filtered.map((item) => <ProductPrice key={`${activeCompanyId}-${item.id}`} item={item}
-        companyId={activeCompanyId} onSaved={refresh} canEdit={can('items', 'update')} />)}
+        companyId={activeCompanyId} onSaved={refresh} canEdit={can('items', 'editar')} />)}
     </div>
   </section>;
 }

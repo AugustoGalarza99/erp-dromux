@@ -7,8 +7,8 @@ El cliente NO usa el sistema hasta el visto bueno del propietario. Opus analiza 
 |---|---|---|
 | 0 | Carpetas por módulo y submódulo (`MAPA_CARPETAS.md`) | HECHA y verificada |
 | 2 | Base nueva en español, tablas unificadas (`MAPA_BASE.md`, `supabase/base_nueva/`) | APLICADA y verificada en Supabase |
-| 3 | Módulos activos por empresa | Servidor HECHO; falta menú en la aplicación |
-| A | Adaptar la aplicación a la base nueva | PRÓXIMA SESIÓN |
+| 3 | Módulos activos por empresa | HECHO en servidor y menú (27/11); falta probar con sesión |
+| A | Adaptar la aplicación a la base nueva | Código HECHO (27/11, `PLAN_ADAPTACION.md`); falta recorrido con sesión |
 | B | Pruebas, revisión crítica y publicación | Después de A |
 | 1 | Archivos, componentes y variables del frontend en español | Después de B |
 | 4 | Importar desde Excel: fórmulas, stock inicial, proveedores y precios (ítems ya existe) | Después de B |
@@ -34,6 +34,11 @@ Criterio de aceptación: `npm run build` OK y recorrido de todas las rutas con `
 5. En Supabase nuevo: `private` no expuesto en la API (HI-005), URL del sitio, respaldos.
 6. Publicar apuntando a la base nueva; el propietario borra la vieja y pasa el proyecto nuevo a la organización paga.
 7. Al borrar la base vieja: mover `supabase/0xx`, `reparacion`, `linea_base` a una carpeta de historial y sacar el conector viejo.
+
+## Anotado: baja completa de una empresa (después de las pruebas; pedido del propietario 27/11)
+- Debe borrar TODO lo asociado. Hoy solo se puede borrar una empresa recién creada: 10 claves sin cascada y 30 tablas con protección de historial.
+- Factible (probado el 27/11 en la base local, con un dueño de tablas sin superusuario): apagar las protecciones dentro de una transacción, borrar por `empresa_id`, borrar la empresa y volver a encenderlas. 221 filas a 0, otra empresa intacta, 0 protecciones apagadas.
+- Diseño propuesto: función en `private`, solo SQL Editor; empresa desactivada; nombre exacto como confirmación; todo o nada; resumen de lo borrado y constancia mínima; no borra cuentas de ingreso (lista las que queden sin empresa); respaldo previo. Como archivo en `cambios/` con deshacer y comprobaciones, prueba local y revisión Opus. Apagar protecciones bloquea esas tablas mientras corre: ejecutar sin usuarios trabajando.
 
 ## Reglas de la base (desde la línea base)
 Cada cambio: archivo en `supabase/base_nueva/cambios/` con deshacer y comprobaciones, registro regenerado (`npm run base:registro`), huellas comparadas y anotación en `BITACORA.md`.

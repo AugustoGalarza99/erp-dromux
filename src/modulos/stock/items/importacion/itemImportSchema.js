@@ -1,3 +1,4 @@
+import { TIPO_ITEM_ETIQUETA } from '../../../../compartido/valores';
 import { normalizeImportNumber } from './importNumber';
 
 function readNumber(value, numericCell, number, header) {
@@ -27,12 +28,7 @@ export const baseHeaders = [
 export const optionalHeaders = ['costo_usd', 'proveedor', 'tipo_dolar'];
 export const headers = [...baseHeaders, ...optionalHeaders];
 
-export const typeLabels = {
-  raw_material: 'Materia prima',
-  semi_finished: 'Semielaborado',
-  finished_product: 'Producto terminado',
-  consumable: 'Insumo',
-};
+export const typeLabels = TIPO_ITEM_ETIQUETA;
 
 export function columnName(index) {
   let result = '';
@@ -108,7 +104,7 @@ export function validateLocalRows(rows) {
     }
     if (row.costo_usd !== '' && !row.tipo_dolar) issues.push('falta tipo de dólar');
     if (row.tipo_dolar && row.costo_usd === '') issues.push('tipo de dólar sin costo en dólares');
-    if (row.tipo === 'raw_material' && row.costo_referencia_ars === '' && row.costo_usd === '') {
+    if (row.tipo === 'materia_prima' && row.costo_referencia_ars === '' && row.costo_usd === '') {
       issues.push('falta costo de materia prima');
     }
     if (row.proveedor && row.costo_referencia_ars === '' && row.costo_usd === '') {
