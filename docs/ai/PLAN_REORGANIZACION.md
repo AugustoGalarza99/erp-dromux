@@ -7,9 +7,9 @@ El cliente NO usa el sistema hasta el visto bueno del propietario. Opus analiza 
 |---|---|---|
 | 0 | Carpetas por módulo y submódulo (`MAPA_CARPETAS.md`) | HECHA y verificada |
 | 2 | Base nueva en español, tablas unificadas (`MAPA_BASE.md`, `supabase/base_nueva/`) | APLICADA y verificada en Supabase |
-| 3 | Módulos activos por empresa | HECHO en servidor y menú (27/11); falta probar con sesión |
-| A | Adaptar la aplicación a la base nueva | Código HECHO (27/11, `PLAN_ADAPTACION.md`); falta recorrido con sesión |
-| B | Pruebas, revisión crítica y publicación | Después de A |
+| 3 | Módulos activos por empresa | HECHO y probado (27/11) |
+| A | Adaptar la aplicación a la base nueva | HECHA y recorrida con sesión (27/11, `PLAN_ADAPTACION.md`) |
+| B | Pruebas, revisión crítica y publicación | EN CURSO: módulos, operario y aislamiento probados; faltan volumen, concurrencia, revisión crítica y publicar (ver `ESTADO.md`) |
 | 1 | Archivos, componentes y variables del frontend en español | Después de B |
 | 4 | Importar desde Excel: fórmulas, stock inicial, proveedores y precios (ítems ya existe) | Después de B |
 | 5 | Botones para eliminar: categorías, unidades, depósitos, envases, proveedores, pedidos, clientes y listas sin historial | Después de B |

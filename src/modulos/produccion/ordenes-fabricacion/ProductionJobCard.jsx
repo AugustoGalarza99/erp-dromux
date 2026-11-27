@@ -105,12 +105,21 @@ export default function ProductionJobCard({
         Number(entry.unit_cost),
     0,
   );
+  // Con permiso completo (crear órdenes y Stock) se puede todo desde la orden. Quien solo opera
+  // órdenes entrega insumos de la fórmula o ya entregados y termina; el servidor exige lo mismo.
+  const canFull = can("produccion_ordenes", "crear") && can("stock", "crear");
+  const canOperate = can("produccion_ordenes", "editar") && can("stock_saldos", "ver");
+  const canIssue = canFull || canOperate;
+  const canReturn = can("produccion_ordenes", "editar")
+    && (can("stock", "crear") || can("stock_saldos", "ver"));
   const chosen = items.find((item) => item.id === issue.componentId);
   const eligible = items.filter(
     (item) =>
       ["materia_prima", "semielaborado", "insumo"].includes(
         item.item_type,
-      ) && item.active !== false,
+      ) && item.active !== false
+      && (canFull || net.has(item.id)
+        || expected.some((line) => line.component_id === item.id)),
   );
   const balanceQuery = useQuery({
     queryKey: ["job-material-balance", activeCompanyId, issue.componentId],
@@ -147,7 +156,6 @@ export default function ProductionJobCard({
             (balance) => balance.warehouse_id === issue.warehouseId,
           )?.quantity ?? 0,
         );
-  const canDeliver = can("produccion_ordenes", "crear") && can("stock", "crear");
 
   function requestFor(key, fingerprint) {
     const previous = requests.current.get(key);
@@ -385,7 +393,7 @@ export default function ProductionJobCard({
           {remitos.map((note, index) => (
             <span key={note.id}>
               {index > 0 && " · "}
-              {can("stock_saldos", "ver") ? (
+              {can("stock_remitos", "ver") ? (
                 <Link to="/inventory/delivery-notes">Nº {note.number}</Link>
               ) : (
                 `Nº ${note.number}`
@@ -435,36 +443,34 @@ export default function ProductionJobCard({
             <Play size={16} /> Iniciar
           </button>
         )}
-        {active && canDeliver && (
-          <>
-            <button
-              type="button"
-              className="button primary"
-              onClick={() => setAction("remito")}
-            >
-              <Truck size={16} /> Remito de entrega
-            </button>
-            <button
-              type="button"
-              className="button outline"
-              onClick={() => setAction("issue")}
-            >
-              <PackagePlus size={16} /> Agregar insumo sin remito
-            </button>
-          </>
+        {active && canFull && (
+          <button
+            type="button"
+            className="button primary"
+            onClick={() => setAction("remito")}
+          >
+            <Truck size={16} /> Remito de entrega
+          </button>
         )}
-        {job.status === "en_proceso" &&
-          can("produccion_ordenes", "crear") &&
-          can("stock", "crear") && (
-            <button
-              type="button"
-              className="button outline"
-              onClick={() => setAction("finish")}
-            >
-              <CheckCircle2 size={16} /> Terminar fabricación
-            </button>
-          )}
-        {active && can("produccion_ordenes", "editar") && (
+        {active && canIssue && (
+          <button
+            type="button"
+            className={`button ${canFull ? "outline" : "primary"}`}
+            onClick={() => setAction("issue")}
+          >
+            <PackagePlus size={16} /> {canFull ? "Agregar insumo sin remito" : "Entregar insumo"}
+          </button>
+        )}
+        {job.status === "en_proceso" && canIssue && (
+          <button
+            type="button"
+            className="button outline"
+            onClick={() => setAction("finish")}
+          >
+            <CheckCircle2 size={16} /> Terminar fabricación
+          </button>
+        )}
+        {active && can("produccion_ordenes", "gestionar") && (
           <button
             type="button"
             className="button outline"
@@ -498,8 +504,7 @@ export default function ProductionJobCard({
               </small>
               {open > 0.000001 &&
                 job.status === "en_proceso" &&
-                can("produccion_ordenes", "editar") &&
-                can("stock", "crear") && (
+                canReturn && (
                   <button
                     type="button"
                     className="production-link"
@@ -544,7 +549,7 @@ export default function ProductionJobCard({
       </ActionDialog>
       <ActionDialog
         open={action === "issue"}
-        title="Agregar insumo sin remito"
+        title={canFull ? "Agregar insumo sin remito" : "Entregar insumo"}
         description="La entrega descuenta stock y se suma al consumo de la orden."
         busy={busy}
         onClose={() => setAction(null)}
@@ -673,7 +678,7 @@ export default function ProductionJobCard({
               className="button primary"
               disabled={
                 busy ||
-                !canDeliver ||
+                !canIssue ||
                 !issue.componentId ||
                 !issue.warehouseId ||
                 !validQuantity(issue.quantity) ||

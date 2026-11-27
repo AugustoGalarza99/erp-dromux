@@ -11,14 +11,20 @@ import { ACCION_ETIQUETA, GRUPO_PERMISOS_ETIQUETA } from '../../../compartido/va
  */
 const ACTIONS = ["ver", "crear", "editar", "eliminar"].map((action) => [action, ACCION_ETIQUETA[action]]);
 
-// "Gestionar" solo existe donde el catálogo lo declara (hoy: Pedidos internos → rechazar y convertir pedidos ajenos).
+// "Gestionar" solo existe donde el catálogo lo declara: Pedidos internos (rechazar y convertir pedidos
+// ajenos) y Órdenes de fabricación (cancelar órdenes).
+const GESTIONAR_AYUDA = {
+  compras_pedidos: "Rechazar y convertir pedidos ajenos",
+  produccion_ordenes: "Cancelar órdenes",
+};
 const SCREEN_ACTIONS = [...ACTIONS, ["gestionar", ACCION_ETIQUETA.gestionar]];
 
 // Pantallas que necesitan ver el stock para mostrar datos correctos (el servidor las exige junto con Stock por depósito).
 const DEPENDENCIES = [
   { screen: 'produccion_disponibilidad', needs: 'stock_saldos', why: 'para calcular si alcanza el stock' },
   { screen: 'produccion_reposicion', needs: 'stock_saldos', why: 'para proyectar qué reponer' },
-  { screen: 'produccion_ordenes', needs: 'stock_saldos', why: 'para ver existencias y materiales asignados en las órdenes' },
+  { screen: 'produccion_ordenes', needs: 'stock_saldos', why: 'para elegir depósito y lote al entregar, devolver y terminar' },
+  { screen: 'produccion_ordenes', needs: 'items', why: 'para mostrar insumos y productos' },
 ];
 
 export default function PermissionsGrid({ permissions, onChange, disabled = false, catalog = [] }) {
@@ -94,7 +100,7 @@ export default function PermissionsGrid({ permissions, onChange, disabled = fals
           <strong>Falta un acceso que va de la mano</strong>
           <ul>
             {missing.map((dep) => (
-              <li key={dep.screen}>
+              <li key={`${dep.screen}-${dep.needs}`}>
                 «{labelOf(dep.screen)}» necesita poder ver «{labelOf(dep.needs)}» {dep.why}.
               </li>
             ))}
@@ -187,6 +193,7 @@ export default function PermissionsGrid({ permissions, onChange, disabled = fals
                             {!sensitive && columnsOf(rows).map(([action, label]) => (
                               <td key={action}>
                                 <input type="checkbox" aria-label={`${screen.label}: ${label}`}
+                                  title={action === "gestionar" ? GESTIONAR_AYUDA[screen.resource] : undefined}
                                   checked={has(screen.resource, action)} disabled={disabled || !access || !screen.actions.includes(action)}
                                   onChange={() => toggleAction(screen, action)} />
                               </td>

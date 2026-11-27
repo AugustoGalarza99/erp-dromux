@@ -203,7 +203,8 @@ export default function PurchaseOrdersPage() {
         }, { replace: true });
       }
     })();
-    return () => { mounted = false; };
+    // Si la carga se interrumpe (React la repite en desarrollo), la siguiente pasada debe rehacerla.
+    return () => { mounted = false; loadedSuggestion.current = ''; };
   }, [activeCompanyId, suggestedItem, suggestedSupplier, suggestedQuantity, mayBuy, params.get('request')]);
 
   const ordersQuery = useQuery({

@@ -140,6 +140,8 @@ _Generado por `documentar.mjs`; no editar a mano._
 | update_company_role | Aplicación | p_company uuid, p_role uuid, p_name text, p_permissions jsonb | ajustes_roles, ajustes_roles_permisos |
 | void_delivery_note | Aplicación | p_company uuid, p_note uuid, p_reason text | produccion_ordenes, produccion_ordenes_eventos, stock_lotes, stock_remitos, stock_remitos_lineas, stock_remitos_reversiones |
 | private.access_audit_immutable | Interna |  |  |
+| private.can_operate_production | Interna | p_company uuid |  |
+| private.can_post_stock | Interna | p_company uuid | produccion_ordenes |
 | private.can_see_production_costs | Interna | p_company uuid |  |
 | private.can_see_reference_cost | Interna | p_company uuid |  |
 | private.check_infinite_stock_change | Interna |  | produccion_ordenes, produccion_ordenes_reservas, stock_saldos |

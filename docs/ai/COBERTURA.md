@@ -39,7 +39,7 @@ Estados: no revisado, inspeccionado, probado, bloqueado. Anotar funciones por fi
 | C-020 | `src/modulos`, `src/compartido` (carpetas) | Probado | Compilado idéntico; 38 rutas con sesión contra base vieja | No aplica | Nombres de archivos en español (etapa 1) |
 | C-021 | Base nueva `nummzswhycklmzbgacnl` (`supabase/base_nueva/`) | Inspeccionado en remoto; probado solo en local | `plpgsql_check` 0 errores, huellas iguales; flujo local 66/66 | Local: operario sin costos, módulo apagado, empresas no editable. Falta: dos empresas y roles en Supabase | Adaptar app, script de roles, revisión crítica |
 
-| C-022 | Aplicación adaptada a la base nueva (`src/`) | Probado en local y por pantalla como administrador: Stock, Producción, roles (27/11) | `npm run build`, `npm run base:frontend`; flujo con datos en «Empresa de prueba» | Rechazo por stock insuficiente, bloqueo al retirar ítem con stock, «ver como rol» sin costos. Falta: no administrador real, dos empresas, otros módulos | Módulos restantes y etapa B |
+| C-022 | Aplicación adaptada a la base nueva (`src/`) | Probado en local y por pantalla: seis módulos (administrador), operario real y aislamiento entre 2 empresas (27/11) | `npm run build`, `npm run base:frontend`; flujo con datos en «Empresa de prueba» | Rechazo por stock insuficiente, bloqueo al retirar ítem con stock, «ver como rol» sin costos. Falta: no administrador real, dos empresas, otros módulos | Módulos restantes y etapa B |
 ## Filas agregadas 24/11/2026
 | ID | Área/rutas/objetos | Estado | Evidencia y entorno/commit | Prueba negativa o de negocio | Próximo paso |
 | --- | --- | --- | --- | --- | --- |

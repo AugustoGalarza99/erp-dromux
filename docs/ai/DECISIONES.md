@@ -38,5 +38,11 @@ Decisión del propietario: la estadística cuenta solo órdenes terminadas (se f
 ## 25/11/2026 — Reposición/¿Alcanza? y permisos que van de la mano
 Decisión del propietario: ¿Alcanza el stock? y Reposición (y ver órdenes con existencias) requieren poder ver Stock por depósito. Cada dueño de empresa asigna los accesos de sus empleados desde Roles (para no crear roles a medida desde soporte); la interfaz avisa las dependencias y ofrece agregarlas con un clic. Consecuencia: el servidor exige pantalla + Stock por depósito (048) y Roles muestra el aviso (PermissionsGrid, DEPENDENCIES).
 
+## 27/11/2026 — D-010 — Operario de fabricación y cancelación de órdenes
+Decisión del propietario: el operario (Órdenes: ver y editar + Stock por depósito: ver) inicia, entrega, devuelve y termina órdenes y carga controles, solo desde la orden; no mueve stock a mano ni crea órdenes, y NO cancela. Cancelar exige «Gestionar» en Órdenes (administradores y roles que crean y editan órdenes). Límite agregado por seguridad (diseño Opus): sin permiso completo solo entrega insumos de la fórmula o ya entregados. Queda por decidir un tope a la cantidad fabricada que declare un operario. Excepción acotada a la regla de «registrar con módulo completo». Aplicado en `cambios/003`.
+
+## 27/11/2026 — Baja completa de empresa
+Pedido del propietario: eliminar una empresa debe borrar todo lo asociado. Se hará después de las pruebas; diseño en `PLAN_REORGANIZACION.md`.
+
 ## 25/11/2026 — Stock: ver por pantalla, registrar con módulo completo
 Problema: dar permisos de Stock pantalla por pantalla para registrar movimientos era confuso y exigía separar el control interno de los movimientos. Decisión del propietario: Ver se da por pantalla; Crear/Editar/Eliminar en cualquier pantalla de Stock otorga el módulo completo, porque todos los movimientos quedan registrados con quién los hizo (`actor_id`). Consecuencia: no se hace la migración 048b; Roles aplica la regla solo y la explica en pantalla.

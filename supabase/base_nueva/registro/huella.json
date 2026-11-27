@@ -2,7 +2,7 @@
   {
     "categoria": "catalogo_permisos",
     "cantidad": 34,
-    "huella": "48a8773a6e462efb67dfac6afe4b1ba0"
+    "huella": "9b25674bbdacf57443cd6a280f0e629a"
   },
   {
     "categoria": "columnas",
@@ -16,8 +16,8 @@
   },
   {
     "categoria": "funciones",
-    "cantidad": 200,
-    "huella": "216d3858f8ee9325913bc8af4056e901"
+    "cantidad": 202,
+    "huella": "43c33ff5e6a70def19490602b37785f3"
   },
   {
     "categoria": "indices",
@@ -26,8 +26,8 @@
   },
   {
     "categoria": "permisos_funciones",
-    "cantidad": 200,
-    "huella": "be0228648240788424c5c85588225afc"
+    "cantidad": 202,
+    "huella": "c5e6f451e0cc3c3695377123bf80a175"
   },
   {
     "categoria": "permisos_tablas",
@@ -36,8 +36,8 @@
   },
   {
     "categoria": "politicas",
-    "cantidad": 79,
-    "huella": "276d36c243537ff30a7f4e6ad8671bc4"
+    "cantidad": 81,
+    "huella": "939b3c5c08b026e54200b89af7e68025"
   },
   {
     "categoria": "restricciones",

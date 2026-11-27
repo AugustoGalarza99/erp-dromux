@@ -16,7 +16,7 @@ export const ROLE_TEMPLATES = [
   {
     id: 'operario',
     label: 'Operario de planta',
-    help: 'Ve y avanza órdenes de fabricación, consulta stock y pide materiales. Sin costos.',
+    help: 'Inicia, entrega y devuelve insumos, termina órdenes y carga controles desde la orden. No crea ni cancela órdenes, no mueve stock por fuera de una orden y no ve costos. Puede pedir materiales.',
     build: () => [
       { resource: 'inicio', actions: ['ver'] },
       { resource: 'produccion_resumen', actions: ['ver'] },
@@ -57,10 +57,15 @@ export const ROLE_TEMPLATES = [
   {
     id: 'supervisor',
     label: 'Supervisor de producción',
-    help: 'Todas las pantallas de Producción y Stock; sin costos ni compras.',
+    help: 'Todas las pantallas de Producción y Stock, incluida la cancelación de órdenes; sin costos ni compras.',
     build: (catalog) => catalog
       .filter((entry) => ['produccion', 'stock'].includes(entry.module) && !entry.is_group)
-      .map((entry) => ({ resource: entry.resource, actions: entry.actions.filter((a) => a !== 'eliminar' && a !== 'gestionar') }))
+      .map((entry) => ({
+        resource: entry.resource,
+        // «Gestionar» en órdenes es cancelar: el supervisor lo tiene.
+        actions: entry.actions.filter((a) => a !== 'eliminar'
+          && (a !== 'gestionar' || entry.resource === 'produccion_ordenes')),
+      }))
       .concat([{ resource: 'inicio', actions: ['ver'] }]),
   },
 ];

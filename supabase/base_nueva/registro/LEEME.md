@@ -2,7 +2,7 @@
 
 _Generado por `documentar.mjs`; no editar a mano._
 
-76 tablas, 200 funciones, 79 reglas de acceso por fila, 60 automatismos.
+76 tablas, 202 funciones, 81 reglas de acceso por fila, 60 automatismos.
 
 Detalle por módulo en cada archivo; funciones en [funciones.md](funciones.md); historial en [BITACORA.md](BITACORA.md).
 Solo describe la estructura: los datos de las empresas no se guardan en el proyecto.

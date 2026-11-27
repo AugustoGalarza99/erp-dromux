@@ -17,7 +17,9 @@ export async function listUnassignedPayments(companyId) {
   const rows = unwrap(await supabase.from('ventas_cobros')
     .select('id, amount:importe, paid_on:fecha_pago, sale_id:venta_id, sale:ventas(number:numero, customer_name:cliente_nombre), allocation:finanzas_cobros_cuentas(account_id:cuenta_id), reversal:ventas_cobros_reversiones(id)')
     .eq('empresa_id', companyId).order('creado_en', { ascending: false }).limit(100));
-  return rows.filter((row) => !row.allocation?.length && !row.reversal?.length);
+  // Son relaciones de uno a uno: la base devuelve un objeto (o null), no una lista.
+  const existe = (relacion) => (Array.isArray(relacion) ? relacion.length > 0 : Boolean(relacion));
+  return rows.filter((row) => !existe(row.allocation) && !existe(row.reversal));
 }
 
 export async function createTreasuryAccount(companyId, values) {

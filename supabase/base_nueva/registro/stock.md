@@ -46,7 +46,7 @@ Reglas:
 - `CHECK (((length(btrim(nombre)) >= 2) AND (length(btrim(nombre)) <= 100)))`
 - `CHECK ((length(ubicacion) <= 250))`
 
-Seguridad por filas: stock_depositos_insert (INSERT), stock_depositos_read (SELECT), stock_depositos_update (UPDATE).
+Seguridad por filas: stock_depositos_insert (INSERT), stock_depositos_lectura_operativa (SELECT), stock_depositos_read (SELECT), stock_depositos_update (UPDATE).
 
 Automatismos: warehouses_prevent_stock_stranding → check_stock_catalog_deactivation.
 
@@ -363,4 +363,4 @@ Reglas:
 - `CHECK (((length(btrim(nombre)) >= 2) AND (length(btrim(nombre)) <= 80)))`
 - `CHECK (((length(btrim(simbolo)) >= 1) AND (length(btrim(simbolo)) <= 12)))`
 
-Seguridad por filas: stock_unidades_insert (INSERT), stock_unidades_read (SELECT), stock_unidades_update (UPDATE).
+Seguridad por filas: stock_unidades_insert (INSERT), stock_unidades_lectura_operativa (SELECT), stock_unidades_read (SELECT), stock_unidades_update (UPDATE).

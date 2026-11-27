@@ -4,6 +4,9 @@ Un renglón por cada cambio aplicado a la base real, del más nuevo al más anti
 
 | Aplicado | Archivo | Qué cambió | Comprobación |
 |---|---|---|---|
+| 27/11/2026 | `cambios/003_produccion_permisos_operario.sql` | Quien opera órdenes entrega, devuelve y termina desde la orden sin permiso general de stock; cancelar exige «Gestionar» (administradores y roles que crean y editan órdenes). 2 funciones nuevas (202 en total; `05_comprobaciones` esperaba 200). | Comprobaciones correctas (1 rol sin cancelar: operario); local 61/61 y deshacer con huellas iguales; huellas iguales (9 de 9). |
+| 27/11/2026 | `cambios/002_ajustes_nombre_de_perfil.sql` | Una empresa nueva guarda el nombre de la persona (o su correo sin dominio) como perfil; corrige los que tenían el código interno. | 0 perfiles con código; anónimo sin permiso; huellas iguales (9 de 9). |
+| 27/11/2026 | `cambios/001_stock_lectura_depositos_unidades.sql` | Quien trabaja con stock u órdenes puede leer nombres de depósitos y unidades (2 reglas de acceso; 81 en total). | 2 reglas presentes; local 14/14; huellas iguales (9 de 9). |
 | 26/11/2026 | `sql/01` a `sql/04` | Línea base: 76 tablas en español, 200 funciones, 79 reglas de acceso, 60 automatismos, 34 permisos, módulos por empresa. | `plpgsql_check` 0 errores (14 avisos); 9 huellas iguales entre base real y proyecto. |
 
 ## Ajustes hechos a mano en el panel de Supabase (no están en los SQL)

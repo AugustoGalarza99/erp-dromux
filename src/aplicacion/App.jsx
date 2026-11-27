@@ -104,11 +104,11 @@ function SetupCompany() {
   );
 }
 
-function PermissionGate({ resource, anyOf, adminOnly = false, children }) {
+function PermissionGate({ resource, anyOf, action = "ver", adminOnly = false, children }) {
   const { can, role, planIncluye } = useAuth();
   const inPlan = (anyOf ?? [resource]).some((entry) => planIncluye(entry));
   const allowed = (!adminOnly || role === "administrador")
-    && (anyOf ?? [resource]).some((entry) => can(entry, "ver"));
+    && (anyOf ?? [resource]).some((entry) => can(entry, action));
 
   if (!inPlan) {
     return (
@@ -360,7 +360,7 @@ export default function App() {
         <Route
           path="/inventory/items/new"
           element={
-            <PermissionGate resource="items">
+            <PermissionGate resource="items" action="crear">
               <ItemEditor />
             </PermissionGate>
           }

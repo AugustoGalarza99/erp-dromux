@@ -5,7 +5,8 @@
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { build } from 'esbuild';
+import { build, transform } from 'esbuild';
+import { parseAst } from 'rollup/parseAst';
 import { crearBase } from './base.mjs';
 
 const raiz = fileURLToPath(new URL('../../..', import.meta.url));
@@ -347,6 +348,66 @@ for (const nombre of [...catalogo.keys(), 'inventario']) {
   const f = await uno('select private.module_enabled($1, $2) as ok', [empresa, nombre]);
   if (f.ok !== valores.moduloHabilitado(nombre, {})) {
     errores.push(`valores.js: el módulo de «${nombre}» no coincide con private.module_enabled`);
+  }
+}
+
+/* ---------- 4. Nombres usados que no existen ---------- */
+// La compilación no avisa si una pantalla usa un nombre que ya no está: la pantalla se cae al abrirla.
+// Control simple: todo nombre usado en un archivo debe declararse o importarse en ese archivo.
+
+const GLOBALES = new Set([...Object.getOwnPropertyNames(globalThis), '__jsx', '__fragmento', 'window',
+  'document', 'localStorage', 'sessionStorage', 'navigator', 'location', 'history', 'requestAnimationFrame',
+  'cancelAnimationFrame', 'FileReader', 'Image', 'createImageBitmap', 'DOMParser', 'XMLSerializer',
+  'HTMLElement', 'HTMLInputElement', 'ResizeObserver', 'IntersectionObserver', 'matchMedia',
+  'getComputedStyle', 'alert', 'confirm', 'DecompressionStream']);
+
+function nombresDe(patron, destino) {
+  if (!patron) return;
+  if (patron.type === 'Identifier') destino.add(patron.name);
+  else if (patron.type === 'ObjectPattern') patron.properties.forEach((p) => nombresDe(p.value ?? p.argument, destino));
+  else if (patron.type === 'ArrayPattern') patron.elements.forEach((e) => nombresDe(e, destino));
+  else if (patron.type === 'AssignmentPattern') nombresDe(patron.left, destino);
+  else if (patron.type === 'RestElement') nombresDe(patron.argument, destino);
+}
+
+for (const ruta of archivos(src, /\.(js|jsx)$/)) {
+  const { code } = await transform(readFileSync(ruta, 'utf8'), {
+    loader: 'jsx', jsx: 'transform', jsxFactory: '__jsx', jsxFragment: '__fragmento',
+  });
+  const declarados = new Set();
+  const usados = new Set();
+  const recorrer = (nodo) => {
+    if (Array.isArray(nodo)) return nodo.forEach(recorrer);
+    if (!nodo || typeof nodo.type !== 'string') return undefined;
+    if (/^Import.*Specifier$/.test(nodo.type)) {
+      declarados.add(nodo.local.name);
+      return undefined;
+    }
+    if (nodo.type === 'VariableDeclarator') nombresDe(nodo.id, declarados);
+    if (/Function/.test(nodo.type)) {
+      nombresDe(nodo.id, declarados);
+      nodo.params?.forEach((p) => nombresDe(p, declarados));
+    }
+    if (nodo.type === 'ClassDeclaration') nombresDe(nodo.id, declarados);
+    if (nodo.type === 'CatchClause') nombresDe(nodo.param, declarados);
+    if (nodo.type === 'Identifier') {
+      usados.add(nodo.name);
+      return undefined;
+    }
+    for (const [clave, hijo] of Object.entries(nodo)) {
+      const esNombrePropio = (clave === 'key' && !nodo.computed)
+        || (clave === 'property' && nodo.type === 'MemberExpression' && !nodo.computed)
+        || ['label', 'meta', 'exported', 'imported'].includes(clave)
+        || (nodo.type === 'MetaProperty' && clave === 'property');
+      if (!esNombrePropio && hijo && typeof hijo === 'object') recorrer(hijo);
+    }
+    return undefined;
+  };
+  recorrer(parseAst(code));
+  for (const nombre of usados) {
+    if (!declarados.has(nombre) && !GLOBALES.has(nombre)) {
+      errores.push(`${corto(ruta)}: se usa «${nombre}» pero no está declarado ni importado`);
+    }
   }
 }
 

@@ -1,55 +1,66 @@
-# Estado — 27/11/2026: aplicación adaptada y probada en Stock y Producción; sin commit
+# Estado — cierre 27/11/2026: base nueva funcionando y probada; faltan pruebas de volumen y revisión crítica
 
 ## Resumen en una frase
-La aplicación (`src/`) usa la base nueva en español; Stock, Producción y roles se probaron por pantalla con el administrador. Falta Compras/Ventas/Finanzas/Reportes, un usuario no administrador y dos empresas. El cliente NO usa el sistema hasta el visto bueno del propietario.
+La aplicación usa la base nueva en español; los seis módulos, un operario real y el aislamiento entre dos empresas se probaron por pantalla o contra el servidor. NO está publicada ni lista para producción. El cliente NO usa el sistema hasta el visto bueno del propietario.
 
 ## Evidencia y entorno
-- Commits del propietario: `cb3c66f` + `7a96ce0` = reorganización y base nueva, en GitHub. La adaptación del 27/11 está SIN commit.
-- Base VIEJA `drcexqsewiwfhiowrgtv` (intacta; `.env.local`). El código adaptado ya NO funciona contra ella: usar `npm run dev:nueva`. No publicar hasta la etapa B.
-- Base NUEVA `nummzswhycklmzbgacnl` (`.env.nueva.local`). Sin cambios de SQL. Datos de prueba en «Empresa de prueba» (módulos `stock` y `produccion`).
-- VERIFICADO local: `npm run build`; `npm run base:frontend` sin errores ni restos viejos.
-- VERIFICADO con sesión (administrador, 27/11): 38 rutas; unidades, categorías, depósitos; ítems de los 4 tipos; ingreso, egreso, transferencia y rechazo por stock insuficiente; fórmula y costo; envase y formato de documento; orden en cola, inicio, entrega, devolución, cierre con ajustes, fabricación en un paso, plan, cancelación; saldos y costos cuadran; remitos (materiales, productos, fabricación), anular, archivar, recuperar; eliminar ítem sin uso y bloqueo con stock; avisos leídos; importación Excel; rol con plantilla, historial y «ver como rol» sin costos. PDF de orden y remito se generan (contenido no revisado a la vista).
-- Corregido durante la prueba: aviso claro al importar precios sin Ventas; historial de accesos se actualiza al guardar; textos de módulo no contratado en Inicio; aviso de consola en catálogos.
-- NO verificado: Compras, Ventas, Finanzas, Reportes; permisos reales de un no administrador; aislamiento entre empresas; tablet/móvil; 200+ filas; concurrencia.
+- Git: `0ead273` («1.0.4.9») = adaptación. Lo posterior del 27/11 queda para el commit de cierre del propietario (nombre sugerido «DromuxERP 1.0.5.0»): comprobar con `git log` al retomar. El propietario publica el sitio a mano (no está vinculado a GitHub).
+- Base VIEJA `drcexqsewiwfhiowrgtv` (intacta; `.env.local`). El código ya NO funciona contra ella: usar `npm run dev:nueva` (o `dev-nueva` en el panel). No publicar todavía.
+- Base NUEVA `nummzswhycklmzbgacnl` (`.env.nueva.local`; conector de solo lectura `mcp__fb7e0e4d…`). `cambios/001`, `002` y `003` aplicados por el propietario, en bitácora, 9 huellas iguales (202 funciones, 81 políticas).
+- Datos de prueba: «Empresa de prueba» (seis módulos; usuarios administrador y operario, rol «Operario de prueba 2») y «Empresa de prueba B» (su administrador; stock y producción; vacía).
+- Local (27/11): `npm run build`, `npm run base:frontend` (sin errores ni restos viejos; detecta nombres sin declarar) y `npm run base:probar` (flujo 66/66, cambios 61/61).
 
-## Hecho el 27/11 (plan: `PLAN_ADAPTACION.md`)
-- `src/compartido/valores.js`; consultas con alias; valores, permisos y roles en español; candado «No incluido en tu plan»; plantilla Excel; controles `pruebas/frontend.mjs` y `viejos.mjs`; `dev-nueva` en `.claude/launch.json`.
-- Quitados: `AcceptInvite.jsx`, grilla de permisos anterior, `completeProductionPlan`.
+## Verificado por pantalla (administrador)
+- Stock: catálogos, ítems, ingreso/egreso/transferencia, rechazo sin stock, remitos (materiales, productos, producción, venta), anular, archivar, recuperar, eliminar sin uso, avisos, importación Excel.
+- Producción: fórmula y costo, envases, formato, orden completa, devolución, cierre con ajustes, un paso, plan, cancelación, disponibilidad, reposición, estadística.
+- Compras, Finanzas, Ventas, Reportes: proveedor y precios ARS/USD, pedido, orden, recepción parcial y total, pagos, tesorería, clientes, listas, presupuestos, ventas, cobros, devolución, reintegro, rentabilidad. Saldos y stock revisados cuadran.
+- Roles con plantilla, historial, «ver como rol»; 35 pantallas a 375 px sin desborde. PDF se generan (contenido no revisado a la vista).
+
+## Verificado de seguridad
+- Operario real: pantallas según rol; sin costos en pantallas ni respuestas probadas; tablas y funciones sensibles rechazadas; escrituras y escaladas rechazadas.
+- Operario tras 003: entrega (solo fórmula), devuelve y termina; cancelar, mover stock, remitos, crear órdenes, fijar la marca y leer costos rechazados.
+- Aislamiento A→B (18 intentos) y B→A (64 tablas sin filas ajenas; 206 llamadas: 197 rechazadas, 9 vacías, 0 con datos de A; datos idénticos).
+
+## NO verificado
+- Botones de una orden activa con sesión de administrador después del 003 (cambió `ProductionJobCard`).
+- Listas de 200+ filas, concurrencia (HI-001), corte de red en el cierre, tablet, contenido de los PDF, rol vendedor y rol compras reales, soporte.
 
 ## Próximo paso
-1. Commit (con confirmación del propietario).
-2. El propietario activa los demás módulos en «Empresa de prueba» (SQL en `base_nueva/LEEME.md`) y se recorren Compras, Ventas, Finanzas y Reportes.
-3. Etapa B: usuario operario y segunda empresa (los crea el propietario), `pruebas_roles_empresas.sql` traducido, revisión crítica Opus, publicar.
-4. Baja completa de empresa (pedido del propietario; diseño en `PLAN_REORGANIZACION.md`). Luego etapas 1, 4 y 5.
+1. Comprobar el commit. Con sesión de administrador: crear una orden y revisar remito, entregar, terminar y cancelar.
+2. Pruebas de volumen (200+ filas), dos sesiones a la vez, tablet y PDF.
+3. Revisión crítica Opus (permisos, 003, módulos, aislamiento) y lista `erp-validar`; recién entonces publicar con confirmación.
+4. Baja completa de empresa (`PLAN_REORGANIZACION.md`). Luego etapas 1, 4 y 5.
+
+## Para la revisión crítica
+- Marca de transacción `dromux.production_job` (alternativa: tabla privada); `private.issue_production_material` sin uso.
+- `create_company` lo puede llamar cualquier usuario autenticado; quien ve producción lee fórmulas por tabla; el operario lee permisos de otros roles de su empresa.
+- HI-005 (`private` no expuesto), URL del sitio y respaldos en Supabase nuevo.
 
 ## Observaciones abiertas (no bloquean)
-- Inicio puede tardar ~1 min (o «Actualizar») en reflejar órdenes nuevas en «Decisiones de hoy».
-- Plantilla Excel con ejemplos de un solo rubro (contra D-006): corregir en la etapa 4.
-- Avisos muestran «10.000000 kg»; la grilla de permisos no indica módulos no contratados.
-- Servidor: «OF n» vs código `OP`; `create_company` guarda UUID como nombre de perfil; zona horaria fija en alertas; precios de Ventas no consultan el módulo.
+- Sin tope a la cantidad fabricada que declara un operario (decide el propietario).
+- Cuentas por cobrar avisa «cobros anteriores a la devolución» aunque ya se reintegró.
+- Porcentajes con punto decimal; avisos con «10.000000 kg»; la grilla de permisos no indica módulos no contratados.
+- Inicio puede tardar ~1 min en reflejar órdenes nuevas («Actualizar» lo resuelve).
+- Plantilla Excel con ejemplos de un solo rubro (D-006): etapa 4.
+- «OF n» vs código `OP`; zona horaria fija en alertas; precios de Ventas no consultan el módulo.
 
 ## Pendiente anterior (sigue vigente)
-- Concurrencia (HI-001), corte de red real en el cierre, «Asignado» como operario con una orden activa.
-- H-UX4 (ayuda inicial a 360 px) y tablas de Roles en 360.
-- `post_stock_operation` a fondo; H-011b (precios en órdenes de compra: decide el propietario); HI-005; H-008, H-010, H-012, H-003, H-002; P2 de la 047 y 048.
-- Lista de lanzamiento (erp-validar). Manual y presentación de `docs/cliente`.
-- Lote de Ventas (revisión crítica obligatoria), luego Finanzas y Reportes.
+- H-UX4 y Roles en 360 px; `post_stock_operation` a fondo; H-011b (precios en órdenes de compra: decide el propietario); H-008, H-010, H-012, H-003, H-002; P2 de la 047 y 048.
+- Manual y presentación de `docs/cliente` (actualizar). Revisión crítica de Ventas.
 
 ## Decisiones vigentes
-- D-008/D-009: español en tablas, columnas y valores; funciones en inglés; base desde cero. Cambios de base solo como archivo en `cambios/` y registrados. Opus analiza y planifica; Sonnet ejecuta.
-- Textos visibles sin cambios; los nombres del frontend se traducen en la etapa 1.
-- El propietario aplica los SQL (conectores solo lectura); ofreció permisos extra si se piden.
-- Empresa nueva: módulos `stock` y `produccion`; se cambian solo desde el SQL Editor. Sin invitaciones.
-- Costos: `costos_materiales` y `costos_produccion` = administrador o permiso explícito. Márgenes/listas: administrador + finanzas hasta su lote.
-- Roles y usuarios solo del administrador; sin permiso se ve con candado; «Gestionar» solo en Pedidos internos.
-- Reposición, ¿Alcanza? y existencias en órdenes exigen «Stock por depósito». Stock: ver por pantalla; crear/editar/eliminar = módulo completo.
-- Estadística cuenta órdenes terminadas aunque estén archivadas; las canceladas no.
-- Alta de empleados, cuentas y empresas MANUAL hasta el lanzamiento comercial.
+- D-008/D-009: español en tablas, columnas y valores; funciones en inglés. Cambios de base solo como archivo en `cambios/` y registrados. Opus analiza y planifica; Sonnet ejecuta.
+- D-010: operario entrega y termina desde la orden; cancelar exige «Gestionar» (órdenes). «Gestionar» además en Pedidos internos.
+- Textos visibles sin cambios; nombres del frontend se traducen en la etapa 1.
+- El propietario aplica los SQL (conectores solo lectura) y hace o confirma los commits.
+- Empresa nueva: módulos `stock` y `produccion`; se cambian solo desde el SQL Editor. Sin invitaciones. Altas de usuarios y empresas MANUALES.
+- Costos solo administrador o permiso explícito. Stock: ver por pantalla; crear/editar/eliminar = módulo completo (excepción D-010).
+- Reposición, ¿Alcanza? y existencias en órdenes exigen «Stock por depósito». Estadística cuenta terminadas aunque estén archivadas.
 - D-005 paleta, D-006 multirrubro, D-007 volumen. IVA: precios sin IVA, informativo en la venta.
 
 ## Datos de sesión
-- Nunca pasar contraseñas. Campos React: setter nativo + evento, o teclado.
-- En el shell NO usar heredocs, `cat >` sin entrada ni `node -e` largos con comillas anidadas (se cuelga).
+- Nunca pasar contraseñas: el propietario inicia sesión en el panel del navegador. Campos React: setter nativo + evento.
+- En el shell NO usar heredocs, `cat >` sin entrada, `awk` con `exit` ni `node -e` largos con comillas anidadas (se cuelga).
 
 ## Regla de mantenimiento
 Reemplazar este resumen al avanzar; máximo 100 líneas. No marcar algo resuelto sin evidencia.
