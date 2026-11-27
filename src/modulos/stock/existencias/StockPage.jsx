@@ -1,21 +1,21 @@
-import { friendlyError } from '../../lib/notifications';
+import { friendlyError } from '../../../compartido/utilidades/notifications';
 import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link, useSearchParams } from 'react-router-dom';
 import {
   ArrowRightLeft, Boxes, ChevronLeft, ChevronRight, Pencil, Search, X,
 } from 'lucide-react';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../../../compartido/contextos/AuthContext';
 import {
   listStock,
   listStockBalances,
   listStockLotBreakdown,
-} from '../../services/stock';
+} from '../compartido/stock';
 import PostStockOperation from './PostStockOperation';
-import StockShell from './StockShell';
-import { dateEs, lotLabel } from '../../lib/display';
-import { formatQuantity, isAtOrBelow } from './stockNumber';
-import './stock.css';
+import StockShell from '../compartido/StockShell';
+import { dateEs, lotLabel } from '../../../compartido/utilidades/display';
+import { formatQuantity, isAtOrBelow } from '../compartido/stockNumber';
+import '../compartido/stock.css';
 
 export default function StockPage() {
   const { activeCompanyId, user, can } = useAuth();

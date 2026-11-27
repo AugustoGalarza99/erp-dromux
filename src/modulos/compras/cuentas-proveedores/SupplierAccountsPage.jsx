@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useAuth } from '../../contexts/AuthContext';
-import { useDebouncedValue } from '../../hooks/useDebouncedValue';
-import ActionDialog from '../../components/ActionDialog';
-import { notifyError, notifySuccess, friendlyError } from '../../lib/notifications';
-import { getTreasuryBalances } from '../../services/treasury';
+import { useAuth } from '../../../compartido/contextos/AuthContext';
+import { useDebouncedValue } from '../../../compartido/hooks/useDebouncedValue';
+import ActionDialog from '../../../compartido/componentes/ActionDialog';
+import { notifyError, notifySuccess, friendlyError } from '../../../compartido/utilidades/notifications';
+import { getTreasuryBalances } from '../../finanzas/tesoreria/treasury';
 import {
   purchaseStatistics,
   supplierAccount,
@@ -14,9 +14,9 @@ import {
   confirmPaymentOrder,
   cancelPaymentOrder,
   findFinanceSuppliers,
-} from '../../services/supplierFinance';
-import { money, argentinaToday } from './supplierUi';
-import PurchasesShell from './PurchasesShell';
+} from './supplierFinance';
+import { money, argentinaToday } from '../compartido/supplierUi';
+import PurchasesShell from '../compartido/PurchasesShell';
 import './supplierAccounts.css';
 
 function Pager({ page, count, onChange }) {

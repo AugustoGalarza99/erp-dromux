@@ -2,13 +2,13 @@ import { useEffect, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { Banknote, CreditCard, Receipt, Search } from 'lucide-react';
-import { useAuth } from '../../contexts/AuthContext';
-import { notifyError, notifySuccess, friendlyError } from '../../lib/notifications';
-import { useDebouncedValue } from '../../hooks/useDebouncedValue';
+import { useAuth } from '../../../compartido/contextos/AuthContext';
+import { notifyError, notifySuccess, friendlyError } from '../../../compartido/utilidades/notifications';
+import { useDebouncedValue } from '../../../compartido/hooks/useDebouncedValue';
 import {
   listReceivables, listSalePayments, postSalePayment, reverseSalePayment,
-} from '../../services/receivables';
-import { getTreasuryBalances } from '../../services/treasury';
+} from './receivables';
+import { getTreasuryBalances } from '../tesoreria/treasury';
 import './receivables.css';
 
 const money = (value) => Number(value).toLocaleString('es-AR', {

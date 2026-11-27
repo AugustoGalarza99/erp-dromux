@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import ActionDialog from '../../components/ActionDialog';
-import { useAuth } from '../../contexts/AuthContext';
-import { supabase } from '../../lib/supabase';
-import { notifyError, notifySuccess } from '../../lib/notifications';
+import ActionDialog from '../../../compartido/componentes/ActionDialog';
+import { useAuth } from '../../../compartido/contextos/AuthContext';
+import { supabase } from '../../../compartido/utilidades/supabase';
+import { notifyError, notifySuccess } from '../../../compartido/utilidades/notifications';
 
 export default function WorkDetailsDialog({ job, onClose, onUpdated }) {
   const { activeCompanyId } = useAuth();

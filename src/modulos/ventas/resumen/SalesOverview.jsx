@@ -11,12 +11,12 @@ import {
   TrendingDown,
   Wallet,
 } from "lucide-react";
-import { useAuth } from "../../contexts/AuthContext";
-import { friendlyError } from "../../lib/notifications";
-import { isMissingFunction, money } from "../../lib/pricing";
-import { listAdminPriceRows, listPriceLists, listPriceRows } from "../../services/priceLists";
-import { getSalesSummary } from "../../services/sales";
-import SalesShell from "./SalesShell";
+import { useAuth } from "../../../compartido/contextos/AuthContext";
+import { friendlyError } from "../../../compartido/utilidades/notifications";
+import { isMissingFunction, money } from "../compartido/pricing";
+import { listAdminPriceRows, listPriceLists, listPriceRows } from "../listas-precios/priceLists";
+import { getSalesSummary } from "../compartido/sales";
+import SalesShell from "../compartido/SalesShell";
 
 const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
 

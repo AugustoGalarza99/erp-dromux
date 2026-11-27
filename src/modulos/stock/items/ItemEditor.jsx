@@ -1,5 +1,5 @@
-import CleanupButton from "../../components/CleanupButton";
-import ConfirmDeleteDialog from "../../components/ConfirmDeleteDialog";
+import CleanupButton from "../../../compartido/componentes/CleanupButton";
+import ConfirmDeleteDialog from "../../../compartido/componentes/ConfirmDeleteDialog";
 import { useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate, useParams } from "react-router-dom";
@@ -13,7 +13,7 @@ import {
   Warehouse,
   Wallet,
 } from "lucide-react";
-import { useAuth } from "../../contexts/AuthContext";
+import { useAuth } from "../../../compartido/contextos/AuthContext";
 import {
   activateItemLots,
   getItem,
@@ -22,18 +22,18 @@ import {
   saveItem,
   searchItemOptions,
   setItemActive,
-} from "../../services/items";
-import { listStockBalances } from "../../services/stock";
+} from "./items";
+import { listStockBalances } from "../compartido/stock";
 import {
   notifyError,
   notifySuccess,
   friendlyError,
-} from "../../lib/notifications";
+} from "../../../compartido/utilidades/notifications";
 import ItemCostFields, { emptyPurchaseCost } from "./ItemCostFields";
 import { itemTypeHelp, itemTypeLabels, itemTypeOrder } from "./itemTypes";
-import StockShell from "./StockShell";
-import { formatQuantity } from "./stockNumber";
-import { refreshSupplierData } from "../purchases/supplierUi";
+import StockShell from "../compartido/StockShell";
+import { formatQuantity } from "../compartido/stockNumber";
+import { refreshSupplierData } from "../../compras/compartido/supplierUi";
 import "./items.css";
 
 const emptyForm = {

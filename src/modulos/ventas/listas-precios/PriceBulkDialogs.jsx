@@ -1,13 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import ActionDialog from "../../components/ActionDialog";
-import ListPager, { usePagedList } from "../../components/ListPager";
-import { useAuth } from "../../contexts/AuthContext";
-import { friendlyError, notifyError, notifySuccess } from "../../lib/notifications";
-import { money, parseAmount, parsePriceRows } from "../../lib/pricing";
-import { dateEs } from "../../lib/display";
-import { bulkPriceChange, importPriceRows, listPriceHistory } from "../../services/priceLists";
+import ActionDialog from "../../../compartido/componentes/ActionDialog";
+import ListPager, { usePagedList } from "../../../compartido/componentes/ListPager";
+import { useAuth } from "../../../compartido/contextos/AuthContext";
+import { friendlyError, notifyError, notifySuccess } from "../../../compartido/utilidades/notifications";
+import { money, parseAmount, parsePriceRows } from "../compartido/pricing";
+import { dateEs } from "../../../compartido/utilidades/display";
+import { bulkPriceChange, importPriceRows, listPriceHistory } from "./priceLists";
 
 const newId = () => crypto.randomUUID();
 

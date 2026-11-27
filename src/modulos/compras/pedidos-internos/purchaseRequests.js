@@ -1,4 +1,4 @@
-import { supabase } from '../lib/supabase';
+import { supabase } from '../../../compartido/utilidades/supabase';
 
 /*
  * Pedidos de compra internos: un operario pide materiales y Compras los convierte en orden.

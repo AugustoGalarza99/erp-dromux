@@ -1,0 +1,47 @@
+[
+  {
+    "categoria": "catalogo_permisos",
+    "cantidad": 34,
+    "huella": "48a8773a6e462efb67dfac6afe4b1ba0"
+  },
+  {
+    "categoria": "columnas",
+    "cantidad": 719,
+    "huella": "8cab29276a227a6e5673027dea7eb17e"
+  },
+  {
+    "categoria": "disparadores",
+    "cantidad": 60,
+    "huella": "a03fe80880100778487b7b8d6d5f8e6c"
+  },
+  {
+    "categoria": "funciones",
+    "cantidad": 200,
+    "huella": "216d3858f8ee9325913bc8af4056e901"
+  },
+  {
+    "categoria": "indices",
+    "cantidad": 214,
+    "huella": "357dac35cb97467243f84604cda8cc63"
+  },
+  {
+    "categoria": "permisos_funciones",
+    "cantidad": 200,
+    "huella": "be0228648240788424c5c85588225afc"
+  },
+  {
+    "categoria": "permisos_tablas",
+    "cantidad": 1438,
+    "huella": "14a8b24ac8d6eb3ef548d4071e5c9743"
+  },
+  {
+    "categoria": "politicas",
+    "cantidad": 79,
+    "huella": "276d36c243537ff30a7f4e6ad8671bc4"
+  },
+  {
+    "categoria": "restricciones",
+    "cantidad": 552,
+    "huella": "445aebf1de16450d30a26fe15bc84b7f"
+  }
+]

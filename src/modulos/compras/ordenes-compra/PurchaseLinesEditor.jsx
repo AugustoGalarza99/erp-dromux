@@ -1,10 +1,10 @@
 import { useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Plus, Search, Trash2 } from "lucide-react";
-import ListPager, { usePagedList } from "../../components/ListPager";
-import { useDebouncedValue } from "../../hooks/useDebouncedValue";
-import { friendlyError } from "../../lib/notifications";
-import { findPurchaseItems } from "../../services/purchases";
+import ListPager, { usePagedList } from "../../../compartido/componentes/ListPager";
+import { useDebouncedValue } from "../../../compartido/hooks/useDebouncedValue";
+import { friendlyError } from "../../../compartido/utilidades/notifications";
+import { findPurchaseItems } from "../compartido/purchases";
 
 const normalize = (text) =>
   String(text ?? "")

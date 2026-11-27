@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ContactRound, Plus, Search } from 'lucide-react';
-import { useAuth } from '../../contexts/AuthContext';
-import { notifyError, notifySuccess, friendlyError } from '../../lib/notifications';
-import { listCustomers, saveCustomer, setCustomerActive } from '../../services/sales';
-import { assignCustomerPriceList, listCustomerPriceLists, listPriceLists } from '../../services/priceLists';
-import SalesShell from './SalesShell';
-import './sales.css';
+import { useAuth } from '../../../compartido/contextos/AuthContext';
+import { notifyError, notifySuccess, friendlyError } from '../../../compartido/utilidades/notifications';
+import { listCustomers, saveCustomer, setCustomerActive } from '../compartido/sales';
+import { assignCustomerPriceList, listCustomerPriceLists, listPriceLists } from '../listas-precios/priceLists';
+import SalesShell from '../compartido/SalesShell';
+import '../compartido/sales.css';
 
 const empty = { name: '', tax_id: '', email: '', phone: '', address: '', notes: '' };
 

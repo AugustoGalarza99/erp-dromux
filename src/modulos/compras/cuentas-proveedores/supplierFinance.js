@@ -1,4 +1,4 @@
-import { supabase } from '../lib/supabase';
+import { supabase } from '../../../compartido/utilidades/supabase';
 
 async function rpc(name, values) {
   const { data, error } = await supabase.rpc(name, values);

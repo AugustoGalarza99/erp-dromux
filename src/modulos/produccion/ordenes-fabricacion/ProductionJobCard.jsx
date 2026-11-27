@@ -1,8 +1,8 @@
-import CleanupButton from "../../components/CleanupButton";
+import CleanupButton from "../../../compartido/componentes/CleanupButton";
 import WorkDetailsDialog from "./WorkDetailsDialog";
 import JobComponentsTable from "./JobComponentsTable";
-import ListPager, { usePagedList } from "../../components/ListPager";
-import "../purchases/supplierAccounts.css";
+import ListPager, { usePagedList } from "../../../compartido/componentes/ListPager";
+import "../../compras/cuentas-proveedores/supplierAccounts.css";
 import { useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
@@ -15,26 +15,26 @@ import {
   Truck,
   XCircle,
 } from "lucide-react";
-import ActionDialog from "../../components/ActionDialog";
-import ConfirmDeleteDialog from "../../components/ConfirmDeleteDialog";
+import ActionDialog from "../../../compartido/componentes/ActionDialog";
+import ConfirmDeleteDialog from "../../../compartido/componentes/ConfirmDeleteDialog";
 import FinishJobDialog from "./FinishJobDialog";
-import DeliveryNoteComposer from "../inventory/DeliveryNoteComposer";
-import { useAuth } from "../../contexts/AuthContext";
+import DeliveryNoteComposer from "../../stock/remitos/DeliveryNoteComposer";
+import { useAuth } from "../../../compartido/contextos/AuthContext";
 import {
   notifyError,
   notifySuccess,
   friendlyError,
-} from "../../lib/notifications";
-import { formatQuantity } from "../inventory/stockNumber";
-import { lotLabel } from "../../lib/display";
-import { listStockLots } from "../../services/stock";
+} from "../../../compartido/utilidades/notifications";
+import { formatQuantity } from "../../stock/compartido/stockNumber";
+import { lotLabel } from "../../../compartido/utilidades/display";
+import { listStockLots } from "../../stock/compartido/stock";
 import {
   cancelProductionJob,
   issueProductionMaterial,
   listProductionBalances,
   returnProductionMaterial,
   startProductionJob,
-} from "../../services/production";
+} from "../compartido/production";
 
 const defaultIssue = () => ({
   componentId: "",

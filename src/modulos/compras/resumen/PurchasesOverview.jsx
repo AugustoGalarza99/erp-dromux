@@ -14,14 +14,14 @@ import {
   Store,
   Wallet,
 } from "lucide-react";
-import { useAuth } from "../../contexts/AuthContext";
-import { friendlyError } from "../../lib/notifications";
-import { dateEs } from "../../lib/display";
-import { listPurchaseOrdersPage } from "../../services/purchases";
-import { listPurchaseRequests } from "../../services/purchaseRequests";
-import { getReplenishmentForecast } from "../../services/replenishment";
-import { paymentOrders } from "../../services/supplierFinance";
-import PurchasesShell from "./PurchasesShell";
+import { useAuth } from "../../../compartido/contextos/AuthContext";
+import { friendlyError } from "../../../compartido/utilidades/notifications";
+import { dateEs } from "../../../compartido/utilidades/display";
+import { listPurchaseOrdersPage } from "../compartido/purchases";
+import { listPurchaseRequests } from "../pedidos-internos/purchaseRequests";
+import { getReplenishmentForecast } from "../../produccion/reposicion/replenishment";
+import { paymentOrders } from "../cuentas-proveedores/supplierFinance";
+import PurchasesShell from "../compartido/PurchasesShell";
 
 const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
 const daysSince = (iso) => Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / 86_400_000));

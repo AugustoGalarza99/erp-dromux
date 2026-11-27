@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useLocation } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
-import { useDebouncedValue } from '../../hooks/useDebouncedValue';
-import { friendlyError, notifyError, notifySuccess } from '../../lib/notifications';
-import { getSalesProfitSummary, listProductCosts } from '../../services/costing';
-import { saveSalePrice } from '../../services/sales';
+import { useAuth } from '../../../compartido/contextos/AuthContext';
+import { useDebouncedValue } from '../../../compartido/hooks/useDebouncedValue';
+import { friendlyError, notifyError, notifySuccess } from '../../../compartido/utilidades/notifications';
+import { getSalesProfitSummary, listProductCosts } from '../../../compartido/servicios/costing';
+import { saveSalePrice } from '../../ventas/compartido/sales';
 import SalesProfitTable from './SalesProfitTable';
-import './financeExtra.css';
+import '../compartido/financeExtra.css';
 
 const ars = (value) => value == null ? 'Pendiente' : Number(value).toLocaleString('es-AR', {
   style: 'currency', currency: 'ARS',

@@ -2,9 +2,9 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { ArrowUpRight, RefreshCcw } from 'lucide-react';
-import { useAuth } from '../../contexts/AuthContext';
-import { friendlyError } from '../../lib/notifications';
-import { getOperationalReport } from '../../services/costing';
+import { useAuth } from '../../compartido/contextos/AuthContext';
+import { friendlyError } from '../../compartido/utilidades/notifications';
+import { getOperationalReport } from '../../compartido/servicios/costing';
 import './reports.css';
 
 const today = () => new Intl.DateTimeFormat('sv-SE', {

@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Search, UsersRound } from 'lucide-react';
-import ConfirmDeleteDialog from '../../components/ConfirmDeleteDialog';
-import { useAuth } from '../../contexts/AuthContext';
-import { friendlyError, notifyError, notifySuccess } from '../../lib/notifications';
-import { listMembers, listRoles, updateMember } from '../../services/administration';
-import './settings.css';
+import ConfirmDeleteDialog from '../../../compartido/componentes/ConfirmDeleteDialog';
+import { useAuth } from '../../../compartido/contextos/AuthContext';
+import { friendlyError, notifyError, notifySuccess } from '../../../compartido/utilidades/notifications';
+import { listMembers, listRoles, updateMember } from '../compartido/administration';
+import '../compartido/settings.css';
 
 const PAGE = 25;
 

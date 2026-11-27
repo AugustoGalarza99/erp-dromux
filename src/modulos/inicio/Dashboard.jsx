@@ -5,13 +5,13 @@ import {
   CheckCircle2, Clock3, Factory, HandCoins, PackageCheck, Play, RefreshCw,
   Lock, ShoppingBag, TrendingUp, Truck, Wallet,
 } from 'lucide-react';
-import { useAuth } from '../../contexts/AuthContext';
-import { supabase } from '../../lib/supabase';
-import { friendlyError } from '../../lib/notifications';
-import { money } from '../purchases/supplierUi';
-import { getReplenishmentForecast } from '../../services/replenishment';
-import { getTreasuryBalances } from '../../services/treasury';
-import { useOperationalAlerts } from '../operations/useOperationalAlerts';
+import { useAuth } from '../../compartido/contextos/AuthContext';
+import { supabase } from '../../compartido/utilidades/supabase';
+import { friendlyError } from '../../compartido/utilidades/notifications';
+import { money } from '../compras/compartido/supplierUi';
+import { getReplenishmentForecast } from '../produccion/reposicion/replenishment';
+import { getTreasuryBalances } from '../finanzas/tesoreria/treasury';
+import { useOperationalAlerts } from './avisos/useOperationalAlerts';
 import './dashboard.css';
 
 const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;

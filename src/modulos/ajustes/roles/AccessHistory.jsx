@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { History } from 'lucide-react';
-import { useAuth } from '../../contexts/AuthContext';
-import { friendlyError } from '../../lib/notifications';
-import { listAccessAudit } from '../../services/administration';
+import { useAuth } from '../../../compartido/contextos/AuthContext';
+import { friendlyError } from '../../../compartido/utilidades/notifications';
+import { listAccessAudit } from '../compartido/administration';
 
 const ACTIONS = {
   role_created: 'Creó un rol',

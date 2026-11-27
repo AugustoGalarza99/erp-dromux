@@ -12,12 +12,12 @@ import {
   Play,
   Plus,
 } from "lucide-react";
-import { useAuth } from "../../contexts/AuthContext";
-import { supabase } from "../../lib/supabase";
-import { friendlyError } from "../../lib/notifications";
-import { dateEs } from "../../lib/display";
-import { getReplenishmentForecast } from "../../services/replenishment";
-import ProductionShell from "./ProductionShell";
+import { useAuth } from "../../../compartido/contextos/AuthContext";
+import { supabase } from "../../../compartido/utilidades/supabase";
+import { friendlyError } from "../../../compartido/utilidades/notifications";
+import { dateEs } from "../../../compartido/utilidades/display";
+import { getReplenishmentForecast } from "../reposicion/replenishment";
+import ProductionShell from "../compartido/ProductionShell";
 
 const rpc = async (name, companyId) => {
   const { data, error } = await supabase.rpc(name, { p_company: companyId });

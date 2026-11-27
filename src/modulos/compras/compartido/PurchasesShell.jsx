@@ -1,5 +1,5 @@
 import { ClipboardList, LayoutGrid, ReceiptText, ShoppingCart, Store, Wallet } from "lucide-react";
-import ModuleShell from "../../components/ModuleShell";
+import ModuleShell from "../../../compartido/componentes/ModuleShell";
 import "./purchasesModule.css";
 
 /*

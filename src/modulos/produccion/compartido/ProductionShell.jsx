@@ -9,7 +9,7 @@ import {
   PackageOpen,
   TrendingUp,
 } from "lucide-react";
-import ModuleShell from "../../components/ModuleShell";
+import ModuleShell from "../../../compartido/componentes/ModuleShell";
 import "./production.css";
 
 /* Pantallas de Producción. Los nombres son neutros: sirven a cualquier rubro que fabrique. */

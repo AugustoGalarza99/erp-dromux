@@ -1,14 +1,14 @@
 import { useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import ActionDialog from '../../components/ActionDialog';
-import { useAuth } from '../../contexts/AuthContext';
-import { useDebouncedValue } from '../../hooks/useDebouncedValue';
-import { notifyError, notifySuccess } from '../../lib/notifications';
+import ActionDialog from '../../../compartido/componentes/ActionDialog';
+import { useAuth } from '../../../compartido/contextos/AuthContext';
+import { useDebouncedValue } from '../../../compartido/hooks/useDebouncedValue';
+import { notifyError, notifySuccess } from '../../../compartido/utilidades/notifications';
 import {
   findPurchaseItems, saveSupplier, saveSupplierCatalogQuote, previewSupplierAdjustment,
-} from '../../services/purchases';
-import { adjustSupplierPrices } from '../../services/costing';
-import { money } from './supplierUi';
+} from '../compartido/purchases';
+import { adjustSupplierPrices } from '../../../compartido/servicios/costing';
+import { money } from '../compartido/supplierUi';
 import { Link } from 'react-router-dom';
 
 export function SupplierEditDialog({ supplier, onClose, onSaved }) {

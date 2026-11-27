@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { Download, FileSpreadsheet, Upload, X } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
-import { useAuth } from '../../contexts/AuthContext';
-import { friendlyError, notifyError, notifySuccess } from '../../lib/notifications';
-import { supabase } from '../../lib/supabase';
+import { useAuth } from '../../../../compartido/contextos/AuthContext';
+import { friendlyError, notifyError, notifySuccess } from '../../../../compartido/utilidades/notifications';
+import { supabase } from '../../../../compartido/utilidades/supabase';
 import { mapWorkbookRows, normalizeRows, typeLabels, validateLocalRows } from './itemImportSchema';
-import { refreshSupplierData, money } from '../purchases/supplierUi';
+import { refreshSupplierData, money } from '../../../compras/compartido/supplierUi';
 import './itemImport.css';
 
 async function loadZip() {

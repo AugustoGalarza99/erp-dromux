@@ -2,12 +2,12 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { Tag } from 'lucide-react';
-import { useAuth } from '../../contexts/AuthContext';
-import { useDebouncedValue } from '../../hooks/useDebouncedValue';
-import { searchActiveSuppliers } from '../../services/items';
-import { listExchangeOverview } from '../../services/costing';
-import { friendlyError } from '../../lib/notifications';
-import { money } from '../purchases/supplierUi';
+import { useAuth } from '../../../compartido/contextos/AuthContext';
+import { useDebouncedValue } from '../../../compartido/hooks/useDebouncedValue';
+import { searchActiveSuppliers } from './items';
+import { listExchangeOverview } from '../../../compartido/servicios/costing';
+import { friendlyError } from '../../../compartido/utilidades/notifications';
+import { money } from '../../compras/compartido/supplierUi';
 
 export const emptyPurchaseCost = {
   currency: 'ARS',

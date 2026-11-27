@@ -2,10 +2,10 @@ import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { Search, Tags } from 'lucide-react';
-import { useAuth } from '../../contexts/AuthContext';
-import { notifyError, notifySuccess, friendlyError } from '../../lib/notifications';
-import { listSaleProducts, saveSalePrice } from '../../services/sales';
-import './sales.css';
+import { useAuth } from '../../../compartido/contextos/AuthContext';
+import { notifyError, notifySuccess, friendlyError } from '../../../compartido/utilidades/notifications';
+import { listSaleProducts, saveSalePrice } from '../compartido/sales';
+import '../compartido/sales.css';
 
 const money = (value) => Number(value).toLocaleString('es-AR', { minimumFractionDigits: 2 });
 

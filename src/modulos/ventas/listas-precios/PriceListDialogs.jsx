@@ -1,16 +1,16 @@
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import ActionDialog from "../../components/ActionDialog";
-import ConfirmDeleteDialog from "../../components/ConfirmDeleteDialog";
-import { useAuth } from "../../contexts/AuthContext";
-import { friendlyError, notifyError, notifySuccess } from "../../lib/notifications";
+import ActionDialog from "../../../compartido/componentes/ActionDialog";
+import ConfirmDeleteDialog from "../../../compartido/componentes/ConfirmDeleteDialog";
+import { useAuth } from "../../../compartido/contextos/AuthContext";
+import { friendlyError, notifyError, notifySuccess } from "../../../compartido/utilidades/notifications";
 import {
   markupOf, marginOf, methodLabels, money, parseAmount, percent, previewPrice, withTax,
-} from "../../lib/pricing";
+} from "../compartido/pricing";
 import {
   getItemSaleSettings, getPriceSettings, listCompanyUnits, removePriceListItem, savePriceList,
   savePriceSettings, saveItemSaleSettings, setPriceListItem,
-} from "../../services/priceLists";
+} from "./priceLists";
 
 const emptyList = {
   name: "", currency: "ARS", valid_from: "", valid_to: "", is_default: false,

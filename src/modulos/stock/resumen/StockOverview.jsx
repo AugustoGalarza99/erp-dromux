@@ -12,14 +12,14 @@ import {
   Truck,
   Warehouse,
 } from "lucide-react";
-import { useAuth } from "../../contexts/AuthContext";
-import { supabase } from "../../lib/supabase";
-import { friendlyError } from "../../lib/notifications";
-import { listItems } from "../../services/items";
-import { listDeliveryNotes } from "../../services/deliveryNotes";
-import { listStockMovements } from "../../services/stock";
-import { formatQuantity } from "./stockNumber";
-import StockShell from "./StockShell";
+import { useAuth } from "../../../compartido/contextos/AuthContext";
+import { supabase } from "../../../compartido/utilidades/supabase";
+import { friendlyError } from "../../../compartido/utilidades/notifications";
+import { listItems } from "../items/items";
+import { listDeliveryNotes } from "../remitos/deliveryNotes";
+import { listStockMovements } from "../compartido/stock";
+import { formatQuantity } from "../compartido/stockNumber";
+import StockShell from "../compartido/StockShell";
 
 const movementKinds = {
   receipt: ["Entrada", ArrowDownToLine],

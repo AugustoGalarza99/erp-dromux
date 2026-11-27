@@ -1,18 +1,18 @@
 import { useEffect, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowDownToLine, X } from 'lucide-react';
-import { useAuth } from '../../contexts/AuthContext';
-import ConfirmDeleteDialog from '../../components/ConfirmDeleteDialog';
-import ListPager, { usePagedList } from '../../components/ListPager';
-import { notifyError, notifySuccess, friendlyError } from '../../lib/notifications';
-import { hasInternalId, lotLabel } from '../../lib/display';
-import { findStockWarehouses, listStockLots } from '../../services/stock';
-import { subtractQuantity } from '../inventory/stockNumber';
+import { useAuth } from '../../../compartido/contextos/AuthContext';
+import ConfirmDeleteDialog from '../../../compartido/componentes/ConfirmDeleteDialog';
+import ListPager, { usePagedList } from '../../../compartido/componentes/ListPager';
+import { notifyError, notifySuccess, friendlyError } from '../../../compartido/utilidades/notifications';
+import { hasInternalId, lotLabel } from '../../../compartido/utilidades/display';
+import { findStockWarehouses, listStockLots } from '../../stock/compartido/stock';
+import { subtractQuantity } from '../../stock/compartido/stockNumber';
 import {
   getReceivableLines,
   listPurchaseReceipts,
   receivePurchaseOrder,
-} from '../../services/purchases';
+} from '../compartido/purchases';
 
 function LotFields({ companyId, userId, line, value, update, disabled }) {
   const query = useQuery({

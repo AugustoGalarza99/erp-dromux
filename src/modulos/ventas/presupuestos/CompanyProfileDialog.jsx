@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import ActionDialog from "../../components/ActionDialog";
-import { useAuth } from "../../contexts/AuthContext";
-import { readLogo } from "../../lib/logo";
-import { friendlyError, notifyError, notifySuccess } from "../../lib/notifications";
-import { getCompanyProfile, saveCompanyProfile } from "../../services/quotes";
+import ActionDialog from "../../../compartido/componentes/ActionDialog";
+import { useAuth } from "../../../compartido/contextos/AuthContext";
+import { readLogo } from "../../../compartido/utilidades/logo";
+import { friendlyError, notifyError, notifySuccess } from "../../../compartido/utilidades/notifications";
+import { getCompanyProfile, saveCompanyProfile } from "./quotes";
 
 const empty = { legal_name: "", tax_id: "", tax_condition: "", address: "", phone: "", email: "", website: "", logo_data: "" };
 

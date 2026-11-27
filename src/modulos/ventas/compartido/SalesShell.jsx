@@ -1,5 +1,5 @@
 import { ContactRound, FileText, LayoutGrid, ShoppingBag, Tags, Wallet } from "lucide-react";
-import ModuleShell from "../../components/ModuleShell";
+import ModuleShell from "../../../compartido/componentes/ModuleShell";
 import "./salesModule.css";
 
 /*

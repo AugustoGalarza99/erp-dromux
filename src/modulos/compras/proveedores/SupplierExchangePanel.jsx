@@ -1,21 +1,21 @@
 import { Link } from "react-router-dom";
-import CleanupButton from "../../components/CleanupButton";
+import CleanupButton from "../../../compartido/componentes/CleanupButton";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
-import ActionDialog from "../../components/ActionDialog";
-import { useAuth } from "../../contexts/AuthContext";
+import ActionDialog from "../../../compartido/componentes/ActionDialog";
+import { useAuth } from "../../../compartido/contextos/AuthContext";
 import {
   addExchangeRate,
   addExchangeType,
   listExchangeRates,
-} from "../../services/costing";
+} from "../../../compartido/servicios/costing";
 import {
   notifySuccess,
   notifyError,
   friendlyError,
-} from "../../lib/notifications";
-import { argentinaToday, money, refreshSupplierData } from "./supplierUi";
+} from "../../../compartido/utilidades/notifications";
+import { argentinaToday, money, refreshSupplierData } from "../compartido/supplierUi";
 
 export default function SupplierExchangePanel({ types }) {
   const { activeCompanyId, user, can } = useAuth();

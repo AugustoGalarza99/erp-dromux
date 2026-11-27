@@ -7,9 +7,9 @@ import {
   useState,
 } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { supabase } from '../lib/supabase';
-import { queryClient } from '../lib/queryClient';
-import { beginSupportSession, getMemberships, getPermissions } from '../services/core';
+import { supabase } from '../utilidades/supabase';
+import { queryClient } from '../utilidades/queryClient';
+import { beginSupportSession, getMemberships, getPermissions } from '../servicios/core';
 
 const AuthContext = createContext(null);
 

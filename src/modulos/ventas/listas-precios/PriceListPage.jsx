@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Search, Tags } from 'lucide-react';
-import { useAuth } from '../../contexts/AuthContext';
-import { useDebouncedValue } from '../../hooks/useDebouncedValue';
-import { friendlyError } from '../../lib/notifications';
-import { listPublicPrices } from '../../services/sales';
+import { useAuth } from '../../../compartido/contextos/AuthContext';
+import { useDebouncedValue } from '../../../compartido/hooks/useDebouncedValue';
+import { friendlyError } from '../../../compartido/utilidades/notifications';
+import { listPublicPrices } from '../compartido/sales';
 
 const money = (value) => Number(value).toLocaleString('es-AR', {
   style: 'currency', currency: 'ARS',

@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Boxes, ChevronLeft, ChevronRight, Plus, Search } from 'lucide-react';
-import { useAuth } from '../../contexts/AuthContext';
-import { notifyError, notifySuccess, friendlyError } from '../../lib/notifications';
+import { useAuth } from '../../../compartido/contextos/AuthContext';
+import { notifyError, notifySuccess, friendlyError } from '../../../compartido/utilidades/notifications';
 import {
   listCatalog,
   saveCatalog,
   setCatalogActive,
-} from '../../services/catalogs';
+} from './catalogs';
 import './catalogs.css';
 
 const configurations = {

@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { ArrowRight, LockKeyhole, Mail } from 'lucide-react';
-import { supabase } from '../../lib/supabase';
-import { useAuth } from '../../contexts/AuthContext';
-import { notifyError, notifySuccess } from '../../lib/notifications';
+import { supabase } from '../../compartido/utilidades/supabase';
+import { useAuth } from '../../compartido/contextos/AuthContext';
+import { notifyError, notifySuccess } from '../../compartido/utilidades/notifications';
 
 export default function Login() {
   const { user } = useAuth();

@@ -1,18 +1,18 @@
 import { useEffect, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowDownToLine, ArrowRightLeft, ArrowUpFromLine } from 'lucide-react';
-import ActionDialog from '../../components/ActionDialog';
-import { hasInternalId, lotLabel } from '../../lib/display';
-import { formatQuantity } from './stockNumber';
-import { useAuth } from '../../contexts/AuthContext';
-import { notifyError, notifySuccess, friendlyError } from '../../lib/notifications';
-import { useDebouncedValue } from '../../hooks/useDebouncedValue';
+import ActionDialog from '../../../compartido/componentes/ActionDialog';
+import { hasInternalId, lotLabel } from '../../../compartido/utilidades/display';
+import { formatQuantity } from '../compartido/stockNumber';
+import { useAuth } from '../../../compartido/contextos/AuthContext';
+import { notifyError, notifySuccess, friendlyError } from '../../../compartido/utilidades/notifications';
+import { useDebouncedValue } from '../../../compartido/hooks/useDebouncedValue';
 import {
   findStockItems,
   findStockWarehouses,
   listStockLots,
   postStockOperation,
-} from '../../services/stock';
+} from '../compartido/stock';
 
 const kinds = [
   { value: 'receipt', label: 'Entrada', icon: ArrowDownToLine },

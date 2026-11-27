@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import ConfirmDeleteDialog from '../../components/ConfirmDeleteDialog';
-import { useAuth } from '../../contexts/AuthContext';
-import { friendlyError, notifyError, notifySuccess } from '../../lib/notifications';
-import { adjustSale, getSaleCredit, refundSaleCredit } from '../../services/sales';
-import { formatQuantity } from '../inventory/stockNumber';
+import ConfirmDeleteDialog from '../../../compartido/componentes/ConfirmDeleteDialog';
+import { useAuth } from '../../../compartido/contextos/AuthContext';
+import { friendlyError, notifyError, notifySuccess } from '../../../compartido/utilidades/notifications';
+import { adjustSale, getSaleCredit, refundSaleCredit } from '../compartido/sales';
+import { formatQuantity } from '../../stock/compartido/stockNumber';
 
 const money = (value) => Number(value).toLocaleString('es-AR', {
   style: 'currency', currency: 'ARS',

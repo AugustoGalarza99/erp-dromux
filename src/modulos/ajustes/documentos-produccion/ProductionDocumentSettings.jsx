@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ImagePlus, Save, Trash2 } from 'lucide-react';
-import { useAuth } from '../../contexts/AuthContext';
-import { documentSettings, saveDocumentSettings } from '../../services/productionDocuments';
-import { notifyError, notifySuccess, friendlyError } from '../../lib/notifications';
-import './settings.css';
+import { useAuth } from '../../../compartido/contextos/AuthContext';
+import { documentSettings, saveDocumentSettings } from '../../produccion/compartido/productionDocuments';
+import { notifyError, notifySuccess, friendlyError } from '../../../compartido/utilidades/notifications';
+import '../compartido/settings.css';
 
 const empty = { logo_data: '', document_code: 'OP', revision: '01', labels: '' };
 const MAX_LABELS = 12;

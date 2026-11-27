@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { supabase } from '../../lib/supabase';
-import { useAuth } from '../../contexts/AuthContext';
-import { notifyError, notifySuccess } from '../../lib/notifications';
-import { acceptInvitation } from '../../services/administration';
+import { supabase } from '../../compartido/utilidades/supabase';
+import { useAuth } from '../../compartido/contextos/AuthContext';
+import { notifyError, notifySuccess } from '../../compartido/utilidades/notifications';
+import { acceptInvitation } from '../ajustes/compartido/administration';
 
 export default function AcceptInvite() {
   const { token } = useParams();

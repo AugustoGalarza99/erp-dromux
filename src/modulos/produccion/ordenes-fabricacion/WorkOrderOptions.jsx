@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { useAuth } from '../../contexts/AuthContext';
-import { documentSettings, packagingTypes } from '../../services/productionDocuments';
-import { friendlyError } from '../../lib/notifications';
+import { useAuth } from '../../../compartido/contextos/AuthContext';
+import { documentSettings, packagingTypes } from '../compartido/productionDocuments';
+import { friendlyError } from '../../../compartido/utilidades/notifications';
 
 export default function WorkOrderOptions({ value, onChange }) {
   const { activeCompanyId: company, user } = useAuth();

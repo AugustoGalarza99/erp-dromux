@@ -1,7 +1,7 @@
 import { Link, useLocation } from 'react-router-dom';
 import { ArrowUpRight } from 'lucide-react';
-import { useAuth } from '../../contexts/AuthContext';
-import ModuleGuide from '../../components/ModuleGuide';
+import { useAuth } from '../../compartido/contextos/AuthContext';
+import ModuleGuide from '../../compartido/componentes/ModuleGuide';
 import { guideSections } from './guideContent';
 import './help.css';
 

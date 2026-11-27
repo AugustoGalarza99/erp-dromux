@@ -1,5 +1,5 @@
-import { supabase } from "../lib/supabase";
-import { LINE_LIMITS } from "../lib/limits";
+import { supabase } from "../../../compartido/utilidades/supabase";
+import { LINE_LIMITS } from "../../../compartido/utilidades/limits";
 
 function unwrap({ data, error }) {
   if (error) throw error;

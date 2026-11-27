@@ -2,22 +2,22 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useSearchParams } from 'react-router-dom';
 import { ClipboardList, Download, PackageCheck, Plus, Sparkles, X } from 'lucide-react';
-import { useAuth } from '../../contexts/AuthContext';
-import ConfirmDeleteDialog from '../../components/ConfirmDeleteDialog';
-import ActionDialog from '../../components/ActionDialog';
-import ListPager, { usePagedList } from '../../components/ListPager';
-import { SupplierPagination } from './SupplierCatalog';
-import { notifyError, notifySuccess, friendlyError } from '../../lib/notifications';
-import { useDebouncedValue } from '../../hooks/useDebouncedValue';
-import { dateEs } from '../../lib/display';
-import { LINE_LIMITS } from '../../lib/limits';
+import { useAuth } from '../../../compartido/contextos/AuthContext';
+import ConfirmDeleteDialog from '../../../compartido/componentes/ConfirmDeleteDialog';
+import ActionDialog from '../../../compartido/componentes/ActionDialog';
+import ListPager, { usePagedList } from '../../../compartido/componentes/ListPager';
+import { SupplierPagination } from '../proveedores/SupplierCatalog';
+import { notifyError, notifySuccess, friendlyError } from '../../../compartido/utilidades/notifications';
+import { useDebouncedValue } from '../../../compartido/hooks/useDebouncedValue';
+import { dateEs } from '../../../compartido/utilidades/display';
+import { LINE_LIMITS } from '../../../compartido/utilidades/limits';
 import ReceiveOrderPanel from './ReceiveOrderPanel';
 import PurchaseLinesEditor from './PurchaseLinesEditor';
-import PurchasesShell from './PurchasesShell';
-import { receivedLines } from './PurchasesOverview';
-import { subtractQuantity } from '../inventory/stockNumber';
-import { getReplenishmentForecast } from '../../services/replenishment';
-import { convertPurchaseRequest, getPurchaseRequest } from '../../services/purchaseRequests';
+import PurchasesShell from '../compartido/PurchasesShell';
+import { receivedLines } from '../resumen/PurchasesOverview';
+import { subtractQuantity } from '../../stock/compartido/stockNumber';
+import { getReplenishmentForecast } from '../../produccion/reposicion/replenishment';
+import { convertPurchaseRequest, getPurchaseRequest } from '../pedidos-internos/purchaseRequests';
 import {
   cancelPurchaseOrder,
   createPurchaseOrder,
@@ -27,9 +27,9 @@ import {
   listSuppliers,
   listSupplierQuotes,
   listPurchaseSuppliersForItems,
-} from '../../services/purchases';
-import './suppliers.css';
-import './purchases.css';
+} from '../compartido/purchases';
+import '../compartido/suppliers.css';
+import '../compartido/purchases.css';
 
 const money = (value) => Number(value || 0).toLocaleString('es-AR', {
   style: 'currency', currency: 'ARS', maximumFractionDigits: 2,

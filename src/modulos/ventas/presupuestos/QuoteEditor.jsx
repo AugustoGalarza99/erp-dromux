@@ -1,12 +1,12 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Eye, Plus, Search, Trash2 } from "lucide-react";
-import ActionDialog from "../../components/ActionDialog";
-import ListPager, { usePagedList } from "../../components/ListPager";
-import { useAuth } from "../../contexts/AuthContext";
-import { friendlyError, notifyError, notifySuccess } from "../../lib/notifications";
-import { createQuote, getCompanyProfile, getQuote } from "../../services/quotes";
-import { getDiscountPolicy, getSalePrices, listCustomers, listSaleProducts } from "../../services/sales";
+import ActionDialog from "../../../compartido/componentes/ActionDialog";
+import ListPager, { usePagedList } from "../../../compartido/componentes/ListPager";
+import { useAuth } from "../../../compartido/contextos/AuthContext";
+import { friendlyError, notifyError, notifySuccess } from "../../../compartido/utilidades/notifications";
+import { createQuote, getCompanyProfile, getQuote } from "./quotes";
+import { getDiscountPolicy, getSalePrices, listCustomers, listSaleProducts } from "../compartido/sales";
 
 const money = (value) => Number(value ?? 0).toLocaleString("es-AR", { style: "currency", currency: "ARS" });
 

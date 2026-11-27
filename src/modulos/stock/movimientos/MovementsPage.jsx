@@ -1,4 +1,4 @@
-import { friendlyError } from '../../lib/notifications';
+import { friendlyError } from '../../../compartido/utilidades/notifications';
 import { useEffect, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link, useSearchParams } from 'react-router-dom';
@@ -10,19 +10,19 @@ import {
   ChevronRight,
   X,
 } from 'lucide-react';
-import StockShell from './StockShell';
-import { dateEs, lotLabel } from '../../lib/display';
-import { useAuth } from '../../contexts/AuthContext';
-import { useDebouncedValue } from '../../hooks/useDebouncedValue';
+import StockShell from '../compartido/StockShell';
+import { dateEs, lotLabel } from '../../../compartido/utilidades/display';
+import { useAuth } from '../../../compartido/contextos/AuthContext';
+import { useDebouncedValue } from '../../../compartido/hooks/useDebouncedValue';
 import {
   findStockItems,
   findStockWarehouses,
   listStockMovements,
-} from '../../services/stock';
-import { formatQuantity } from './stockNumber';
-import { findSalesByIds } from '../../services/sales';
+} from '../compartido/stock';
+import { formatQuantity } from '../compartido/stockNumber';
+import { findSalesByIds } from '../../ventas/compartido/sales';
 import { readableMovementNote, saleIdFromNote } from './movementLabels';
-import './stock.css';
+import '../compartido/stock.css';
 
 const labels = {
   receipt: ['Entrada', ArrowDownToLine],

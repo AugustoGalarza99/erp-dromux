@@ -1,7 +1,7 @@
 import { useMemo, useRef, useState } from "react";
 import { Plus, Search, Trash2, Undo2 } from "lucide-react";
-import ListPager, { usePagedList } from "../../components/ListPager";
-import { itemTypeLabels } from "../inventory/itemTypes";
+import ListPager, { usePagedList } from "../../../compartido/componentes/ListPager";
+import { itemTypeLabels } from "../../stock/items/itemTypes";
 
 const normalize = (text) =>
   String(text ?? "")

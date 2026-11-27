@@ -1,4 +1,4 @@
-import { supabase } from "../lib/supabase";
+import { supabase } from "../utilidades/supabase";
 
 function unwrap({ data, error }) {
   if (error) throw error;

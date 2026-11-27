@@ -1,16 +1,16 @@
-import CleanupButton from "../../components/CleanupButton";
+import CleanupButton from "../../../compartido/componentes/CleanupButton";
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { CalendarDays, ClipboardList, Plus, XCircle } from "lucide-react";
-import { useAuth } from "../../contexts/AuthContext";
-import ConfirmDeleteDialog from "../../components/ConfirmDeleteDialog";
+import { useAuth } from "../../../compartido/contextos/AuthContext";
+import ConfirmDeleteDialog from "../../../compartido/componentes/ConfirmDeleteDialog";
 import {
   notifyError,
   notifySuccess,
   friendlyError,
-} from "../../lib/notifications";
-import { formatQuantity } from "../inventory/stockNumber";
+} from "../../../compartido/utilidades/notifications";
+import { formatQuantity } from "../../stock/compartido/stockNumber";
 import {
   cancelProductionPlan,
   checkManufacturingAvailability,
@@ -20,10 +20,10 @@ import {
   listProductionJobs,
   listProductionPlans,
   listProductionWarehouses,
-} from "../../services/production";
-import ProductionShell from "./ProductionShell";
-import ListPager, { usePagedList } from "../../components/ListPager";
-import "./production.css";
+} from "../compartido/production";
+import ProductionShell from "../compartido/ProductionShell";
+import ListPager, { usePagedList } from "../../../compartido/componentes/ListPager";
+import "../compartido/production.css";
 
 const money = (value) =>
   Number(value).toLocaleString("es-AR", { minimumFractionDigits: 2 });

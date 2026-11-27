@@ -30,6 +30,17 @@ ERP multiempresa para pymes de fabricación en Argentina/LATAM. Producción y st
 - Nunca incluir `service_role`, contraseñas o tokens en frontend, Git, memoria o logs. Las variables VITE_* se publican al cliente.
 - Cache por usuario/empresa/permisos; limpiar al salir o cambiar empresa. Realtime filtrado, autorizado y con limpieza de suscripciones.
 
+## Nombres, orden y datos (reglas del propietario, 26/11/2026)
+- Español en lo posible en carpetas, archivos, componentes, variables y funciones del dominio, y en Supabase (tablas, columnas, funciones, valores guardados y permisos). Ejemplo: `materia_prima`, no `raw_material`. En identificadores, sin tildes ni ñ y con `_` en la base. Quedan en inglés solo los nombres impuestos por herramientas (`src`, `public`, `id`, prefijo `use` de los hooks, esquema `auth`, palabras de React/Supabase).
+- Todo lo nuevo nace en español. Lo existente se renombra por etapas acordadas, cambiando base y frontend juntos, con migración, deshacer, comprobaciones y pruebas; nunca dejar un nombre a medias.
+- Carpetas por módulo y submódulo: `src/modulos/<modulo>/<submodulo>/` (ej.: `produccion/formulas`, `produccion/ordenes-fabricacion`, `produccion/planificacion`), con sus pantallas, servicios y estilos juntos. Lo compartido va en `src/compartido/`.
+- Supabase legible: nombres en español, agrupados por módulo, y unificar tablas cuando sea una relación uno a uno o un simple ajuste (ej.: módulos activos por empresa como `jsonb` en la tabla de empresas, aplicado también en el backend). No unificar historiales ni movimientos, ni cuando se pierda integridad, permisos o rendimiento.
+- Eliminar tablas solo con evidencia de que no se usan (frontend, funciones, políticas, triggers y relaciones); vacía no significa sin uso. Requiere respaldo y autorización específica.
+- Cargas masivas: las altas que puedan ser muchas ofrecen importación desde Excel con plantilla, vista previa, errores por fila y sin duplicar por reintento.
+- Todo registro que se pueda borrar sin romper historial tiene botón para eliminar (con confirmación); si tiene historial, archivar y explicar por qué.
+- Opus para analizar y planificar; Sonnet para ejecutar.
+- Registro de la base (`supabase/base_nueva/`): cada agregado o corrección es un archivo numerado en `cambios/` con deshacer y comprobaciones; nunca cambios sueltos en el editor. Tras aplicarlo: regenerar `registro/`, comparar huellas con la base real y anotarlo en `registro/BITACORA.md`. Para ubicar una tabla o función, leer `registro/` antes que los SQL.
+
 ## Autonomía y entornos
 - Avanzar con lectura, cambios locales reversibles, pruebas y migraciones preparadas. No pedir aprobación para cada archivo.
 - No modificar la base remota, desplegar, instalar plugins no revisados, crear recursos con costo ni destruir datos sin autorización específica para ese entorno.

@@ -2,15 +2,15 @@ import { useEffect, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Eye, Lock, Plus, RotateCcw, Save, Search, ShieldCheck, Users } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
-import { notifyError, notifySuccess, friendlyError } from '../../lib/notifications';
+import { useAuth } from '../../../compartido/contextos/AuthContext';
+import { notifyError, notifySuccess, friendlyError } from '../../../compartido/utilidades/notifications';
 import {
   listMembers, listRoles, listRolePermissions, listPermissionCatalog, saveRole,
-} from '../../services/administration';
+} from '../compartido/administration';
 import PermissionsGrid from './PermissionsGrid';
 import AccessHistory from './AccessHistory';
 import { ROLE_TEMPLATES, applyTemplate } from './roleTemplates';
-import './settings.css';
+import '../compartido/settings.css';
 
 // Clave estable de una lista de permisos, para saber si hay cambios sin guardar.
 const keyOf = (list) => [...list].map((p) => `${p.resource}:${p.action}`).sort().join('|');

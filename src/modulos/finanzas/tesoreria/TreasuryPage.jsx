@@ -1,15 +1,15 @@
 import { useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useAuth } from '../../contexts/AuthContext';
-import ConfirmDeleteDialog from '../../components/ConfirmDeleteDialog';
-import { notifyError, notifySuccess } from '../../lib/notifications';
-import { listPurchaseOrders } from '../../services/purchases';
+import { useAuth } from '../../../compartido/contextos/AuthContext';
+import ConfirmDeleteDialog from '../../../compartido/componentes/ConfirmDeleteDialog';
+import { notifyError, notifySuccess } from '../../../compartido/utilidades/notifications';
+import { listPurchaseOrders } from '../../compras/compartido/purchases';
 import {
   assignSalePayment, createTreasuryAccount, getTreasuryBalances,
   listTreasuryEntries, listUnassignedPayments, postTreasuryEntry,
-} from '../../services/treasury';
-import { readableMovementNote } from '../inventory/movementLabels';
-import './financeExtra.css';
+} from './treasury';
+import { readableMovementNote } from '../../stock/movimientos/movementLabels';
+import '../compartido/financeExtra.css';
 
 const ars = (value) => Number(value).toLocaleString('es-AR', {
   style: 'currency', currency: 'ARS',

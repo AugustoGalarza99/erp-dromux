@@ -1,11 +1,11 @@
 import { useMemo, useRef, useState } from "react";
 import { AlertTriangle, ArrowDownToLine, ArrowUpFromLine } from "lucide-react";
-import ActionDialog from "../../components/ActionDialog";
-import ListPager, { usePagedList } from "../../components/ListPager";
-import { notifyError, notifySuccess } from "../../lib/notifications";
-import { lotLabel } from "../../lib/display";
-import { finishProductionJobAdjusted } from "../../services/production";
-import { formatQuantity } from "../inventory/stockNumber";
+import ActionDialog from "../../../compartido/componentes/ActionDialog";
+import ListPager, { usePagedList } from "../../../compartido/componentes/ListPager";
+import { notifyError, notifySuccess } from "../../../compartido/utilidades/notifications";
+import { lotLabel } from "../../../compartido/utilidades/display";
+import { finishProductionJobAdjusted } from "../compartido/production";
+import { formatQuantity } from "../../stock/compartido/stockNumber";
 import "./finishJob.css";
 
 /*

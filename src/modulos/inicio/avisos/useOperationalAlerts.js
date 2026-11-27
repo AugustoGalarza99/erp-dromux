@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
-import { useAuth } from '../../contexts/AuthContext';
-import { listOperationalAlerts, listReadAlerts } from '../../services/operational';
+import { useAuth } from '../../../compartido/contextos/AuthContext';
+import { listOperationalAlerts, listReadAlerts } from './operational';
 
 export function useOperationalAlerts() {
   const { activeCompanyId, user } = useAuth();

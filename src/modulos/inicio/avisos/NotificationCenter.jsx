@@ -2,9 +2,9 @@ import { useEffect, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { Bell, Check, CircleAlert, RefreshCw } from 'lucide-react';
-import { useAuth } from '../../contexts/AuthContext';
-import { notifyError, notifySuccess, friendlyError } from '../../lib/notifications';
-import { markOperationalAlertRead } from '../../services/operational';
+import { useAuth } from '../../../compartido/contextos/AuthContext';
+import { notifyError, notifySuccess, friendlyError } from '../../../compartido/utilidades/notifications';
+import { markOperationalAlertRead } from './operational';
 import { useOperationalAlerts } from './useOperationalAlerts';
 import './operations.css';
 

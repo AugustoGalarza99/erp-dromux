@@ -1,21 +1,21 @@
-import CleanupButton from "../../components/CleanupButton";
+import CleanupButton from "../../../compartido/componentes/CleanupButton";
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Factory, Plus, Truck } from "lucide-react";
-import ActionDialog from "../../components/ActionDialog";
-import { listDeliveryNotes } from "../../services/deliveryNotes";
-import { useAuth } from "../../contexts/AuthContext";
+import ActionDialog from "../../../compartido/componentes/ActionDialog";
+import { listDeliveryNotes } from "../../stock/remitos/deliveryNotes";
+import { useAuth } from "../../../compartido/contextos/AuthContext";
 import {
   notifyError,
   notifySuccess,
   friendlyError,
-} from "../../lib/notifications";
-import { formatQuantity } from "../inventory/stockNumber";
-import { lotLabel } from "../../lib/display";
-import ProductionShell from "./ProductionShell";
-import ListPager, { usePagedList } from "../../components/ListPager";
-import { listStockLots } from "../../services/stock";
+} from "../../../compartido/utilidades/notifications";
+import { formatQuantity } from "../../stock/compartido/stockNumber";
+import { lotLabel } from "../../../compartido/utilidades/display";
+import ProductionShell from "../compartido/ProductionShell";
+import ListPager, { usePagedList } from "../../../compartido/componentes/ListPager";
+import { listStockLots } from "../../stock/compartido/stock";
 import {
   completeProductionNow,
   createProductionJob,
@@ -27,14 +27,14 @@ import {
   listProductionRuns,
   listProductionReservationLocations,
   listProductionWarehouses,
-} from "../../services/production";
+} from "../compartido/production";
 import ProductionJobCard from "./ProductionJobCard";
 import WorkOrderOptions from "./WorkOrderOptions";
 import {
   createWorkOrder,
   documentSettings,
-} from "../../services/productionDocuments";
-import "./production.css";
+} from "../compartido/productionDocuments";
+import "../compartido/production.css";
 
 const freshInput = (componentId = "") => ({
   rowId: crypto.randomUUID(),

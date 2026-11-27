@@ -1,15 +1,15 @@
 import { useEffect, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Plus, Trash2 } from 'lucide-react';
-import { useAuth } from '../../contexts/AuthContext';
-import { notifyError, notifySuccess, friendlyError } from '../../lib/notifications';
-import { listStockLots } from '../../services/stock';
-import { listProductionBalances } from '../../services/production';
-import { issueDeliveryNote, issueSaleDeliveryNote } from '../../services/deliveryNotes';
-import { formatQuantity } from './stockNumber';
-import { itemTypeLabels } from './itemTypes';
-import { lotLabel } from '../../lib/display';
-import { LINE_LIMITS } from '../../lib/limits';
+import { useAuth } from '../../../compartido/contextos/AuthContext';
+import { notifyError, notifySuccess, friendlyError } from '../../../compartido/utilidades/notifications';
+import { listStockLots } from '../compartido/stock';
+import { listProductionBalances } from '../../produccion/compartido/production';
+import { issueDeliveryNote, issueSaleDeliveryNote } from './deliveryNotes';
+import { formatQuantity } from '../compartido/stockNumber';
+import { itemTypeLabels } from '../items/itemTypes';
+import { lotLabel } from '../../../compartido/utilidades/display';
+import { LINE_LIMITS } from '../../../compartido/utilidades/limits';
 import './deliveryNotes.css';
 
 const newLine = (itemId = '', quantity = '', warehouseId = '', lotCode = '') => ({

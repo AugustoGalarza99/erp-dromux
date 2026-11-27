@@ -1,30 +1,30 @@
-import CleanupButton from "../../components/CleanupButton";
+import CleanupButton from "../../../compartido/componentes/CleanupButton";
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useSearchParams } from "react-router-dom";
 import { FileDown, Plus, RotateCcw } from "lucide-react";
-import ActionDialog from "../../components/ActionDialog";
-import { useAuth } from "../../contexts/AuthContext";
+import ActionDialog from "../../../compartido/componentes/ActionDialog";
+import { useAuth } from "../../../compartido/contextos/AuthContext";
 import {
   friendlyError,
   notifyError,
   notifySuccess,
-} from "../../lib/notifications";
+} from "../../../compartido/utilidades/notifications";
 import {
   listDeliveryNotes,
   listDeliveryItems,
   voidDeliveryNote,
-} from "../../services/deliveryNotes";
+} from "./deliveryNotes";
 import {
   listProductionJobs,
   listProductionReservationLocations,
   listProductionWarehouses,
-} from "../../services/production";
-import { formatQuantity } from "./stockNumber";
-import { listSales } from "../../services/sales";
+} from "../../produccion/compartido/production";
+import { formatQuantity } from "../compartido/stockNumber";
+import { listSales } from "../../ventas/compartido/sales";
 import DeliveryNoteComposer from "./DeliveryNoteComposer";
-import StockShell from "./StockShell";
-import { lotLabel } from "../../lib/display";
+import StockShell from "../compartido/StockShell";
+import { lotLabel } from "../../../compartido/utilidades/display";
 import "./deliveryNotes.css";
 
 const kinds = {

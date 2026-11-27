@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ChevronLeft, ChevronRight, PackageOpen, Pencil, Plus, X } from 'lucide-react';
-import { useAuth } from '../../contexts/AuthContext';
-import { useDebouncedValue } from '../../hooks/useDebouncedValue';
-import { packagingTypes, savePackaging } from '../../services/productionDocuments';
-import { searchItemOptions } from '../../services/items';
-import { notifyError, notifySuccess, friendlyError } from '../../lib/notifications';
-import ActionDialog from '../../components/ActionDialog';
-import ProductionShell from './ProductionShell';
+import { useAuth } from '../../../compartido/contextos/AuthContext';
+import { useDebouncedValue } from '../../../compartido/hooks/useDebouncedValue';
+import { packagingTypes, savePackaging } from '../compartido/productionDocuments';
+import { searchItemOptions } from '../../stock/items/items';
+import { notifyError, notifySuccess, friendlyError } from '../../../compartido/utilidades/notifications';
+import ActionDialog from '../../../compartido/componentes/ActionDialog';
+import ProductionShell from '../compartido/ProductionShell';
 import './packaging.css';
 
 const empty = { id: '', name: '', capacity: '', unit_id: '', active: true };

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Calculator } from "lucide-react";
-import { markupOf, marginOf, money, parseAmount, percent, previewPrice, withTax } from "../../lib/pricing";
+import { markupOf, marginOf, money, parseAmount, percent, previewPrice, withTax } from "../compartido/pricing";
 
 /*
  * Simulador "¿a qué precio vendo?". Solo calcula en pantalla con lo que se escribe: no guarda nada.

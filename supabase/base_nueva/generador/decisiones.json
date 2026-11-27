@@ -1,0 +1,135 @@
+{
+  "funciones_quitadas": ["accept_company_invitation", "company_invitation_list", "create_company_invitation", "revoke_company_invitation"],
+  "variables": {
+    "_todas": {},
+    "post_stock_operation": { "p_kind": "stock_operations.kind" },
+    "adjust_sale": { "p_kind": "sale_adjustments.kind" },
+    "bulk_price_change": { "p_mode": "price_change_requests.kind", "r.method": "price_list_item_pricing.method", "v_method": "price_list_item_pricing.method" },
+    "rebalance_production_reservations": { "v_row.status": "production_jobs.status" },
+    "finish_production_job_adjusted": { "v_kind": "production_job_events.kind" },
+    "issue_delivery_note": { "p_kind": "delivery_notes.kind" },
+    "post_sale_payment": { "p_method": "sale_payments.method" },
+    "post_sale_with_payment": { "p_method": "sale_payments.method", "p_payment_mode": "sale_checkouts.payment_mode" },
+    "create_treasury_account": { "p_kind": "treasury_accounts.kind" },
+    "post_treasury_entry": { "p_kind": "treasury_entries.kind" },
+    "create_purchase_request": { "p_priority": "purchase_requests.priority" },
+    "create_company_role": { "p_code": "roles.code" },
+    "set_company_member": { "v_old_code": "roles.code", "v_new_code": "roles.code" },
+    "update_company_role": { "v_code": "roles.code" },
+    "prepare_item_import": { "v_type": "items.item_type" },
+    "price_compute": { "p_method": "price_list_item_pricing.method" },
+    "set_price_list_item": { "p_method": "price_list_item_pricing.method" },
+    "set_quote_status": { "p_status": "quotes.status", "v_row.status": "quotes.status" },
+    "erp_quotes_page": { "p_status": "quotes.status" }
+  },
+  "literales": {
+    "check_stock_catalog_deactivation": { "items": "-", "warehouses": "-" },
+    "finish_production_job_adjusted": { "return": "production_job_events.kind" },
+    "issue_sale_delivery_note": { "sale": "delivery_notes.kind" },
+    "erp_quotes_page": { "expired": "quotes.status" },
+    "erp_quote_detail": { "expired": "quotes.status" },
+    "get_user_role": { "support": "roles.code" },
+    "snapshot_work_options": { "count": "-" }
+  },
+  "cambios_previos": {
+    "private.prepare_production_document": [
+      ["private.production_job_numbers(company_id,next_number) values(new.company_id,2)", "public.document_counters(company_id,document,next_number) values(new.company_id,'orden_fabricacion',2)"],
+      ["on conflict(company_id) do update set next_number=private.production_job_numbers.next_number+1", "on conflict(company_id,document) do update set next_number=public.document_counters.next_number+1"]
+    ],
+    "public.create_supplier_payment_order": [
+      ["private.supplier_payment_numbers(company_id,next_number) values(p_company,2)", "public.document_counters(company_id,document,next_number) values(p_company,'pago_proveedor',2)"],
+      ["on conflict(company_id) do update set next_number=private.supplier_payment_numbers.next_number+1", "on conflict(company_id,document) do update set next_number=public.document_counters.next_number+1"]
+    ],
+    "public.create_purchase_order": [
+      ["insert into public.purchase_counters(company_id) values (p_company)", "insert into public.document_counters(company_id,document) values (p_company,'orden_compra')"],
+      ["on conflict (company_id) do nothing", "on conflict (company_id,document) do nothing"],
+      ["update public.purchase_counters c", "update public.document_counters c"],
+      ["where c.company_id = p_company\r\n  returning c.next_number - 1 into v_number", "where c.company_id = p_company and c.document = 'orden_compra'\r\n  returning c.next_number - 1 into v_number"]
+    ],
+    "public.create_purchase_request": [
+      ["insert into public.purchase_request_counters(company_id) values (p_company)", "insert into public.document_counters(company_id,document) values (p_company,'pedido_interno')"],
+      ["on conflict (company_id) do nothing", "on conflict (company_id,document) do nothing"],
+      ["update public.purchase_request_counters c", "update public.document_counters c"],
+      ["where c.company_id = p_company\r\n  returning c.next_number - 1 into v_number", "where c.company_id = p_company and c.document = 'pedido_interno'\r\n  returning c.next_number - 1 into v_number"]
+    ],
+    "public.create_quote": [
+      ["insert into public.quote_counters(company_id) values (p_company) on conflict do nothing", "insert into public.document_counters(company_id,document) values (p_company,'presupuesto') on conflict do nothing"],
+      ["update public.quote_counters set", "update public.document_counters set"],
+      ["where company_id = p_company returning next_number - 1 into v_number", "where company_id = p_company and document = 'presupuesto' returning next_number - 1 into v_number"]
+    ],
+    "public.issue_delivery_note": [
+      ["insert into public.delivery_note_counters(company_id) values (p_company)", "insert into public.document_counters(company_id,document) values (p_company,'remito')"],
+      ["update public.delivery_note_counters set", "update public.document_counters set"],
+      ["where company_id = p_company returning next_number - 1 into v_number", "where company_id = p_company and document = 'remito' returning next_number - 1 into v_number"]
+    ],
+    "public.issue_sale_delivery_note": [
+      ["insert into public.delivery_note_counters(company_id) values (p_company)", "insert into public.document_counters(company_id,document) values (p_company,'remito')"],
+      ["update public.delivery_note_counters set", "update public.document_counters set"],
+      ["where company_id = p_company returning next_number - 1 into v_number", "where company_id = p_company and document = 'remito' returning next_number - 1 into v_number"]
+    ],
+    "public.post_sale": [
+      ["insert into public.sale_counters(company_id) values(p_company) on conflict do nothing", "insert into public.document_counters(company_id,document) values(p_company,'venta') on conflict do nothing"],
+      ["update public.sale_counters set", "update public.document_counters set"],
+      ["where company_id=p_company returning next_number-1 into v_number", "where company_id=p_company and document='venta' returning next_number-1 into v_number"]
+    ],
+    "private.sale_resolve_price": [
+      ["select l.price_list_id as id, 1 as ord from public.customer_price_lists l\r\n      where l.company_id = p_company and l.customer_id = p_customer", "select l.price_list_id as id, 1 as ord from public.customers l\r\n      where l.company_id = p_company and l.id = p_customer and l.price_list_id is not null"]
+    ],
+    "public.erp_production_dashboard": [
+      ["(select j.id, j.status, j.due_on, j.note,\r\n        j.planned_quantity, i.name as product_name", "(select j.id as id, j.status as status, j.due_on as due_on, j.note as note,\r\n        j.planned_quantity as planned_quantity, i.name as product_name"]
+    ],
+    "public.supplier_account": [
+      ["select r.id,r.created_at,(r.created_at at time zone 'America/Argentina/Buenos_Aires')::date ledger_date,", "select r.id as id,r.created_at as created_at,(r.created_at at time zone 'America/Argentina/Buenos_Aires')::date as ledger_date,"]
+    ],
+    "public.supplier_adjustment_preview": [
+      ["select i.name,q.unit_price,q.currency_code,", "select i.name as name,q.unit_price as unit_price,q.currency_code as currency_code,"]
+    ],
+    "public.supplier_payable_orders": [
+      ["select o.id,o.number,o.status,round(sum(l.quantity*l.unit_price),2) total,", "select o.id as id,o.number as number,o.status as status,round(sum(l.quantity*l.unit_price),2) as total,"]
+    ],
+    "public.supplier_purchase_statistics": [
+      ["select o.supplier_id,o.supplier_name,l.item_id,pl.item_code,pl.item_name,pl.unit_symbol,", "select o.supplier_id as supplier_id,o.supplier_name as supplier_name,l.item_id as item_id,pl.item_code as item_code,pl.item_name as item_name,pl.unit_symbol as unit_symbol,"],
+      ["l.quantity,l.quantity*l.unit_price amount,r.id receipt_id", "l.quantity as quantity,l.quantity*l.unit_price as amount,r.id as receipt_id"],
+      ["select supplier_id,max(supplier_name) name,sum(amount) amount,", "select supplier_id as supplier_id,max(supplier_name) as name,sum(amount) as amount,"],
+      ["select item_id,max(item_code) code,max(item_name) name,unit_symbol,sum(quantity) quantity,sum(amount) amount", "select item_id as item_id,max(item_code) as code,max(item_name) as name,unit_symbol as unit_symbol,sum(quantity) as quantity,sum(amount) as amount"]
+    ],
+    "public.assign_customer_price_list": [
+      ["delete from public.customer_price_lists where company_id = p_company and customer_id = p_customer", "update public.customers set price_list_id = null where company_id = p_company and id = p_customer"],
+      ["insert into public.customer_price_lists(company_id, customer_id, price_list_id, updated_by)\r\n  values (p_company, p_customer, p_list, auth.uid())\r\n  on conflict (company_id, customer_id) do update set price_list_id = excluded.price_list_id,\r\n    updated_at = clock_timestamp(), updated_by = auth.uid()", "update public.customers set price_list_id = p_list where company_id = p_company and id = p_customer"]
+    ]
+  },
+  "cambios": {
+    "private.quotes_guard": [["- 'status' - 'status_changed_at' - 'status_changed_by'", "- 'estado' - 'estado_cambiado_en' - 'estado_cambiado_por'"]],
+    "private.reject_stock_operation_mutation": [["- 'lot_id'", "- 'lote_id'"]],
+    "private.check_stock_catalog_deactivation": [["tg_table_name = 'items'", "tg_table_name = 'stock_items'"], ["tg_table_name = 'warehouses'", "tg_table_name = 'stock_depositos'"]],
+    "private.guard_archived_recipe": [["when 'production_jobs' then", "when 'produccion_ordenes' then"], ["when 'production_plans' then", "when 'produccion_planes' then"]]
+  },
+  "defectos": {},
+  "columnas_agregadas": {
+    "companies": [
+      "moneda text not null default 'ARS' check (moneda ~ '^[A-Z]{3}$')",
+      "zona_horaria text not null default 'America/Argentina/Cordoba'",
+      "modulos jsonb not null default '{\"stock\": true, \"produccion\": true, \"compras\": false, \"ventas\": false, \"finanzas\": false, \"reportes\": false}'::jsonb check (jsonb_typeof(modulos) = 'object')"
+    ],
+    "customers": ["lista_precio_id uuid"]
+  },
+  "sql_tablas_nuevas": [
+    "create table public.empresas_numeradores (\n  empresa_id uuid not null,\n  documento text not null,\n  proximo_numero bigint not null default 1 check (proximo_numero > 0),\n  constraint empresas_numeradores_pkey primary key (empresa_id, documento)\n);",
+    "alter table public.empresas_numeradores enable row level security;"
+  ],
+  "sql_claves_nuevas_unicas": [],
+  "sql_claves_nuevas_foraneas": [
+    "alter table public.empresas_numeradores add constraint empresas_numeradores_empresa_id_fkey foreign key (empresa_id) references public.empresas(id) on delete cascade;",
+    "alter table public.ventas_clientes add constraint ventas_clientes_lista_precio_fkey foreign key (empresa_id, lista_precio_id) references public.ventas_listas_precios(empresa_id, id);"
+  ],
+  "sql_disparadores_nuevos": [],
+  "politicas_quitadas": ["companies_admin_update"],
+  "sin_permisos_por_columna": ["companies"],
+  "sql_permisos_nuevos": ["revoke all on table public.empresas_numeradores from public, anon, authenticated, service_role;"],
+  "firmas_nuevas": { "private.module_enabled": "private.module_enabled(p_company uuid, p_resource text)" },
+  "permisos_funciones_nuevas": { "private.module_enabled": ["postgres=X/postgres"] },
+  "sql_final": [
+    "drop event trigger if exists ensure_rls;",
+    "create event trigger ensure_rls on ddl_command_end when tag in ('CREATE TABLE', 'CREATE TABLE AS', 'SELECT INTO') execute function public.rls_auto_enable();"
+  ]
+}

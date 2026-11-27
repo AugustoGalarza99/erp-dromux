@@ -33,6 +33,12 @@ Estados: no revisado, inspeccionado, probado, bloqueado. Anotar funciones por fi
 | C-016 | Corrección de costos 035/036 y frontend asociado | Inspeccionado (revisión crítica por subagente + lectura propia); NO aplicado, NO probado | `supabase/035_*.sql`, `036_*.sql`, `services/production.js`, `services/items.js`, `ItemEditor.jsx`, `FormulasPage.jsx`; `npm run build` OK; repo `74786d5` + cambios sin commit | Pendiente: roles admin/compras/operario y dos empresas | Ejecutar según `supabase/reparacion/LEEME.md` |
 | C-017 | Línea base `supabase/linea_base/001_*.sql` | Inspeccionado (conteos coinciden con lo observado); no cargado | 67 tablas, 144 funciones, 74 políticas, 51 triggers; generado desde catálogos remotos en solo lectura | Pendiente: cargar en base vacía y comparar | Elegir entorno de pruebas |
 
+## Filas agregadas 26/11/2026 (reorganización)
+| ID | Área/rutas/objetos | Estado | Evidencia y entorno/commit | Prueba negativa o de negocio | Próximo paso |
+| --- | --- | --- | --- | --- | --- |
+| C-020 | `src/modulos`, `src/compartido` (carpetas) | Probado | Compilado idéntico; 38 rutas con sesión contra base vieja | No aplica | Nombres de archivos en español (etapa 1) |
+| C-021 | Base nueva `nummzswhycklmzbgacnl` (`supabase/base_nueva/`) | Inspeccionado en remoto; probado solo en local | `plpgsql_check` 0 errores, huellas iguales; flujo local 66/66 | Local: operario sin costos, módulo apagado, empresas no editable. Falta: dos empresas y roles en Supabase | Adaptar app, script de roles, revisión crítica |
+
 ## Filas agregadas 24/11/2026
 | ID | Área/rutas/objetos | Estado | Evidencia y entorno/commit | Prueba negativa o de negocio | Próximo paso |
 | --- | --- | --- | --- | --- | --- |

@@ -1,4 +1,4 @@
-import { supabase } from '../lib/supabase';
+import { supabase } from '../../../compartido/utilidades/supabase';
 
 export const catalogs = {
   units: {

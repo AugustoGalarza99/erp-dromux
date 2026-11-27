@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { CornerDownLeft, Lock, Search } from "lucide-react";
-import { useAuth } from "../contexts/AuthContext";
+import { useAuth } from "../contextos/AuthContext";
 import { searchEntries } from "./navConfig";
 
 const normalize = (text) =>

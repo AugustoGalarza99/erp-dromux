@@ -2,16 +2,16 @@ import { useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { AlertTriangle, ArrowUpRight, CheckCircle2, RefreshCw } from 'lucide-react';
-import { useAuth } from '../../contexts/AuthContext';
-import { friendlyError, notifyError, notifySuccess } from '../../lib/notifications';
+import { useAuth } from '../../../compartido/contextos/AuthContext';
+import { friendlyError, notifyError, notifySuccess } from '../../../compartido/utilidades/notifications';
 import {
   checkManufacturingAvailability, listFormulas, listProductionItems,
   listProductionJobs, listProductionReservations, recalculateProductionReservations,
-} from '../../services/production';
-import { formatQuantity } from '../inventory/stockNumber';
-import { lotLabel } from '../../lib/display';
-import ProductionShell from './ProductionShell';
-import ListPager, { usePagedList } from '../../components/ListPager';
+} from '../compartido/production';
+import { formatQuantity } from '../../stock/compartido/stockNumber';
+import { lotLabel } from '../../../compartido/utilidades/display';
+import ProductionShell from '../compartido/ProductionShell';
+import ListPager, { usePagedList } from '../../../compartido/componentes/ListPager';
 import './availability.css';
 
 const validQuantity = (value) => /^\d+(?:\.\d{1,6})?$/.test(String(value))

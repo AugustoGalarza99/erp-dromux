@@ -12,10 +12,10 @@ import {
   X,
   Sparkles,
 } from "lucide-react";
-import { useAuth } from "../contexts/AuthContext";
-import { notifyError, notifySuccess } from "../lib/notifications";
-import ModuleHelp from "../modules/help/ModuleHelp";
-import NotificationCenter from "../modules/operations/NotificationCenter";
+import { useAuth } from "../contextos/AuthContext";
+import { notifyError, notifySuccess } from "../utilidades/notifications";
+import ModuleHelp from "../../modulos/ayuda/ModuleHelp";
+import NotificationCenter from "../../modulos/inicio/avisos/NotificationCenter";
 import ActionDialog from "./ActionDialog";
 import CommandPalette from "./CommandPalette";
 import ViewAsBar from "./ViewAsBar";

@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { KeyRound, UserRound } from 'lucide-react';
-import { useAuth } from '../../contexts/AuthContext';
-import { supabase } from '../../lib/supabase';
-import { friendlyError, notifyError, notifySuccess } from '../../lib/notifications';
+import { useAuth } from '../../../compartido/contextos/AuthContext';
+import { supabase } from '../../../compartido/utilidades/supabase';
+import { friendlyError, notifyError, notifySuccess } from '../../../compartido/utilidades/notifications';
 import './profile.css';
 
 export default function ProfilePage() {

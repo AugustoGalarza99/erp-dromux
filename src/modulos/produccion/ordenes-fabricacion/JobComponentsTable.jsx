@@ -1,8 +1,8 @@
 import { useMemo, useState } from "react";
 import { PackageCheck } from "lucide-react";
-import ListPager, { usePagedList } from "../../components/ListPager";
-import { lotLabel } from "../../lib/display";
-import { formatQuantity } from "../inventory/stockNumber";
+import ListPager, { usePagedList } from "../../../compartido/componentes/ListPager";
+import { lotLabel } from "../../../compartido/utilidades/display";
+import { formatQuantity } from "../../stock/compartido/stockNumber";
 
 const normalize = (text) =>
   String(text ?? "")

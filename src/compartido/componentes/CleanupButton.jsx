@@ -1,14 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 import { Trash2 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { useAuth } from "../contexts/AuthContext";
+import { useAuth } from "../contextos/AuthContext";
 import {
   cleanupPreview,
   cleanupRecord,
   cleanupResources,
   refreshCleanupData,
-} from "../services/cleanup";
-import { notifyError, notifySuccess } from "../lib/notifications";
+} from "../servicios/cleanup";
+import { notifyError, notifySuccess } from "../utilidades/notifications";
 import ConfirmDeleteDialog from "./ConfirmDeleteDialog";
 import "./cleanup.css";
 

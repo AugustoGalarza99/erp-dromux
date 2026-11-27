@@ -2,20 +2,20 @@ import { useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { Plus, ReceiptText, ShoppingBag, Trash2 } from 'lucide-react';
-import { useAuth } from '../../contexts/AuthContext';
-import { notifyError, notifySuccess, friendlyError } from '../../lib/notifications';
-import { formatQuantity } from '../inventory/stockNumber';
-import { lotLabel } from '../../lib/display';
-import { listStockLots } from '../../services/stock';
-import { listProductionBalances, listProductionWarehouses } from '../../services/production';
+import { useAuth } from '../../../compartido/contextos/AuthContext';
+import { notifyError, notifySuccess, friendlyError } from '../../../compartido/utilidades/notifications';
+import { formatQuantity } from '../../stock/compartido/stockNumber';
+import { lotLabel } from '../../../compartido/utilidades/display';
+import { listStockLots } from '../../stock/compartido/stock';
+import { listProductionBalances, listProductionWarehouses } from '../../produccion/compartido/production';
 import {
   getDiscountPolicy, getSalePrices, listCustomers, listSaleProducts, listSales, postSale,
-} from '../../services/sales';
-import { isMissingFunction } from '../../lib/pricing';
-import { getTreasuryBalances } from '../../services/treasury';
+} from '../compartido/sales';
+import { isMissingFunction } from '../compartido/pricing';
+import { getTreasuryBalances } from '../../finanzas/tesoreria/treasury';
 import SaleAdjustmentPanel from './SaleAdjustmentPanel';
-import SalesShell from './SalesShell';
-import './sales.css';
+import SalesShell from '../compartido/SalesShell';
+import '../compartido/sales.css';
 
 const money = (value) => Number(value).toLocaleString('es-AR', {
   minimumFractionDigits: 2,

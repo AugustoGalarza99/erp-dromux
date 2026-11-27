@@ -1,5 +1,5 @@
-import CleanupButton from "../../components/CleanupButton";
-import { friendlyError } from "../../lib/notifications";
+import CleanupButton from "../../../compartido/componentes/CleanupButton";
+import { friendlyError } from "../../../compartido/utilidades/notifications";
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useSearchParams } from "react-router-dom";
@@ -15,10 +15,10 @@ import {
   Warehouse,
   X,
 } from "lucide-react";
-import { useAuth } from "../../contexts/AuthContext";
-import { listItems } from "../../services/items";
-import ItemImport from "./ItemImport";
-import StockShell from "./StockShell";
+import { useAuth } from "../../../compartido/contextos/AuthContext";
+import { listItems } from "./items";
+import ItemImport from "./importacion/ItemImport";
+import StockShell from "../compartido/StockShell";
 import { itemTypeLabels } from "./itemTypes";
 import "./items.css";
 

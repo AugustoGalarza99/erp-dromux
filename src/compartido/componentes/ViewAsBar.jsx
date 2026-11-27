@@ -1,6 +1,6 @@
 import { Eye, LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../contexts/AuthContext";
+import { useAuth } from "../contextos/AuthContext";
 
 /*
  * Barra fija de "Ver como rol". Es solo interfaz: no cambia la sesión ni escribe nada.

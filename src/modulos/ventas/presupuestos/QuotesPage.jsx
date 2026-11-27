@@ -2,16 +2,16 @@ import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
 import { Building2, ChevronLeft, ChevronRight, FileDown, FilePlus2, Search } from "lucide-react";
-import ConfirmDeleteDialog from "../../components/ConfirmDeleteDialog";
-import { useAuth } from "../../contexts/AuthContext";
-import { useDebouncedValue } from "../../hooks/useDebouncedValue";
-import { hasInternalId } from "../../lib/display";
-import { friendlyError, notifyError, notifySuccess } from "../../lib/notifications";
-import { isMissingFunction } from "../../lib/pricing";
-import { getCompanyProfile, getQuote, listQuotes, setQuoteStatus } from "../../services/quotes";
+import ConfirmDeleteDialog from "../../../compartido/componentes/ConfirmDeleteDialog";
+import { useAuth } from "../../../compartido/contextos/AuthContext";
+import { useDebouncedValue } from "../../../compartido/hooks/useDebouncedValue";
+import { hasInternalId } from "../../../compartido/utilidades/display";
+import { friendlyError, notifyError, notifySuccess } from "../../../compartido/utilidades/notifications";
+import { isMissingFunction } from "../compartido/pricing";
+import { getCompanyProfile, getQuote, listQuotes, setQuoteStatus } from "./quotes";
 import CompanyProfileDialog from "./CompanyProfileDialog";
 import QuoteEditor from "./QuoteEditor";
-import SalesShell from "./SalesShell";
+import SalesShell from "../compartido/SalesShell";
 
 const money = (value) => Number(value ?? 0).toLocaleString("es-AR", { style: "currency", currency: "ARS" });
 const dateOnly = (iso) => {

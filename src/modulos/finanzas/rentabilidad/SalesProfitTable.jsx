@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { useAuth } from '../../contexts/AuthContext';
-import { useDebouncedValue } from '../../hooks/useDebouncedValue';
-import { friendlyError } from '../../lib/notifications';
-import { listSalesProfitDetail } from '../../services/costing';
+import { useAuth } from '../../../compartido/contextos/AuthContext';
+import { useDebouncedValue } from '../../../compartido/hooks/useDebouncedValue';
+import { friendlyError } from '../../../compartido/utilidades/notifications';
+import { listSalesProfitDetail } from '../../../compartido/servicios/costing';
 
 const today = () => new Intl.DateTimeFormat('sv-SE', {
   timeZone: 'America/Argentina/Buenos_Aires',

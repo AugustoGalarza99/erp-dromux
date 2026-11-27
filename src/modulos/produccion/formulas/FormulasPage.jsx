@@ -1,28 +1,28 @@
-import CleanupButton from "../../components/CleanupButton";
-import ConfirmDeleteDialog from "../../components/ConfirmDeleteDialog";
-import ListPager, { usePagedList } from "../../components/ListPager";
-import "../../components/cleanup.css";
+import CleanupButton from "../../../compartido/componentes/CleanupButton";
+import ConfirmDeleteDialog from "../../../compartido/componentes/ConfirmDeleteDialog";
+import ListPager, { usePagedList } from "../../../compartido/componentes/ListPager";
+import "../../../compartido/componentes/cleanup.css";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { FlaskConical, Save } from "lucide-react";
-import { useAuth } from "../../contexts/AuthContext";
+import { useAuth } from "../../../compartido/contextos/AuthContext";
 import {
   notifyError,
   notifySuccess,
   friendlyError,
-} from "../../lib/notifications";
+} from "../../../compartido/utilidades/notifications";
 import {
   FORMULA_LINE_LIMIT,
   getFormulaCost,
   listFormulas,
   listProductionItems,
   saveFormula,
-} from "../../services/production";
-import { formatQuantity } from "../inventory/stockNumber";
+} from "../compartido/production";
+import { formatQuantity } from "../../stock/compartido/stockNumber";
 import FormulaLinesEditor from "./FormulaLinesEditor";
-import ProductionShell from "./ProductionShell";
-import "./production.css";
+import ProductionShell from "../compartido/ProductionShell";
+import "../compartido/production.css";
 
 const normalize = (text) =>
   String(text ?? "")

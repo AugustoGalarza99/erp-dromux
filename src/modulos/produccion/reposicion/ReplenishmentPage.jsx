@@ -4,12 +4,12 @@ import { Link } from 'react-router-dom';
 import {
   AlertOctagon, ArrowUpRight, Boxes, CalendarClock, RefreshCw, ShoppingCart, X,
 } from 'lucide-react';
-import { useAuth } from '../../contexts/AuthContext';
-import ListPager, { usePagedList } from '../../components/ListPager';
-import { friendlyError } from '../../lib/notifications';
-import { getReplenishmentForecast } from '../../services/replenishment';
-import { formatQuantity } from '../inventory/stockNumber';
-import ProductionShell from './ProductionShell';
+import { useAuth } from '../../../compartido/contextos/AuthContext';
+import ListPager, { usePagedList } from '../../../compartido/componentes/ListPager';
+import { friendlyError } from '../../../compartido/utilidades/notifications';
+import { getReplenishmentForecast } from './replenishment';
+import { formatQuantity } from '../../stock/compartido/stockNumber';
+import ProductionShell from '../compartido/ProductionShell';
 import './replenishment.css';
 
 const quantity = (value) => formatQuantity(Number(value ?? 0).toFixed(6));

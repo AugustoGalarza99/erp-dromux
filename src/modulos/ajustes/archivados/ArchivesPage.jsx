@@ -2,17 +2,17 @@ import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArchiveRestore, ChevronLeft, ChevronRight, Search } from "lucide-react";
-import { useAuth } from "../../contexts/AuthContext";
-import { useDebouncedValue } from "../../hooks/useDebouncedValue";
+import { useAuth } from "../../../compartido/contextos/AuthContext";
+import { useDebouncedValue } from "../../../compartido/hooks/useDebouncedValue";
 import {
   archivedRecords,
   cleanupResources,
   restoreArchived,
   refreshCleanupData,
-} from "../../services/cleanup";
-import { notifyError, notifySuccess, friendlyError } from "../../lib/notifications";
-import ConfirmDeleteDialog from "../../components/ConfirmDeleteDialog";
-import "./settings.css";
+} from "../../../compartido/servicios/cleanup";
+import { notifyError, notifySuccess, friendlyError } from "../../../compartido/utilidades/notifications";
+import ConfirmDeleteDialog from "../../../compartido/componentes/ConfirmDeleteDialog";
+import "../compartido/settings.css";
 
 const PAGE_SIZE = 25;
 

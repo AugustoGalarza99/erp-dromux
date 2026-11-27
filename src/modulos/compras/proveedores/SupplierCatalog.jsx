@@ -2,11 +2,11 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { ChevronLeft, ChevronRight, Plus, Search, TrendingUp } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
-import { useDebouncedValue } from '../../hooks/useDebouncedValue';
-import { friendlyError } from '../../lib/notifications';
-import { findPurchaseItems, listSupplierCatalog } from '../../services/purchases';
-import { money, typeNames } from './supplierUi';
+import { useAuth } from '../../../compartido/contextos/AuthContext';
+import { useDebouncedValue } from '../../../compartido/hooks/useDebouncedValue';
+import { friendlyError } from '../../../compartido/utilidades/notifications';
+import { findPurchaseItems, listSupplierCatalog } from '../compartido/purchases';
+import { money, typeNames } from '../compartido/supplierUi';
 
 export function SupplierPagination({ page, count, onChange }) {
   const pages = Math.max(1, Math.ceil(Number(count) / 25));

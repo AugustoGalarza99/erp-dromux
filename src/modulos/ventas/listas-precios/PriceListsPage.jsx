@@ -4,19 +4,19 @@ import { useSearchParams } from "react-router-dom";
 import {
   AlertTriangle, ChevronLeft, ChevronRight, FileUp, History, Pencil, Percent, Plus, Search, Settings2, Tags,
 } from "lucide-react";
-import { useAuth } from "../../contexts/AuthContext";
-import { useDebouncedValue } from "../../hooks/useDebouncedValue";
-import { dateEs } from "../../lib/display";
-import { friendlyError } from "../../lib/notifications";
-import { isMissingFunction, money, percent } from "../../lib/pricing";
+import { useAuth } from "../../../compartido/contextos/AuthContext";
+import { useDebouncedValue } from "../../../compartido/hooks/useDebouncedValue";
+import { dateEs } from "../../../compartido/utilidades/display";
+import { friendlyError } from "../../../compartido/utilidades/notifications";
+import { isMissingFunction, money, percent } from "../compartido/pricing";
 import {
   getPriceSettings, listAdminPriceRows, listPriceLists, listPriceRows,
-} from "../../services/priceLists";
+} from "./priceLists";
 import { BulkDialog, HistoryDialog, ImportDialog } from "./PriceBulkDialogs";
 import { ItemPriceDialog, ListFormDialog, SettingsDialog } from "./PriceListDialogs";
 import PriceSimulator from "./PriceSimulator";
 import LegacyPriceList from "./PriceListPage";
-import SalesShell from "./SalesShell";
+import SalesShell from "../compartido/SalesShell";
 
 const SIZES = [25, 50, 100];
 const FILTERS = [

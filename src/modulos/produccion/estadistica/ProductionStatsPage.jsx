@@ -1,15 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { CheckCircle2, ClipboardList, Scale, TrendingDown, TrendingUp, X } from "lucide-react";
-import { useAuth } from "../../contexts/AuthContext";
-import ListPager, { usePagedList } from "../../components/ListPager";
-import { friendlyError } from "../../lib/notifications";
-import { dateEs } from "../../lib/display";
+import { useAuth } from "../../../compartido/contextos/AuthContext";
+import ListPager, { usePagedList } from "../../../compartido/componentes/ListPager";
+import { friendlyError } from "../../../compartido/utilidades/notifications";
+import { dateEs } from "../../../compartido/utilidades/display";
 import {
   getProductionOutputSummary,
   listProductionOutputByProduct,
-} from "../../services/production";
-import ProductionShell from "./ProductionShell";
+} from "../compartido/production";
+import ProductionShell from "../compartido/ProductionShell";
 import "./productionStats.css";
 
 /*

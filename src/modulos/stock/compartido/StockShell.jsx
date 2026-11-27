@@ -7,7 +7,7 @@ import {
   Truck,
   Warehouse,
 } from "lucide-react";
-import { useAuth } from "../../contexts/AuthContext";
+import { useAuth } from "../../../compartido/contextos/AuthContext";
 import "./stock.css";
 
 /*

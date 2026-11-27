@@ -1,0 +1,541 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Dromux ERP · Manual de uso: Stock y Producción</title>
+<style>
+  @page { size: A4; margin: 0; }
+  :root {
+    --ink: #1c2b36; --muted: #5b6b78; --line: #e3eaef; --soft: #f5f8fa;
+    --stock: #2563eb; --prod: #ea6a12; --compras: #7c3aed; --brand: #0b4f6c;
+    --ok: #166534; --warn: #92400e;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body { font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif; color: var(--ink); font-size: 10.4pt; line-height: 1.45; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .page { width: 210mm; height: 297mm; padding: 17mm 17mm 18mm; position: relative; page-break-after: always; overflow: hidden; background: #fff; }
+  .page:last-child { page-break-after: auto; }
+  h1, h2, h3, h4, p { margin: 0; }
+  .foot { position: absolute; left: 17mm; right: 17mm; bottom: 8mm; display: flex; justify-content: space-between; font-size: 8pt; color: var(--muted); border-top: 1px solid var(--line); padding-top: 2.5mm; }
+
+  .cover { padding: 0; background: linear-gradient(160deg, #0b4f6c 0%, #0e6a8a 55%, #1a8aa0 100%); color: #fff; }
+  .cover .inner { padding: 26mm 20mm; height: 100%; display: flex; flex-direction: column; justify-content: space-between; }
+  .logo { display: inline-flex; align-items: center; gap: 10px; font-weight: 700; font-size: 16pt; letter-spacing: .5px; }
+  .logo b { display: inline-grid; place-items: center; width: 38px; height: 38px; border-radius: 10px; background: #fff; color: var(--brand); font-size: 20pt; }
+  .cover h1 { font-size: 34pt; line-height: 1.08; font-weight: 700; margin-top: 8mm; }
+  .cover .lead { font-size: 13pt; max-width: 135mm; margin-top: 7mm; opacity: .95; }
+  .cover ol { margin: 9mm 0 0; padding: 0; list-style: none; font-size: 11pt; columns: 2; column-gap: 10mm; }
+  .cover li { padding: 1.3mm 0; border-bottom: 1px solid rgba(255,255,255,.25); break-inside: avoid; }
+  .cover .meta { font-size: 9.5pt; opacity: .85; display: flex; justify-content: space-between; }
+
+  .eyebrow { text-transform: uppercase; letter-spacing: 1.6px; font-size: 8.4pt; font-weight: 700; color: var(--accent, var(--brand)); }
+  h2 { font-size: 19pt; line-height: 1.15; margin-top: 1.5mm; }
+  .bar { width: 44px; height: 4px; background: var(--accent, var(--brand)); border-radius: 4px; margin: 3.5mm 0 4mm; }
+  .sub { color: var(--muted); margin-bottom: 3mm; }
+  h3 { font-size: 12pt; color: var(--accent, var(--brand)); margin: 4mm 0 1.5mm; }
+
+  .steps { counter-reset: s; list-style: none; padding: 0; margin: 2mm 0; }
+  .steps > li { counter-increment: s; position: relative; padding: 0 0 2.4mm 9mm; }
+  .steps > li::before { content: counter(s); position: absolute; left: 0; top: 0; width: 6.2mm; height: 6.2mm; border-radius: 50%; background: var(--accent, var(--brand)); color: #fff; font-weight: 700; font-size: 9pt; display: grid; place-items: center; }
+  .steps b { color: var(--ink); }
+  .btn { display: inline-block; padding: 0 5px; border: 1px solid var(--line); background: var(--soft); border-radius: 5px; font-size: 9.2pt; font-weight: 600; color: var(--brand); white-space: nowrap; }
+  .menu { font-weight: 600; color: var(--brand); }
+
+  .tip, .warn, .note { border-radius: 10px; padding: 3mm 4mm; margin: 3mm 0; font-size: 9.6pt; border: 1px solid var(--line); border-left: 5px solid var(--brand); background: var(--soft); }
+  .warn { border-left-color: #d97706; background: #fffbeb; }
+  .tip { border-left-color: #16a34a; background: #f0fdf4; }
+  .tip b, .warn b, .note b { display: block; margin-bottom: .5mm; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 9.4pt; margin: 2mm 0; }
+  th { text-align: left; background: var(--accent, var(--brand)); color: #fff; padding: 2mm 2.6mm; font-size: 8.8pt; }
+  td { padding: 2mm 2.6mm; border-bottom: 1px solid var(--line); vertical-align: top; }
+  tr:nth-child(even) td { background: var(--soft); }
+
+  .flow { display: flex; align-items: stretch; gap: 2mm; margin: 4mm 0; }
+  .flow > div { flex: 1; border: 1px solid var(--line); border-top: 4px solid var(--accent, var(--brand)); border-radius: 9px; padding: 2.6mm; font-size: 8.8pt; background: #fff; }
+  .flow > div b { display: block; color: var(--accent, var(--brand)); font-size: 9.6pt; margin-bottom: 1mm; }
+  .flow > span { align-self: center; color: var(--muted); font-size: 12pt; }
+
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 4mm; }
+  .card { border: 1px solid var(--line); border-radius: 10px; padding: 3.4mm 4mm; border-top: 4px solid var(--accent, var(--brand)); }
+  .card h4 { font-size: 10.6pt; color: var(--accent, var(--brand)); margin-bottom: 1mm; }
+  .card p, .card li { font-size: 9.4pt; }
+  .card ul { margin: 1mm 0 0; padding-left: 4.4mm; }
+  ul.c { margin: 1.5mm 0; padding-left: 5mm; } ul.c li { margin: .7mm 0; }
+  .tag { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 8pt; font-weight: 700; }
+  .t-mp { background: #dbeafe; color: #1e40af; } .t-se { background: #fef3c7; color: #92400e; }
+  .t-pt { background: #dcfce7; color: #166534; } .t-in { background: #ede9fe; color: #5b21b6; }
+</style>
+</head>
+<body>
+
+<!-- 1. PORTADA -->
+<section class="page cover">
+  <div class="inner">
+    <div>
+      <div class="logo"><b>D</b> DROMUX ERP</div>
+      <h1>Manual de uso<br>Stock y Producción</h1>
+      <p class="lead">Paso a paso, desde la primera unidad de medida hasta el producto terminado en el depósito. Pensado para que cualquier persona de tu equipo pueda seguirlo sin conocimientos técnicos.</p>
+      <ol>
+        <li>1 · Cómo está organizado</li>
+        <li>2 · Preparar la empresa</li>
+        <li>3 · Tipos de ítem y alta</li>
+        <li>4 · Proveedores y precios</li>
+        <li>5 · Cargar y mover stock</li>
+        <li>6 · Armar una fórmula</li>
+        <li>7 · Costos</li>
+        <li>8 · Antes de fabricar</li>
+        <li>9 · Orden de fabricación</li>
+        <li>10 · Terminar la fabricación</li>
+        <li>11 · Ejemplo completo</li>
+        <li>12 · Compras y recepción</li>
+        <li>13 · Equipo y consejos</li>
+      </ol>
+    </div>
+    <div class="meta">
+      <span>Manual de usuario · Versión de noviembre 2026</span>
+      <span>Los nombres de pantallas son los del menú</span>
+    </div>
+  </div>
+</section>
+
+<!-- 2. ORGANIZACIÓN -->
+<section class="page" style="--accent:var(--brand)">
+  <span class="eyebrow">1 · Cómo está organizado</span>
+  <h2>El camino completo, en una mirada</h2>
+  <div class="bar"></div>
+  <p class="sub">Dromux ERP se usa siempre en el mismo orden. Primero se prepara lo básico (una sola vez), después se cargan los materiales y, recién ahí, se fabrica. Si seguís este orden, el sistema te guía y evita errores.</p>
+
+  <div class="flow">
+    <div style="--accent:#475569"><b>A. Preparar</b>Unidades, categorías, depósitos y envases</div><span>›</span>
+    <div style="--accent:var(--stock)"><b>B. Ítems</b>Dar de alta materiales y productos</div><span>›</span>
+    <div style="--accent:var(--compras)"><b>C. Proveedores</b>Quién vende qué y a qué precio</div><span>›</span>
+    <div style="--accent:var(--stock)"><b>D. Stock</b>Cargar existencias</div>
+  </div>
+  <div class="flow">
+    <div style="--accent:var(--prod)"><b>E. Fórmula</b>Qué lleva cada producto</div><span>›</span>
+    <div style="--accent:var(--prod)"><b>F. ¿Alcanza?</b>Revisar faltantes antes de arrancar</div><span>›</span>
+    <div style="--accent:var(--prod)"><b>G. Orden</b>Crearla, entregar insumos, iniciarla</div><span>›</span>
+    <div style="--accent:var(--prod)"><b>H. Terminar</b>Cargar lo real: entra el producto al stock</div>
+  </div>
+
+  <h3>El menú de la izquierda</h3>
+  <table>
+    <tr><th style="width:30%">Módulo</th><th>Para qué sirve</th></tr>
+    <tr><td><span class="menu">Stock</span></td><td>Ítems (materiales y productos), existencias por depósito, movimientos y remitos de entrega.</td></tr>
+    <tr><td><span class="menu">Producción</span></td><td>Fórmulas, órdenes de fabricación, planificación, ¿alcanza el stock?, reposición, envases y estadística.</td></tr>
+    <tr><td><span class="menu">Compras</span></td><td>Proveedores, pedidos internos, órdenes de compra, recepción de mercadería y cuentas con proveedores.</td></tr>
+    <tr><td><span class="menu">Ajustes</span></td><td>Unidades, categorías, depósitos, usuarios, roles y documentos de producción.</td></tr>
+  </table>
+
+  <div class="note"><b>Candados en el menú</b>Si una pantalla aparece con un candado es porque tu rol no tiene acceso. No es un error: el administrador de tu empresa decide qué ve cada persona. Cada empresa ve únicamente sus propios datos.</div>
+  <div class="tip"><b>Tres reglas que conviene recordar</b>
+    • Todo cambio de stock pide un motivo y queda registrado con tu usuario y la fecha.<br>
+    • Si hacés doble clic o se corta internet, la operación no se repite dos veces.<br>
+    • Lo que ya se registró no se borra: se revierte o se archiva, para que siempre haya historial.</div>
+  <div class="foot"><span>Dromux ERP · Manual de uso</span><span>2</span></div>
+</section>
+
+<!-- 3. PREPARAR LA EMPRESA -->
+<section class="page" style="--accent:#475569">
+  <span class="eyebrow">2 · Preparar la empresa</span>
+  <h2>Unidades, categorías, depósitos y envases</h2>
+  <div class="bar"></div>
+  <p class="sub">Se hace una sola vez al comenzar (y se amplía cuando haga falta). Los nombres los elegís vos, según tu rubro: el sistema no impone ninguno.</p>
+
+  <h3>2.1 Unidades de medida</h3>
+  <p>Ruta: <span class="menu">Ajustes › Unidades</span></p>
+  <ol class="steps">
+    <li>Tocá <span class="btn">Nueva unidad</span>.</li>
+    <li>Completá <b>Código</b> (ej.: <i>kg</i>), <b>Nombre</b> (ej.: <i>Kilogramo</i>), <b>Símbolo</b> y <b>Magnitud</b> (Cantidad, Masa, Volumen, Longitud, Superficie o Tiempo).</li>
+    <li>Guardá. Repetí para cada unidad que uses: kg, litro, metro, unidad, caja, etc.</li>
+  </ol>
+
+  <h3>2.2 Categorías</h3>
+  <p>Ruta: <span class="menu">Ajustes › Categorías</span>. Sirven para agrupar ítems por familia (ej.: «Metales», «Telas», «Aditivos»). Cargá <b>Código</b>, <b>Nombre</b> y, si querés, una descripción.</p>
+
+  <h3>2.3 Depósitos</h3>
+  <p>Ruta: <span class="menu">Ajustes › Depósitos</span>. Un depósito es un lugar donde se guarda mercadería: «Depósito central», «Planta», «Sector frío». Cargá <b>Código</b>, <b>Nombre</b> y <b>Ubicación</b> (opcional). Necesitás al menos uno para poder tener stock.</p>
+
+  <h3>2.4 Envases y presentaciones (opcional)</h3>
+  <p>Ruta: <span class="menu">Producción › Envases y presentaciones</span>. Son las formas en que entregás lo fabricado: bolsa, caja, bidón, pack, rollo. Indicá cómo se llama, cuánto contiene cada envase y en qué unidad. Al terminar una fabricación podrás registrar cuántos envases salieron de cada tipo.</p>
+
+  <h3>2.5 Documentos de producción (opcional)</h3>
+  <p>Ruta: <span class="menu">Ajustes › Documentos de producción</span>. Define cómo se ve la hoja de fabricación en PDF que recibe el operario.</p>
+
+  <div class="tip"><b>Cómo elegir bien las unidades</b>Usá la unidad en que realmente pesás, medís o contás cada cosa. La unidad se define en cada ítem y se respeta en fórmulas, compras y stock: el sistema no convierte kilos en litros por su cuenta.</div>
+  <div class="warn"><b>Antes de pasar al siguiente paso</b>Verificá que tengas: al menos una unidad, un depósito y (si querés ordenar) tus categorías. Sin eso no podés dar de alta ítems con stock.</div>
+  <div class="foot"><span>Dromux ERP · Manual de uso</span><span>3</span></div>
+</section>
+
+<!-- 4. TIPOS DE ÍTEM -->
+<section class="page" style="--accent:var(--stock)">
+  <span class="eyebrow">3 · Ítems</span>
+  <h2>Tipos de ítem y cómo darlos de alta</h2>
+  <div class="bar"></div>
+  <p class="sub">Un «ítem» es cualquier cosa que guardás en el depósito. Cada ítem pertenece a uno de cuatro tipos. Elegir bien el tipo es lo más importante del alta, porque ordena las listas y las fórmulas.</p>
+
+  <table>
+    <tr><th style="width:24%">Tipo</th><th style="width:38%">Qué es</th><th>Ejemplos (varían según el rubro)</th></tr>
+    <tr><td><span class="tag t-mp">Materia prima</span></td><td>Lo que comprás y transformás al fabricar. Siempre necesita un costo.</td><td>Chapa, harina, aceite, tela, resina.</td></tr>
+    <tr><td><span class="tag t-se">Semielaborado</span></td><td>Lo que fabricás vos y después usás para armar otro producto. Tiene su propia fórmula.</td><td>Masa base, pieza cortada, mezcla preparada.</td></tr>
+    <tr><td><span class="tag t-pt">Producto terminado</span></td><td>Lo que vendés o entregás a un cliente. Tiene fórmula.</td><td>El artículo final de tu catálogo.</td></tr>
+    <tr><td><span class="tag t-in">Insumo</span></td><td>Lo que se gasta en la operación y acompaña al producto.</td><td>Envases, etiquetas, guantes, cinta.</td></tr>
+  </table>
+
+  <h3>Alta de un ítem, paso a paso</h3>
+  <p>Ruta: <span class="menu">Stock › Todos los ítems › Nuevo ítem</span> (o desde «Materias primas» / «Productos»).</p>
+  <ol class="steps">
+    <li><b>1. Qué es.</b> Elegí el <b>Tipo de ítem</b>. Escribí el <b>Código interno</b> (único en tu empresa, ej.: <i>MP-001</i>; letras, números, punto y guion) y el <b>Nombre</b>. Podés agregar categoría y descripción.</li>
+    <li><b>2. Cómo se mide y se controla.</b> Elegí la <b>Unidad de medida</b> y el <b>Stock mínimo de referencia</b>: cuando el total baja de ese valor, el ítem aparece «en mínimo» y el sistema sugiere reponer.</li>
+    <li><b>3. Costo de referencia.</b> Cargá el costo por unidad (en pesos o dólares). Es obligatorio para materias primas. Alimenta el costo de las fórmulas.</li>
+    <li>Tocá <span class="btn">Crear ítem</span>. Se abre la ficha del ítem, desde donde después cargás sus existencias.</li>
+  </ol>
+
+  <div class="two">
+    <div class="card" style="--accent:var(--stock)"><h4>Seguir por lotes</h4><p>Activalo cuando necesites trazabilidad (fecha de elaboración, vencimiento). Cada entrada tendrá un lote y las salidas descuentan de un lote concreto.</p></div>
+    <div class="card" style="--accent:var(--stock)"><h4>Stock infinito</h4><p>Para recursos como el agua: permite consumirlos sin cargar existencias. No admite lotes ni mínimo. Cada consumo igual queda registrado.</p></div>
+  </div>
+  <div class="note"><b>Código de barras y descripción</b>Son opcionales. Si más adelante necesitás cambiar un código, no pasa nada con las fórmulas: el sistema identifica cada ítem por su identidad interna, no por el código.</div>
+  <div class="tip"><b>Muchos ítems de una vez</b>Si tenés cientos de materiales, el sistema permite importarlos desde una planilla en lugar de cargarlos uno por uno. Consultá con soporte para preparar el archivo.</div>
+  <div class="foot"><span>Dromux ERP · Manual de uso</span><span>4</span></div>
+</section>
+
+<!-- 5. PROVEEDORES -->
+<section class="page" style="--accent:var(--compras)">
+  <span class="eyebrow">4 · Proveedores y precios</span>
+  <h2>Quién te vende cada material</h2>
+  <div class="bar"></div>
+  <p class="sub">Cargar proveedores sirve para dos cosas: armar órdenes de compra rápido y mantener actualizado el costo de tus materiales.</p>
+
+  <h3>4.1 Dar de alta un proveedor</h3>
+  <p>Ruta: <span class="menu">Compras › Proveedores</span></p>
+  <ol class="steps">
+    <li>Tocá <span class="btn">Nuevo proveedor</span>.</li>
+    <li>Completá el <b>Nombre</b> (obligatorio) y, si querés, <b>¿Qué nos provee?</b> (ej.: «Perfiles y caños»), <b>CUIT</b>, <b>Teléfono</b>, <b>Correo</b> y <b>Entrega habitual (días)</b>. Ese plazo se usa para calcular cuándo conviene reponer.</li>
+    <li>Guardá con <span class="btn">Guardar proveedor</span>.</li>
+  </ol>
+
+  <h3>4.2 Asociarle materiales y precios</h3>
+  <ol class="steps">
+    <li>Abrí el proveedor y tocá <span class="btn">Agregar ítem</span>.</li>
+    <li>Buscá el material (debe existir antes como ítem) y cargá el <b>Precio</b> por unidad y la <b>Moneda</b> (pesos o dólares; si es dólares, elegí el <b>Tipo de dólar</b>).</li>
+    <li>El sistema muestra el <b>costo en pesos</b> resultante. En «Código del proveedor y ajuste adicional» podés sumar el código del proveedor o un ajuste en %.</li>
+    <li>Guardá con <span class="btn">Agregar ítem</span>.</li>
+  </ol>
+  <div class="note"><b>Proveedor principal</b>Cuando un material tiene un proveedor principal, su <b>costo de referencia se actualiza solo</b> cuando editás el precio de ese proveedor. Así los costos de tus fórmulas se mantienen al día sin cargar nada dos veces.</div>
+
+  <h3>4.3 Otras tareas</h3>
+  <ul class="c">
+    <li><b>Editar un precio</b>: dentro del proveedor, tocá el precio del ítem y guardá.</li>
+    <li><b>Desactivar un proveedor</b>: deja de ofrecerse pero conserva su historial.</li>
+    <li><b>Dólares</b>: si usás precios en dólares, el administrador debe tener cargada la cotización vigente del tipo de dólar elegido (Oficial, MEP, etc.).</li>
+  </ul>
+  <div class="warn"><b>Quién ve los precios</b>Los precios de proveedores y los costos son información sensible: solo los ven los roles autorizados (administración y compras). Un operario o vendedor no los ve en pantalla ni en los PDF que descarga.</div>
+  <div class="foot"><span>Dromux ERP · Manual de uso</span><span>5</span></div>
+</section>
+
+<!-- 6. STOCK -->
+<section class="page" style="--accent:var(--stock)">
+  <span class="eyebrow">5 · Stock</span>
+  <h2>Cargar existencias y mover mercadería</h2>
+  <div class="bar"></div>
+  <p class="sub">Un ítem recién creado tiene stock cero. Hay dos formas de que tenga existencias: <b>cargar el stock inicial</b> (lo que ya tenés hoy) o <b>comprar y recibir</b> (ver sección 12).</p>
+
+  <h3>5.1 Registrar una entrada, salida o transferencia</h3>
+  <p>Ruta: <span class="menu">Stock › Stock por depósito</span> (o, desde la ficha del ítem, <span class="btn">Registrar entrada o salida</span>).</p>
+  <ol class="steps">
+    <li>Elegí el tipo de operación: <b>Entrada</b> (suma), <b>Salida</b> (resta) o <b>Transferencia</b> (pasa de un depósito a otro).</li>
+    <li>Buscá el <b>Ítem</b> y elegí el <b>Depósito</b> (en transferencias, también el de destino).</li>
+    <li>Cargá la <b>Cantidad</b>. Si el ítem sigue lotes, indicá el <b>Lote</b> y, en entradas, el vencimiento.</li>
+    <li>Escribí el <b>Motivo</b> (obligatorio), por ejemplo «Stock inicial al comenzar a usar el sistema».</li>
+    <li>Confirmá. Las entradas se registran directo; las salidas y transferencias piden una confirmación extra.</li>
+  </ol>
+  <div class="tip"><b>Stock inicial</b>Hacé el conteo físico, cargá una entrada por ítem con el motivo «Stock inicial» y listo. Desde ese momento las compras, las fabricaciones y las entregas lo mueven solas.</div>
+
+  <h3>5.2 Dónde consultar</h3>
+  <table>
+    <tr><th style="width:28%">Pantalla</th><th>Qué muestra</th></tr>
+    <tr><td><span class="menu">Resumen de stock</span></td><td>Vista general: totales, ítems en mínimo, alertas.</td></tr>
+    <tr><td><span class="menu">Stock por depósito</span></td><td>Cuánto hay de cada ítem en cada depósito y en cada lote. Tiene búsqueda y filtros.</td></tr>
+    <tr><td><span class="menu">Movimientos</span></td><td>Historial completo de entradas, salidas y transferencias: quién, cuándo, cuánto y por qué.</td></tr>
+    <tr><td><span class="menu">Remitos de entrega</span></td><td>Documentos de entrega de materiales o productos, con PDF.</td></tr>
+  </table>
+
+  <h3>5.3 Remitos de entrega</h3>
+  <p>Documentan que se retiró mercadería del depósito (a un cliente, a una persona, a producción). Ruta: <span class="menu">Stock › Remitos de entrega</span>. Elegí los ítems y cantidades, el destinatario, y descargá el PDF. El remito descuenta el stock una sola vez; si te equivocás, se <b>revierte</b> (no se borra) y queda el rastro.</p>
+  <div class="warn"><b>Si una persona no ve estas pantallas</b>Puede tener acceso limitado según su rol. Por ejemplo, un operario suele ver «Stock por depósito» pero no «Movimientos» ni «Remitos». Pedile al administrador que ajuste el rol si lo necesita.</div>
+  <div class="foot"><span>Dromux ERP · Manual de uso</span><span>6</span></div>
+</section>
+
+<!-- 7. FÓRMULA -->
+<section class="page" style="--accent:var(--prod)">
+  <span class="eyebrow">6 · Fórmulas</span>
+  <h2>Armar la fórmula (receta) de un producto</h2>
+  <div class="bar"></div>
+  <p class="sub">La fórmula dice cuánto de cada material necesitás para obtener una cantidad de producto. Se puede hacer para un <b>producto terminado</b> y también para un <b>semielaborado</b>.</p>
+
+  <p>Ruta: <span class="menu">Producción › Fórmulas</span></p>
+  <ol class="steps">
+    <li>En <b>Producto y cantidad base</b>, buscá y elegí el <b>Producto a fabricar</b>.</li>
+    <li>Indicá la <b>Cantidad base de la fórmula</b>: cuánto producto se obtiene con las cantidades que vas a cargar (ej.: 100 kg, o 50 unidades).</li>
+    <li>Si hay mermas o ganancia de volumen, activá <b>¿Aplica factor de rendimiento?</b> y cargá el factor: 0,98 convierte 100 en 98; 1,2 convierte 100 en 120. Mirá la <b>Salida esperada</b> que se calcula sola.</li>
+    <li>En <b>Agregar componente</b>, escribí parte del nombre o código, elegí el material de la lista, poné la <b>Cantidad</b> y tocá <span class="btn">Agregar</span>. Repetí por cada componente.</li>
+    <li>Revisá la tabla: cada fila muestra si es <i>Nuevo</i>, si cambió («Antes 12») o si está sin cambios. Para sacar un componente, tocá el tacho; si te arrepentís, «Recuperar».</li>
+    <li>Tocá <span class="btn">Guardar fórmula</span>. Abajo verás el <b>costo estimado por unidad</b> (solo si tu rol ve costos).</li>
+  </ol>
+
+  <div class="two">
+    <div class="card" style="--accent:var(--prod)"><h4>Qué puede llevar una fórmula</h4>
+      <ul><li><span class="tag t-mp">Materias primas</span></li><li><span class="tag t-se">Semielaborados</span> (que tienen su propia fórmula)</li><li><span class="tag t-in">Insumos</span></li></ul>
+      <p style="margin-top:1mm">Un producto no puede usarse a sí mismo como componente.</p></div>
+    <div class="card" style="--accent:var(--prod)"><h4>Fórmulas grandes</h4>
+      <p>Una fórmula admite cientos de componentes. Cuando hay muchos, aparece un filtro para encontrar uno rápido y la tabla se pagina de a 15 filas.</p></div>
+  </div>
+
+  <div class="note"><b>Versiones: tus órdenes viejas no cambian</b>Cada vez que guardás cambios se crea una versión nueva. Cada orden de fabricación guarda la versión con la que se hizo, así que modificar la fórmula hoy no altera lo que ya se fabricó.</div>
+  <div class="warn"><b>Semielaborado primero</b>Si el producto final lleva un semielaborado, primero creá la fórmula del semielaborado. Si no, el sistema te avisa: «es un semielaborado sin fórmula, creá primero su fórmula».</div>
+  <div class="tip"><b>Ejemplo</b>«Producto X» (base 10 unidades) = 4 kg de Material A + 2 litros de Material B + 10 de Insumo C (etiqueta). Si querés fabricar 50 unidades, el sistema calcula solo 20 kg, 10 litros y 50 etiquetas.</div>
+  <div class="foot"><span>Dromux ERP · Manual de uso</span><span>7</span></div>
+</section>
+
+<!-- 8. COSTOS -->
+<section class="page" style="--accent:#0f8b8d">
+  <span class="eyebrow">7 · Costos</span>
+  <h2>Cómo se calculan y quién los ve</h2>
+  <div class="bar"></div>
+  <p class="sub">El costo de un producto sale de los costos de sus componentes. No hay que calcularlo a mano: se arma solo a partir de lo que cargaste.</p>
+
+  <div class="flow">
+    <div style="--accent:var(--compras)"><b>Precio del proveedor</b>Lo que pagás por unidad de cada material</div><span>›</span>
+    <div style="--accent:var(--stock)"><b>Costo de referencia</b>Queda guardado en cada materia prima</div><span>›</span>
+    <div style="--accent:var(--prod)"><b>Fórmula</b>Suma cantidad × costo de cada componente</div><span>›</span>
+    <div style="--accent:#0f8b8d"><b>Costo del producto</b>Estimado por unidad fabricada</div>
+  </div>
+
+  <h3>Dónde se carga cada costo</h3>
+  <table>
+    <tr><th style="width:30%">Qué</th><th>Dónde y cómo</th></tr>
+    <tr><td>Costo de una materia prima</td><td>En la ficha del ítem, sección <b>3. Costo de referencia</b>: moneda y costo por unidad. Si tiene proveedor principal, se actualiza desde el precio de ese proveedor.</td></tr>
+    <tr><td>Costo en dólares</td><td>Elegí «Dólares» y el <b>Tipo de dólar</b>. El sistema convierte a pesos con la cotización vigente. Si no hay cotización cargada, no te deja guardar.</td></tr>
+    <tr><td>Costo de un semielaborado o producto</td><td>No se carga: se calcula desde su fórmula. Lo ves al guardarla («Costo estimado por unidad»).</td></tr>
+  </table>
+
+  <h3>Quién puede ver los costos</h3>
+  <ul class="c">
+    <li>El <b>administrador</b> ve todos los costos.</li>
+    <li>Otros roles solo los ven si el administrador se los habilita expresamente (por ejemplo, Compras).</li>
+    <li>El <b>operario</b> recibe cantidades y procesos <b>sin costos</b>: ni en pantalla ni en el PDF de la orden.</li>
+    <li>Un vendedor tampoco ve costos de producción.</li>
+  </ul>
+  <div class="note"><b>Precios con IVA</b>Los precios y costos del sistema se manejan sin IVA; el IVA se muestra como dato informativo al vender.</div>
+  <div class="warn"><b>Importante</b>El costo estimado depende de que cada material tenga su costo de referencia al día. Si un proveedor sube los precios, actualizá el precio en <span class="menu">Compras › Proveedores</span> y el costo se refleja en las fórmulas.</div>
+  <div class="tip"><b>Pantalla de «Rentabilidad y precios»</b>Es de administración. Permite comparar costo y ganancia; forma parte del módulo de Finanzas, que se está terminando de validar.</div>
+  <div class="foot"><span>Dromux ERP · Manual de uso</span><span>8</span></div>
+</section>
+
+<!-- 9. ANTES DE FABRICAR -->
+<section class="page" style="--accent:var(--prod)">
+  <span class="eyebrow">8 · Antes de fabricar</span>
+  <h2>¿Alcanza el stock? Planificar y reponer</h2>
+  <div class="bar"></div>
+  <p class="sub">Antes de lanzar una orden conviene saber si hay material suficiente. El sistema lo calcula por vos, descontando lo que ya está reservado para otras órdenes.</p>
+
+  <h3>8.1 ¿Alcanza el stock para fabricar?</h3>
+  <p>Ruta: <span class="menu">Producción › ¿Alcanza el stock para fabricar?</span></p>
+  <ol class="steps">
+    <li>Elegí el <b>producto</b> y escribí la <b>cantidad</b> que querés fabricar.</li>
+    <li>El sistema compara con las existencias y muestra, ítem por ítem, lo que <b>sobra</b> y lo que <b>falta</b>. Primero aparecen los faltantes.</li>
+    <li>Si falta algo, podés pasar a pedirlo (sección 12) y volver a consultar.</li>
+  </ol>
+  <div class="note"><b>Para usar esta pantalla</b>necesitás poder ver «Stock por depósito». Si tu rol no lo tiene, el sistema te lo avisa y el administrador puede habilitarlo.</div>
+
+  <h3>8.2 Planificación</h3>
+  <p>Ruta: <span class="menu">Producción › Planificación</span>. Sirve para preparar cantidades y fechas <b>antes</b> de fabricar. Planificar no descuenta stock. Cuando llegue el momento, desde el plan se crea la orden con un clic.</p>
+
+  <h3>8.3 Pronóstico y reposición</h3>
+  <p>Ruta: <span class="menu">Producción › Pronóstico y reposición</span>. Anticipa faltantes con el consumo registrado, el stock libre, las compras pendientes y los plazos de entrega de cada proveedor. Lo más urgente aparece primero.</p>
+  <p>Desde ahí podés armar una orden de compra con lo que conviene reponer de cada proveedor.</p>
+
+  <h3>8.4 Resumen de producción</h3>
+  <p>Ruta: <span class="menu">Producción › Resumen de producción</span>. Muestra qué se está fabricando, qué falta y qué necesita tu decisión hoy.</p>
+
+  <div class="tip"><b>Estadística</b>En <span class="menu">Producción › Estadística de producción</span> ves cuánto se fabricó por mes, por semana o en el rango que elijas. Se calcula con las órdenes terminadas y la cantidad real obtenida. No incluye costos.</div>
+  <div class="warn"><b>Una orden se puede crear aunque falte material</b>El sistema lo permite (queda «en cola»), pero no podrás entregar insumos que no existen. Lo recomendable es revisar «¿Alcanza?» antes.</div>
+  <div class="foot"><span>Dromux ERP · Manual de uso</span><span>9</span></div>
+</section>
+
+<!-- 10. ORDEN -->
+<section class="page" style="--accent:var(--prod)">
+  <span class="eyebrow">9 · Orden de fabricación</span>
+  <h2>Crear la orden y entregar los insumos</h2>
+  <div class="bar"></div>
+  <div class="flow">
+    <div style="--accent:#64748b"><b>En cola</b>Creada y reservada. No toca stock</div><span>›</span>
+    <div style="--accent:var(--prod)"><b>En proceso</b>Se entregan insumos: acá el stock baja</div><span>›</span>
+    <div style="--accent:#16a34a"><b>Terminada</b>Entra el producto real al depósito</div>
+  </div>
+
+  <h3>9.1 Crear una orden</h3>
+  <p>Ruta: <span class="menu">Producción › Órdenes de fabricación › Nueva orden</span></p>
+  <ol class="steps">
+    <li>Elegí el <b>Producto con fórmula</b>.</li>
+    <li>Cargá la <b>Cantidad teórica a fabricar</b> y el <b>Depósito de destino</b> (donde entrará el producto terminado). Verás la <b>Salida esperada</b>.</li>
+    <li>Completá las <b>Observaciones</b> (obligatorio, mínimo 3 letras).</li>
+    <li>Elegí el modo: <b>Dejar en la cola</b> (la programás; podés poner <b>Fecha prevista</b>) o <b>Ya está fabricado</b> (registrás algo que se hizo y cargás consumos y resultado reales).</li>
+    <li>Tocá <span class="btn">Crear orden</span> (o <span class="btn">Completar fabricación</span>).</li>
+  </ol>
+  <p><b>Reserva:</b> al crear la orden en cola, el sistema reserva el stock libre para que otra orden no lo use, pero todavía no lo descuenta.</p>
+
+  <h3>9.2 Trabajar la orden (botones de su tarjeta)</h3>
+  <table>
+    <tr><th style="width:30%">Botón</th><th>Qué hace</th></tr>
+    <tr><td><span class="btn">Iniciar</span></td><td>Pasa la orden de «en cola» a «en proceso».</td></tr>
+    <tr><td><span class="btn">Remito de entrega</span></td><td>Entrega insumos desde el depósito y emite un remito (quién los recibe). Puede hacerse en varios días. <b>Acá se descuenta el stock.</b></td></tr>
+    <tr><td><span class="btn">Agregar insumo sin remito</span></td><td>Suma un insumo puntual (por ejemplo uno fuera de la fórmula, o elegir un lote concreto) sin documento.</td></tr>
+    <tr><td><span class="btn">Devolver hasta…</span></td><td>En el historial de insumos: si sobró material, se devuelve al stock, al mismo depósito y lote de origen.</td></tr>
+    <tr><td><span class="btn">PDF del proceso</span></td><td>Descarga la hoja de fabricación para el operario (sin costos).</td></tr>
+    <tr><td><span class="btn">Terminar fabricación</span></td><td>Cierra la orden con lo real (ver sección 10).</td></tr>
+    <tr><td><span class="btn">Cancelar orden</span></td><td>Cancela y libera la reserva. Pide confirmación y deja registro.</td></tr>
+  </table>
+  <div class="warn"><b>Insumos sin stock</b>Si intentás entregar más de lo que hay, no se descuenta nada parcialmente: la operación se hace completa o no se hace.</div>
+  <div class="foot"><span>Dromux ERP · Manual de uso</span><span>10</span></div>
+</section>
+
+<!-- 11. TERMINAR -->
+<section class="page" style="--accent:var(--prod)">
+  <span class="eyebrow">10 · Terminar la fabricación</span>
+  <h2>Cargar lo que realmente pasó</h2>
+  <div class="bar"></div>
+  <p class="sub">Al terminar, cargás la cantidad real obtenida y lo realmente usado. El stock <b>solo cambia cuando confirmás</b> en el último paso. Ruta: tarjeta de la orden › <span class="btn">Terminar fabricación</span>.</p>
+
+  <ol class="steps">
+    <li><b>1. Producto obtenido.</b> Escribí la <b>Cantidad real fabricada</b> (te muestra la prevista). Si el producto sigue lotes, el <b>Lote</b> es obligatorio; el vencimiento es opcional. Si salió de más o de menos, el sistema te lo marca en porcentaje: ingresa al stock solamente lo real.</li>
+    <li><b>2. Envases y presentaciones</b> (si definiste alguno). Indicá cuántos envases salieron de cada tipo. Te avisa si queda algo sin envasar. Es un registro: no mueve stock por sí solo.</li>
+    <li><b>3. Insumos realmente usados.</b> Por defecto se da por usado lo entregado. Si usaste más, se descuenta la diferencia; si usaste menos, el sobrante vuelve al stock. Podés buscar un insumo, filtrar «solo los que difieren de la fórmula» o usar los botones <span class="btn">Dar por usado lo entregado</span> / <span class="btn">Igualar todo a lo previsto</span>.</li>
+    <li>Si lo real difiere de la fórmula, completá el <b>Motivo de la diferencia</b> (obligatorio). Ej.: «merma por limpieza».</li>
+    <li>Tocá <span class="btn">Revisar y confirmar</span>.</li>
+    <li><b>Confirmá los movimientos de stock.</b> Revisá el resumen: qué entra, qué sale, de qué depósito. Al confirmar se modifica el stock. Podés <span class="btn">Volver a editar</span> antes de confirmar.</li>
+  </ol>
+
+  <div class="two">
+    <div class="card" style="--accent:#16a34a"><h4>Qué ocurre al confirmar</h4>
+      <ul><li>Entra el producto terminado al depósito de destino.</li><li>Se descuentan los insumos usados de más.</li><li>Vuelven al stock los sobrantes.</li><li>La orden pasa a «Terminada» y suma a la estadística.</li></ul></div>
+    <div class="card" style="--accent:#d97706"><h4>Si algo sale mal</h4>
+      <ul><li><b>Stock insuficiente:</b> el cierre falla completo, no queda nada a medias. El mensaje aparece dentro del mismo diálogo.</li><li><b>Se cortó internet:</b> reintentá. Si la operación ya había llegado, no se repite.</li><li>Tope: 300 ajustes por cierre. Dejá sin cambios los insumos que coinciden con lo entregado.</li></ul></div>
+  </div>
+
+  <div class="tip"><b>Trabajo diario recomendado</b>1) Crear la orden · 2) Entregar insumos con remito · 3) Iniciar · 4) Fabricar · 5) Terminar con lo real · 6) Descargar PDF si hace falta archivarlo. Cuanto más completo sea el cierre, más confiables serán el stock y los costos.</div>
+  <div class="note"><b>Órdenes archivadas</b>Una orden terminada o cancelada puede archivarse para despejar la lista. No se borra: en <span class="menu">Ajustes › Archivados</span> podés verla o restaurarla. La estadística de producción sigue contando las terminadas aunque estén archivadas.</div>
+  <div class="foot"><span>Dromux ERP · Manual de uso</span><span>11</span></div>
+</section>
+
+<!-- 12. EJEMPLO -->
+<section class="page" style="--accent:var(--brand)">
+  <span class="eyebrow">11 · Ejemplo completo</span>
+  <h2>De cero al producto terminado</h2>
+  <div class="bar"></div>
+  <p class="sub">Un recorrido de punta a punta con nombres genéricos. Reemplazá los nombres por los de tu rubro: los pasos son los mismos.</p>
+
+  <table>
+    <tr><th style="width:6%">#</th><th style="width:34%">Qué hacés</th><th>Dónde / cómo</th></tr>
+    <tr><td>1</td><td>Crear unidades y depósito</td><td>Ajustes › Unidades: «kg», «unidad». Ajustes › Depósitos: «Depósito central».</td></tr>
+    <tr><td>2</td><td>Dar de alta <span class="tag t-mp">Material A</span> y <span class="tag t-mp">Material B</span></td><td>Stock › Nuevo ítem · Tipo «Materia prima» · unidad «kg» · costo por kg.</td></tr>
+    <tr><td>3</td><td>Dar de alta <span class="tag t-in">Etiqueta</span></td><td>Tipo «Insumo» · unidad «unidad».</td></tr>
+    <tr><td>4</td><td>Dar de alta <span class="tag t-se">Mezcla base</span></td><td>Tipo «Semielaborado» · unidad «kg».</td></tr>
+    <tr><td>5</td><td>Dar de alta <span class="tag t-pt">Producto X</span></td><td>Tipo «Producto terminado» · unidad «unidad».</td></tr>
+    <tr><td>6</td><td>Cargar el proveedor y sus precios</td><td>Compras › Proveedores › Nuevo proveedor › Agregar ítem (Material A y B con precio).</td></tr>
+    <tr><td>7</td><td>Cargar el stock inicial</td><td>Stock › Stock por depósito › Entrada · motivo «Stock inicial» para A, B y Etiqueta.</td></tr>
+    <tr><td>8</td><td>Fórmula de la <span class="tag t-se">Mezcla base</span></td><td>Producción › Fórmulas · base 100 kg = 60 kg Material A + 40 kg Material B.</td></tr>
+    <tr><td>9</td><td>Fórmula del <span class="tag t-pt">Producto X</span></td><td>Base 10 unidades = 5 kg de Mezcla base + 10 Etiquetas.</td></tr>
+    <tr><td>10</td><td>Verificar que alcance</td><td>Producción › ¿Alcanza el stock? · Producto X × 50 unidades.</td></tr>
+    <tr><td>11</td><td>Fabricar la Mezcla base primero</td><td>Orden de fabricación › Nueva orden › cola › Remito de entrega › Iniciar › Terminar fabricación (cantidad real).</td></tr>
+    <tr><td>12</td><td>Fabricar el Producto X</td><td>Nueva orden · 50 unidades · destino «Depósito central» · entregar insumos · Iniciar · Terminar.</td></tr>
+    <tr><td>13</td><td>Controlar el resultado</td><td>Stock por depósito: el Producto X suma 50. Movimientos: queda cada paso con su usuario.</td></tr>
+  </table>
+  <div class="tip"><b>Qué comprueba este recorrido</b>Que cada material baja una sola vez, que el semielaborado se produce antes de usarse, que lo fabricado entra al stock con su cantidad real y que todo queda registrado para consultar después.</div>
+  <div class="foot"><span>Dromux ERP · Manual de uso</span><span>12</span></div>
+</section>
+
+<!-- 13. COMPRAS -->
+<section class="page" style="--accent:var(--compras)">
+  <span class="eyebrow">12 · Compras y recepción</span>
+  <h2>Pedir, comprar y recibir mercadería</h2>
+  <div class="bar"></div>
+  <p class="sub">Cuando falta material, el circuito normal es: pedido interno → orden de compra → recepción. <b>El stock sube recién al recibir la mercadería</b>, no al crear la orden.</p>
+
+  <div class="flow">
+    <div style="--accent:var(--compras)"><b>Pedido interno</b>Alguien del equipo pide lo que le falta</div><span>›</span>
+    <div style="--accent:var(--compras)"><b>Orden de compra</b>Se arma con el proveedor y se envía en PDF</div><span>›</span>
+    <div style="--accent:var(--stock)"><b>Recepción</b>Llega la mercadería: sube el stock</div><span>›</span>
+    <div style="--accent:#0f8b8d"><b>Pago</b>Se registra en Compras y cuentas</div>
+  </div>
+
+  <h3>12.1 Pedido interno</h3>
+  <p>Ruta: <span class="menu">Compras › Pedidos internos › Nuevo pedido</span>. Indicá qué necesitás y, si querés, para cuándo. Compras lo revisa: lo convierte en orden de compra o lo rechaza con un motivo que ve quien lo pidió.</p>
+
+  <h3>12.2 Orden de compra</h3>
+  <p>Ruta: <span class="menu">Compras › Órdenes de compra › Nueva orden de compra</span></p>
+  <ol class="steps">
+    <li>Elegí el <b>proveedor</b>.</li>
+    <li>Agregá ítems con su cantidad y precio (buscás por nombre o código y tocás <span class="btn">Agregar</span>). Podés sumar «lo que conviene reponer de este proveedor».</li>
+    <li>Revisá y confirmá «¿Crear la orden de compra?». Después podés descargarla en PDF para enviársela al proveedor.</li>
+  </ol>
+
+  <h3>12.3 Recibir mercadería</h3>
+  <ol class="steps">
+    <li>En la orden, tocá <span class="btn">Recibir mercadería</span>.</li>
+    <li>Elegí el <b>Depósito de recepción</b>, marcá los ítems que llegaron y la <b>Cantidad que llegó</b> de cada uno (puede ser parcial). Si sigue lotes, el <b>Lote</b> es obligatorio.</li>
+    <li>Confirmá con «Sí, recibir». Lo recibido se registra una sola vez y sube el stock.</li>
+  </ol>
+  <div class="note"><b>Recepciones parciales</b>Si llega solo una parte, la orden queda con lo pendiente. Más tarde recibís el resto. También podés «cancelar lo que falta recibir».</div>
+
+  <h3>12.4 Pagos a proveedores</h3>
+  <p>Ruta: <span class="menu">Compras › Compras y cuentas</span>. Ves lo comprado en un período y lo que debés a cada proveedor. Registrá la <b>Nueva orden de pago</b> para que se refleje en Tesorería.</p>
+  <div class="warn"><b>Estado actual</b>El módulo de Compras está en validación. Usalo con tu equipo y avisanos cualquier duda o diferencia que encuentres.</div>
+  <div class="foot"><span>Dromux ERP · Manual de uso</span><span>13</span></div>
+</section>
+
+<!-- 14. EQUIPO Y CONSEJOS -->
+<section class="page" style="--accent:#475569">
+  <span class="eyebrow">13 · Equipo y consejos</span>
+  <h2>Personas, permisos y buenas prácticas</h2>
+  <div class="bar"></div>
+
+  <h3>13.1 Usuarios y roles</h3>
+  <p>Solo el administrador de la empresa gestiona esto. Ruta: <span class="menu">Ajustes › Roles y permisos</span> y <span class="menu">Ajustes › Usuarios</span>.</p>
+  <ol class="steps">
+    <li>En <b>Roles</b>, creá un rol por tipo de trabajo (por ejemplo «Operario», «Compras», «Supervisor») y tildá, pantalla por pantalla, qué puede <b>ver</b>, <b>crear</b>, <b>editar</b> o <b>eliminar</b>.</li>
+    <li>En <b>Usuarios</b>, asigná a cada persona su rol. Al cambiarlo, el sistema te pide confirmación y los permisos cambian al instante.</li>
+  </ol>
+  <div class="two">
+    <div class="card" style="--accent:#475569"><h4>Dependencias entre pantallas</h4><p>Algunas pantallas (¿Alcanza?, Reposición, Órdenes) necesitan que el rol también vea «Stock por depósito». Roles te avisa y ofrece agregarlo con un botón.</p></div>
+    <div class="card" style="--accent:#475569"><h4>Escrituras en Stock</h4><p>Crear, editar o eliminar en una pantalla de Stock da acceso completo al módulo, porque todos los movimientos comparten control. Todo queda registrado con el usuario.</p></div>
+  </div>
+  <p style="margin-top:2mm">Un rol típico de <b>Operario</b>: ve Órdenes de fabricación, Stock por depósito y ¿Alcanza?; no ve costos ni Movimientos.</p>
+
+  <h3>13.2 Buenas prácticas</h3>
+  <ul class="c">
+    <li><b>Un código claro por ítem</b> y nombres que se entiendan solos.</li>
+    <li><b>Cargá el motivo con detalle</b>: «Merma por limpieza» ayuda más que «ajuste».</li>
+    <li><b>Cerrá cada orden con lo real</b>, no con lo teórico. Es lo que mantiene el stock confiable.</li>
+    <li><b>Hacé un conteo físico periódico</b> y corregí diferencias con un movimiento y su motivo.</li>
+    <li><b>Mantené al día los precios de proveedores</b> para que los costos reflejen la realidad.</li>
+  </ul>
+
+  <h3>13.3 Preguntas frecuentes</h3>
+  <table>
+    <tr><th style="width:38%">Si te pasa esto…</th><th>Hacé esto</th></tr>
+    <tr><td>No veo una pantalla (candado)</td><td>Tu rol no la incluye. Pedile al administrador que la habilite.</td></tr>
+    <tr><td>No puedo crear una materia prima</td><td>Necesita costo; lo cargan Administración o Compras.</td></tr>
+    <tr><td>«No hay materiales disponibles» al armar la fórmula</td><td>El material no existe, está inactivo o ya está agregado. Revisá en Stock › Todos los ítems.</td></tr>
+    <tr><td>El producto no aparece al crear la orden</td><td>Le falta la fórmula. Crearla en Producción › Fórmulas.</td></tr>
+    <tr><td>Me equivoqué en un movimiento</td><td>No se borra: registrá el movimiento contrario con su motivo, o revertí el remito.</td></tr>
+    <tr><td>Quiero dejar de usar un ítem</td><td>Desactivalo en su ficha. Conserva historial y existencias.</td></tr>
+  </table>
+  <p class="sub" style="margin-top:2mm">¿Dudas? Dentro del sistema hay una <b>Guía de uso</b> y ayudas en cada pantalla. Si algo no coincide con este manual, avisanos con una captura.</p>
+  <div class="foot"><span>Dromux ERP · Manual de uso</span><span>14</span></div>
+</section>
+
+</body>
+</html>

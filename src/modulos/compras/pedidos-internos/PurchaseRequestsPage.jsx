@@ -2,25 +2,25 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { ClipboardPlus, Info, Plus, ShoppingCart, X } from 'lucide-react';
-import { useAuth } from '../../contexts/AuthContext';
-import ActionDialog from '../../components/ActionDialog';
-import ConfirmDeleteDialog from '../../components/ConfirmDeleteDialog';
-import ListPager, { usePagedList } from '../../components/ListPager';
-import { SupplierPagination } from './SupplierCatalog';
-import { useDebouncedValue } from '../../hooks/useDebouncedValue';
-import { dateEs } from '../../lib/display';
-import { LINE_LIMITS } from '../../lib/limits';
-import { friendlyError, notifyError, notifySuccess } from '../../lib/notifications';
+import { useAuth } from '../../../compartido/contextos/AuthContext';
+import ActionDialog from '../../../compartido/componentes/ActionDialog';
+import ConfirmDeleteDialog from '../../../compartido/componentes/ConfirmDeleteDialog';
+import ListPager, { usePagedList } from '../../../compartido/componentes/ListPager';
+import { SupplierPagination } from '../proveedores/SupplierCatalog';
+import { useDebouncedValue } from '../../../compartido/hooks/useDebouncedValue';
+import { dateEs } from '../../../compartido/utilidades/display';
+import { LINE_LIMITS } from '../../../compartido/utilidades/limits';
+import { friendlyError, notifyError, notifySuccess } from '../../../compartido/utilidades/notifications';
 import {
   cancelPurchaseRequest,
   createPurchaseRequest,
   listPurchaseRequests,
   rejectPurchaseRequest,
-} from '../../services/purchaseRequests';
+} from './purchaseRequests';
 import PurchaseRequestLinesEditor from './PurchaseRequestLinesEditor';
-import PurchasesShell from './PurchasesShell';
-import './suppliers.css';
-import './purchases.css';
+import PurchasesShell from '../compartido/PurchasesShell';
+import '../compartido/suppliers.css';
+import '../compartido/purchases.css';
 
 const statusLabels = { pending: 'Pendiente', ordered: 'Ordenado', rejected: 'Rechazado', cancelled: 'Cancelado' };
 const statusSegments = [['pending', 'Pendientes'], ['', 'Todos'], ['ordered', 'Ordenados'],
