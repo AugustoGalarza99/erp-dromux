@@ -195,7 +195,7 @@ export function buildQuotePdf(quote, profile) {
     `Presupuesto válido hasta el ${dateOnly(quote.valid_until)}. Pasada esa fecha los precios pueden modificarse.`,
     "Importes expresados en pesos argentinos.",
     showTax
-      ? "Los precios incluyen el IVA discriminado en el detalle."
+      ? "Los precios unitarios no incluyen IVA; se detalla aparte y está sumado en el total."
       : included ? "Precios finales, IVA incluido." : "Los precios no incluyen IVA.",
   ].filter(Boolean);
   pdf.setFont("helvetica", "bold");

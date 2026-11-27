@@ -15,7 +15,7 @@ _Generado por `documentar.mjs`; no editar a mano._
 | archived_records | Aplicación | p_company uuid, p_resource text, p_search text, p_page integer | finanzas_cotizaciones, stock_items |
 | assign_customer_price_list | Aplicación | p_company uuid, p_customer uuid, p_list uuid | ventas_clientes, ventas_listas_precios |
 | assign_sale_payment_account | Aplicación | p_company uuid, p_payment uuid, p_account uuid | finanzas_cobros_cuentas, finanzas_cuentas, ventas_cobros |
-| begin_support_session | Aplicación | p_company uuid, p_reason text | empresas, private.soporte_accesos, private.soporte_operadores, private.soporte_sesiones |
+| begin_support_session | Aplicación | p_company uuid, p_reason text | empresas, empresas_usuarios, private.soporte_accesos, private.soporte_operadores, private.soporte_sesiones |
 | bulk_price_change | Aplicación | p_company uuid, p_list uuid, p_mode text, p_percent numeric, p_item_ids uuid[], p_apply boolean, p_reason text, p_request_id uuid | stock_items, ventas_listas_items, ventas_listas_items_metodo, ventas_listas_precios, ventas_precios_antiduplicado |
 | cancel_production_job | Aplicación | p_company uuid, p_job uuid, p_reason text | produccion_ordenes, produccion_ordenes_eventos, produccion_planes |
 | cancel_production_plan | Aplicación | p_company uuid, p_plan uuid | produccion_ordenes, produccion_planes |
@@ -40,6 +40,7 @@ _Generado por `documentar.mjs`; no editar a mano._
 | create_quote | Aplicación | p_company uuid, p_customer uuid, p_name text, p_tax_id text, p_email text, p_phone text, p_address text, p_valid_until date, p_note text, p_show_tax boolean, p_lines jsonb, p_request_id uuid, p_tax_included boolean | ajustes_perfiles, empresas, empresas_numeradores, stock_items, stock_unidades, ventas_clientes, ventas_precios_config, ventas_presupuestos, ventas_presupuestos_lineas |
 | create_supplier_payment_order | Aplicación | p_company uuid, p_supplier uuid, p_account uuid, p_on date, p_note text, p_reference text, p_lines jsonb, p_request uuid | compras_ordenes, compras_ordenes_lineas, compras_pagos, compras_pagos_lineas, compras_proveedores, empresas, empresas_numeradores, finanzas_cuentas, finanzas_movimientos |
 | create_treasury_account | Aplicación | p_company uuid, p_name text, p_kind text, p_opening numeric | finanzas_cuentas |
+| end_support_session | Aplicación |  | private.soporte_sesiones |
 | erp_admin_price_list_rows | Aplicación | p_company uuid, p_list uuid, p_search text, p_filter text, p_page integer, p_page_size integer | ventas_listas_precios, ventas_precios_config |
 | erp_admin_product_costs | Aplicación | p_company uuid, p_search text |  |
 | erp_admin_sales_profit_detail | Aplicación | p_company uuid, p_from date, p_to date, p_search text, p_page integer | ventas, ventas_ajustes, ventas_ajustes_lineas, ventas_lineas |
@@ -153,6 +154,7 @@ _Generado por `documentar.mjs`; no editar a mano._
 | private.cleanup_target | Interna | p_resource text |  |
 | private.current_fx_rate | Interna | p_company uuid, p_type uuid | finanzas_cotizaciones |
 | private.erp_production_alerts | Interna | p_company uuid | produccion_ordenes, stock_items, stock_saldos, stock_unidades |
+| private.etiqueta_soporte | Interna | p_company uuid, p_user uuid | empresas_usuarios, private.soporte_accesos |
 | private.get_user_role | Interna | p_company uuid | ajustes_roles, empresas, empresas_usuarios |
 | private.guard_archived_formula_edit | Interna |  |  |
 | private.guard_archived_recipe | Interna |  | produccion_formulas, private.produccion_solicitudes_eliminadas |
@@ -192,6 +194,7 @@ _Generado por `documentar.mjs`; no editar a mano._
 | private.quotes_guard | Interna |  |  |
 | private.rebalance_production_on_event | Interna |  |  |
 | private.rebalance_production_reservations | Interna | p_company uuid | produccion_ordenes, produccion_ordenes_eventos, produccion_ordenes_reservas, produccion_reservas_ubicaciones, stock_depositos, stock_items, stock_lotes, stock_lotes_saldos, stock_saldos |
+| private.rebalance_production_reservations_item | Interna | p_company uuid, p_item uuid | produccion_ordenes, produccion_ordenes_eventos, produccion_ordenes_reservas, produccion_reservas_ubicaciones, stock_depositos, stock_items, stock_lotes, stock_lotes_saldos, stock_saldos |
 | private.refresh_fx_costs | Interna |  | compras_proveedores_items, stock_items |
 | private.refresh_quote_cost | Interna |  |  |
 | private.reject_stock_history_mutation | Interna |  |  |

@@ -41,11 +41,11 @@ export function buildProductionJobPdf(job, items, warehouses, companyName, setti
   }
   pdf.setFont('helvetica', 'bold');
   pdf.setFontSize(11);
-  pdf.text(`ORDEN DE PRODUCCION ${job.number ?? ''}`, 87, 20);
+  pdf.text(`ORDEN DE PRODUCCIÓN ${job.number ?? ''}`, 87, 20);
   pdf.setFont('helvetica', 'normal');
   pdf.setFontSize(8);
   pdf.text(
-    pdf.splitTextToSize(`${code}  |  Revision ${revision}  |  Formula ${job.formula_version}`, 104),
+    pdf.splitTextToSize(`${code}  |  Revisión ${revision}  |  Fórmula ${job.formula_version}`, 104),
     87,
     27,
   );
@@ -77,8 +77,8 @@ export function buildProductionJobPdf(job, items, warehouses, companyName, setti
           : `${quantity(job.actual_quantity)} ${product?.units?.symbol ?? ''}`,
       ],
       [
-        'Deposito',
-        warehouses.find((entry) => entry.id === job.warehouse_id)?.name ?? 'Deposito',
+        'Depósito',
+        warehouses.find((entry) => entry.id === job.warehouse_id)?.name ?? 'Depósito',
         'Estado',
         {
           pendiente: 'En cola',
@@ -146,7 +146,7 @@ export function buildProductionJobPdf(job, items, warehouses, companyName, setti
   autoTable(pdf, {
     ...style,
     startY: pdf.lastAutoTable.finalY + 5,
-    head: [['CONTROL / OBSERVACION', 'RESULTADO / DETALLE']],
+    head: [['CONTROL / OBSERVACIÓN', 'RESULTADO / DETALLE']],
     body: controls,
     margin: { ...margin, bottom: 30 },
     columnStyles: { 0: { cellWidth: 60 }, 1: { cellWidth: 126 } },

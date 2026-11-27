@@ -177,7 +177,7 @@ export default function StockOverview() {
                   </span>
                   <span className="stock-line-text">
                     <strong>{label} · {row.item_code}</strong>
-                    <small>{row.warehouse_code} · {new Date(row.created_at).toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" })}</small>
+                    <small>{row.warehouse_code} · {new Date(row.created_at).toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit", hourCycle: "h23" })}</small>
                   </span>
                   <strong className={positive ? "positive" : "negative"}>
                     {positive ? "+" : "−"}{formatQuantity(String(row.delta).replace("-", ""))} {row.unit_symbol}

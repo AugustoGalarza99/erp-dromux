@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { dateTimeEs } from '../../../compartido/utilidades/display';
 import { useQuery } from '@tanstack/react-query';
 import { History } from 'lucide-react';
 import { useAuth } from '../../../compartido/contextos/AuthContext';
@@ -73,7 +74,7 @@ export default function AccessHistory() {
             <tbody>
               {rows.map((row, index) => (
                 <tr key={`${row.created_at}-${index}`}>
-                  <td data-label="Fecha">{new Date(row.created_at).toLocaleString('es-AR')}</td>
+                  <td data-label="Fecha">{dateTimeEs(row.created_at)}</td>
                   <td data-label="Quién">{row.actor_email ?? 'Usuario'}</td>
                   <td data-label="Qué hizo">
                     {AUDITORIA_ETIQUETA[row.action] ?? row.action}

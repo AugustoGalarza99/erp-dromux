@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { dateTimeEs } from "../../../compartido/utilidades/display";
 import CleanupButton from "../../../compartido/componentes/CleanupButton";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -144,7 +145,7 @@ export default function SupplierExchangePanel({ types }) {
             <strong>{money(entry.ars_per_usd)}</strong>
             <small>
               Vigencia: {entry.effective_on.split("-").reverse().join("/")} ·
-              Guardado: {new Date(entry.created_at).toLocaleString("es-AR")}
+              Guardado: {dateTimeEs(entry.created_at)}
             </small>
           </div>
         ))}

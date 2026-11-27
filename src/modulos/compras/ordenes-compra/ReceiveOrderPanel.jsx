@@ -5,7 +5,7 @@ import { useAuth } from '../../../compartido/contextos/AuthContext';
 import ConfirmDeleteDialog from '../../../compartido/componentes/ConfirmDeleteDialog';
 import ListPager, { usePagedList } from '../../../compartido/componentes/ListPager';
 import { notifyError, notifySuccess, friendlyError } from '../../../compartido/utilidades/notifications';
-import { hasInternalId, lotLabel } from '../../../compartido/utilidades/display';
+import { hasInternalId, lotLabel, dateTimeEs } from '../../../compartido/utilidades/display';
 import { findStockWarehouses, listStockLots } from '../../stock/compartido/stock';
 import { subtractQuantity } from '../../stock/compartido/stockNumber';
 import {
@@ -368,7 +368,7 @@ export default function ReceiveOrderPanel({ order, onClose, onBusyChange }) {
         )}
         {historyPager.visible.map((receipt) => (
           <div className="purchase-receipt-entry" key={receipt.id}>
-            <strong>{new Date(receipt.created_at).toLocaleString('es-AR')}</strong>
+            <strong>{dateTimeEs(receipt.created_at)}</strong>
             <span>{receipt.note}</span>
             {(receipt.lines ?? []).map((line) => (
               <small key={line.line_no}>

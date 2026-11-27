@@ -35,12 +35,21 @@ const supportResources = [
 
 export async function getPermissions(roleId, support = false) {
   if (support) {
-    // El soporte lee todo lo del catálogo salvo los datos sensibles (costos); sin catálogo, la lista fija.
-    const { data } = await supabase
+    // Soporte con sesión abierta: las mismas acciones que un administrador. El servidor lo vuelve a exigir.
+    const catalog = unwrap(await supabase
       .from('ajustes_permisos_catalogo')
-      .select('resource:recurso, module:modulo');
-    const fromCatalog = (data ?? []).filter((entry) => entry.module !== 'sensible').map((entry) => entry.resource);
-    return [...new Set([...supportResources, ...fromCatalog])].map((resource) => ({ resource, action: 'ver' }));
+      .select('resource:recurso, actions:acciones'));
+    const fromCatalog = catalog.flatMap((entry) =>
+      entry.actions.map((action) => ({ resource: entry.resource, action })));
+    const listed = new Set(
+      fromCatalog.filter((entry) => entry.action === 'ver').map((entry) => entry.resource),
+    );
+    return [
+      ...fromCatalog,
+      ...supportResources
+        .filter((resource) => !listed.has(resource))
+        .map((resource) => ({ resource, action: 'ver' })),
+    ];
   }
   return unwrap(await supabase
     .from('ajustes_roles_permisos')
@@ -53,6 +62,10 @@ export async function beginSupportSession(companyId, reason) {
     p_company: companyId,
     p_reason: reason.trim(),
   }));
+}
+
+export async function endSupportSession() {
+  return unwrap(await supabase.rpc('end_support_session'));
 }
 
 export async function createCompany(name) {

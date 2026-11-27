@@ -33,6 +33,7 @@ export default function AdminLayout() {
     user,
     signOut,
     openSupportCompany,
+    isSupport,
   } = useAuth();
   const location = useLocation();
   const where = locate(location.pathname);
@@ -293,13 +294,13 @@ export default function AdminLayout() {
       <ActionDialog
         open={!!supportTarget}
         busy={supportBusy}
-        title="Consultar otra empresa"
-        description={`El acceso a ${supportTarget?.companies.name ?? "esta empresa"} será de solo lectura y quedará registrado.`}
+        title="Entrar como soporte"
+        description={`El acceso a ${supportTarget?.companies.name ?? "esta empresa"} será completo durante 4 horas; el ingreso y el motivo quedan registrados.`}
         onClose={() => setSupportTarget(null)}
       >
         <form onSubmit={switchSupportCompany}>
           <label>
-            Motivo de la consulta
+            Motivo del acceso
             <textarea
               required
               minLength={8}
@@ -322,7 +323,7 @@ export default function AdminLayout() {
               className="button primary"
               disabled={supportBusy || supportReason.trim().length < 8}
             >
-              {supportBusy ? "Ingresando…" : "Ingresar en modo lectura"}
+              {supportBusy ? "Ingresando…" : "Ingresar como soporte"}
             </button>
           </div>
         </form>
@@ -376,8 +377,8 @@ export default function AdminLayout() {
             </nav>
           </div>
           <div className="topbar-right">
-            {role === "soporte" && (
-              <span className="support-readonly">Soporte · solo lectura</span>
+            {isSupport && (
+              <span className="support-readonly">Soporte · acceso completo</span>
             )}
             <button
               type="button"

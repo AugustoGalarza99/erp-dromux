@@ -14,6 +14,13 @@ export function dateEs(value) {
   return match ? `${match[3]}/${match[2]}/${match[1]}` : text;
 }
 
+/*
+ * Fecha y hora en formato de 24 horas. Sin `hourCycle`, algunos navegadores muestran las 13:05
+ * como "01:05" sin aclarar si es de tarde.
+ */
+export const dateTimeEs = (value) =>
+  new Date(value).toLocaleString('es-AR', { hourCycle: 'h23' });
+
 export const hasInternalId = (text) => new RegExp(UUID_SOURCE, 'i').test(String(text ?? ''));
 
 export function stripIds(text) {

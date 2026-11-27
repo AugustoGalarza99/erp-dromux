@@ -1,4 +1,5 @@
-.finance-extra { display: grid; gap: 24px; color: #172b3d; }
+/* minmax(0, 1fr): sin esto una tabla ancha estira toda la página en tablet. */
+.finance-extra { display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; color: #172b3d; }
 .finance-extra-card, .finance-extra-account { background: #fff; border: 1px solid #dae5e9; border-radius: 15px; padding: 24px; box-shadow: 0 8px 30px rgba(17,42,55,.035); }
 .finance-extra-card h2 { margin: 0 0 17px; font-size: 18px; }
 .finance-extra-accounts { display: grid; grid-template-columns: repeat(auto-fit,minmax(220px,1fr)); gap: 15px; }

@@ -14,6 +14,8 @@
 .delivery-status { align-self: start; padding: 5px 9px; border-radius: 30px; background: #e5f5ef; color: #137257; font-size: 11px; font-weight: 800; }
 .delivery-status.anulado { background: #f8eceb; color: #a63840; }
 .delivery-composer { display: grid; gap: 5px; }
+.delivery-lines-summary { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+.delivery-lines-summary p { margin: 0; font-size: 13px; }
 .delivery-composer-tip { padding: 12px 14px; border-left: 3px solid #19958c; border-radius: 8px; background: #f1f9f7; color: #3c5961; font-size: 12px; line-height: 1.6; }
 .delivery-line { position: relative; min-width: 0; margin: 12px 0; padding: 13px; border: 1px solid #dbe8e8; border-radius: 12px; background: #fafdfe; }
 .delivery-line legend { padding: 0 6px; font-size: 12px; font-weight: 800; }

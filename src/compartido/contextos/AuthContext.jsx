@@ -9,12 +9,30 @@ import {
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../utilidades/supabase';
 import { queryClient } from '../utilidades/queryClient';
-import { beginSupportSession, getMemberships, getPermissions } from '../servicios/core';
+import {
+  beginSupportSession,
+  endSupportSession,
+  getMemberships,
+  getPermissions,
+} from '../servicios/core';
 import { moduloHabilitado } from '../valores';
 
 const AuthContext = createContext(null);
 
 export const useAuth = () => useContext(AuthContext);
+
+// La sesión de soporte se recuerda al recargar (solo en esta pestaña). El servidor decide si sigue vigente.
+const supportKey = (userId) => `erp:support:${userId}`;
+const readSupportSession = (userId) => {
+  try {
+    return JSON.parse(sessionStorage.getItem(supportKey(userId))) ?? null;
+  } catch {
+    return null;
+  }
+};
+// Quita lo ya cargado de una empresa cuando cambia lo que se puede ver.
+const dropCompanyData = () =>
+  queryClient.removeQueries({ predicate: (query) => query.queryKey[0] !== 'memberships' });
 
 export function AuthProvider({ children }) {
   const [session, setSession] = useState(null);
@@ -81,13 +99,16 @@ export function AuthProvider({ children }) {
   const memberships = allMemberships.filter((item) => item.company_active);
   const storageKey = user ? `erp:active-company:${user.id}` : null;
   const preferredId = activeId ?? (storageKey ? localStorage.getItem(storageKey) : null);
+  // Sin preferencia, primero una empresa propia: entrar a otra como soporte es una decisión explícita.
   const membership = memberships.find((item) => item.company_id === preferredId)
+    ?? memberships.find((item) => item.roles?.code !== 'soporte')
     ?? memberships[0]
     ?? null;
   const roleId = membership?.role_id;
   const support = membership?.roles?.code === 'soporte';
-  const supportActive = support && supportSession?.companyId === membership?.company_id
-    && supportSession.expiresAt > clock;
+  const currentSupport = supportSession ?? (user ? readSupportSession(user.id) : null);
+  const supportActive = support && currentSupport?.companyId === membership?.company_id
+    && currentSupport.expiresAt > clock;
 
   const permissionsQuery = useQuery({
     queryKey: ['permissions', user?.id, membership?.company_id, roleId],
@@ -98,8 +119,15 @@ export function AuthProvider({ children }) {
   });
 
   const realPermissions = permissionsQuery.data ?? [];
-  const realRole = membership?.roles?.code ?? null;
+  // Con la sesión de soporte abierta se trabaja como administrador (igual que en el servidor).
+  const realRole = supportActive ? 'administrador' : (membership?.roles?.code ?? null);
   const companyId = membership?.company_id ?? null;
+
+  const wasSupportActive = useRef(false);
+  useEffect(() => {
+    if (wasSupportActive.current && !supportActive) dropCompanyData();
+    wasSupportActive.current = supportActive;
+  }, [supportActive]);
 
   // Solo un administrador real puede mirar como otro rol, y solo dentro de la empresa donde empezó.
   const viewAsActive = Boolean(viewAs && realRole === 'administrador' && viewAs.companyId === companyId);
@@ -131,10 +159,24 @@ export function AuthProvider({ children }) {
     queryClient.removeQueries({ predicate: (query) => query.queryKey[0] !== 'memberships' && query.queryKey[0] !== 'permissions' });
   };
 
+  // Termina el acceso de soporte en el servidor. Si falla, vence solo a las 4 horas.
+  const closeSupportSession = async () => {
+    if (!user || !(supportSession ?? readSupportSession(user.id))) return;
+    sessionStorage.removeItem(supportKey(user.id));
+    setSupportSession(null);
+    try {
+      await endSupportSession();
+    } catch (error) {
+      console.warn('No se pudo cerrar la sesión de soporte', error?.message);
+    }
+  };
+
   const setActiveCompanyId = (id) => {
     const target = memberships.find((item) => item.company_id === id);
     if (!target || target.roles?.code === 'soporte') return;
 
+    closeSupportSession();
+    if (support) dropCompanyData();
     setViewAs(null);
     setActiveId(id);
     localStorage.setItem(storageKey, id);
@@ -146,17 +188,22 @@ export function AuthProvider({ children }) {
       throw new Error('Empresa no disponible para soporte.');
     }
     const expires = await beginSupportSession(id, reason);
-    setSupportSession({ companyId: id, expiresAt: Date.parse(expires) });
+    const opened = { companyId: id, expiresAt: Date.parse(expires) };
+    sessionStorage.setItem(supportKey(user.id), JSON.stringify(opened));
+    // Nada de la empresa anterior debe quedar a la vista.
+    dropCompanyData();
+    setSupportSession(opened);
+    setViewAs(null);
     setActiveId(id);
     localStorage.setItem(storageKey, id);
     await queryClient.invalidateQueries();
   };
 
   const signOut = async () => {
+    await closeSupportSession();
     const { error } = await supabase.auth.signOut();
     if (error) throw error;
     queryClient.clear();
-    setSupportSession(null);
     setViewAs(null);
     if (storageKey) localStorage.removeItem(storageKey);
   };
@@ -179,6 +226,7 @@ export function AuthProvider({ children }) {
     stopViewAs,
     supportNeedsAccess: support && !supportActive,
     supportActive,
+    isSupport: support,
     permissions,
     can,
     planIncluye,

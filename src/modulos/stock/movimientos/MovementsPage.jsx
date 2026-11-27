@@ -11,7 +11,7 @@ import {
   X,
 } from 'lucide-react';
 import StockShell from '../compartido/StockShell';
-import { dateEs, lotLabel } from '../../../compartido/utilidades/display';
+import { dateEs, lotLabel, dateTimeEs } from '../../../compartido/utilidades/display';
 import { useAuth } from '../../../compartido/contextos/AuthContext';
 import { useDebouncedValue } from '../../../compartido/hooks/useDebouncedValue';
 import {
@@ -247,7 +247,7 @@ export default function MovementsPage() {
                     : row.item_code}
                 </strong>
                 <small>
-                  {row.warehouse_code} · {new Date(row.created_at).toLocaleString('es-AR')}
+                  {row.warehouse_code} · {dateTimeEs(row.created_at)}
                 </small>
                 <p>{readableMovementNote(row.note, saleNames)}</p>
                 {row.lot_code && (

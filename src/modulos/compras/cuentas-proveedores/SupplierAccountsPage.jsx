@@ -18,6 +18,7 @@ import {
 import { money, argentinaToday } from '../compartido/supplierUi';
 import PurchasesShell from '../compartido/PurchasesShell';
 import './supplierAccounts.css';
+import { dateEs } from '../../../compartido/utilidades/display';
 
 function Pager({ page, count, onChange }) {
   return (
@@ -406,7 +407,7 @@ export default function SupplierAccountsPage() {
                 OP {row.number} · {row.supplier?.name}
               </h2>
               <p>
-                {money(row.amount)} · {row.account?.name} · {row.paid_on} ·{' '}
+                {money(row.amount)} · {row.account?.name} · {dateEs(row.paid_on)} ·{' '}
                 {{ borrador: 'Borrador', pagado: 'Pagada', cancelado: 'Anulada' }[row.status]}
               </p>
               <p>

@@ -26,7 +26,7 @@ import {
   friendlyError,
 } from "../../../compartido/utilidades/notifications";
 import { formatQuantity } from "../../stock/compartido/stockNumber";
-import { lotLabel } from "../../../compartido/utilidades/display";
+import { lotLabel, dateTimeEs } from "../../../compartido/utilidades/display";
 import { listStockLots } from "../../stock/compartido/stock";
 import {
   cancelProductionJob,
@@ -96,6 +96,11 @@ export default function ProductionJobCard({
   const remaining = expected.filter(
     (line) =>
       Number(line.quantity) - (net.get(line.component_id) ?? 0) > 0.000001,
+  ).length;
+  // En una orden terminada ya no falta nada: interesa en qué se apartó de la fórmula.
+  const different = expected.filter(
+    (line) =>
+      Math.abs(Number(line.quantity) - (net.get(line.component_id) ?? 0)) > 0.000001,
   ).length;
   const actualCost = events.reduce(
     (sum, entry) =>
@@ -367,12 +372,14 @@ export default function ProductionJobCard({
               : `${formatQuantity(job.actual_quantity)} ${product?.units?.symbol ?? ""}`}
           </strong>
         </span>
-        <span>
-          Insumos pendientes{" "}
-          <strong>
-            {remaining} de {expected.length}
-          </strong>
-        </span>
+        {job.status !== "cancelada" && (
+          <span>
+            {job.status === "terminada" ? "Insumos con diferencia" : "Insumos pendientes"}{" "}
+            <strong>
+              {job.status === "terminada" ? different : remaining} de {expected.length}
+            </strong>
+          </span>
+        )}
         {(role === "administrador" || can("costos_produccion", "ver")) && (
           <span>
             Costo consumido <strong>$ {money(actualCost)}</strong>
@@ -500,7 +507,7 @@ export default function ProductionJobCard({
               </span>
               <small>
                 {entry.note} ·{" "}
-                {new Date(entry.created_at).toLocaleString("es-AR")}
+                {dateTimeEs(entry.created_at)}
               </small>
               {open > 0.000001 &&
                 job.status === "en_proceso" &&

@@ -294,7 +294,7 @@ Reglas:
 - `CHECK ((cantidad > (0)::numeric))`
 - `CHECK (((venta_id IS NULL) = (venta_linea IS NULL)))`
 - `UNIQUE (empresa_id, evento_produccion_id)`
-- `CHECK (((linea >= 1) AND (linea <= 40)))`
+- `CHECK (((linea >= 1) AND (linea <= 500)))`
 
 Seguridad por filas: stock_remitos_lineas_delivery_lines_read (SELECT).
 

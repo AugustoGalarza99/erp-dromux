@@ -158,8 +158,15 @@ function SuspendedCompany({ companies }) {
 }
 
 function SupportAccess() {
-  const { activeCompany, activeCompanyId, openSupportCompany, signOut } =
-    useAuth();
+  const {
+    activeCompany,
+    activeCompanyId,
+    memberships,
+    setActiveCompanyId,
+    openSupportCompany,
+    signOut,
+  } = useAuth();
+  const ownCompanies = memberships.filter((item) => item.roles?.code !== "soporte");
   const [reason, setReason] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -183,8 +190,8 @@ function SupportAccess() {
       <ShieldCheck size={32} />
       <h1>Acceso de soporte</h1>
       <p>
-        Para consultar {activeCompany?.name}, indicá el motivo. El acceso será
-        de solo lectura y quedará registrado.
+        Para trabajar en {activeCompany?.name}, indicá el motivo. Vas a tener
+        acceso completo durante 4 horas y el ingreso quedará registrado.
       </p>
       <form onSubmit={enter}>
         <label className="sr-only" htmlFor="support-reason">
@@ -211,6 +218,16 @@ function SupportAccess() {
           {error}
         </p>
       )}
+      {ownCompanies.map((item) => (
+        <button
+          key={item.company_id}
+          type="button"
+          className="text-button"
+          onClick={() => setActiveCompanyId(item.company_id)}
+        >
+          Volver a {item.companies.name}
+        </button>
+      ))}
       <button type="button" className="text-button" onClick={signOut}>
         Cerrar sesión
       </button>

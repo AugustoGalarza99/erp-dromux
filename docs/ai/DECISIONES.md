@@ -44,5 +44,14 @@ Decisión del propietario: el operario (Órdenes: ver y editar + Stock por depó
 ## 27/11/2026 — Baja completa de empresa
 Pedido del propietario: eliminar una empresa debe borrar todo lo asociado. Se hará después de las pruebas; diseño en `PLAN_REORGANIZACION.md`.
 
+## 27/11/2026 — D-011 — Alta de empresa y acceso de soporte
+Decisiones del propietario, pendientes de implementar:
+- Crear empresa solo si la cuenta no está vinculada a ninguna; si ya lo está, entra a la suya. La pantalla ya lo hace; falta exigirlo en el servidor (`create_company`).
+- El rol soporte (cuenta personal del propietario) debe tener acceso completo a cualquier empresa para resolver dudas o problemas. Hoy es solo lectura, sin costos, 30 minutos por motivo, y la base nueva no tiene ningún operador cargado. Cambia la regla «limitado» de `CLAUDE.md`; se mantiene que sea explícito (lista de operadores) y auditado (motivo y registro). Requiere diseño con Opus antes de escribirlo.
+- Confirmado luego: una sola cuenta de soporte (la del propietario, que además administra una empresa), para todas las empresas actuales y futuras, sin figurar entre los usuarios ni mostrar su nombre o correo a ninguna empresa. Criterio de implementación: lo que haga queda registrado y la empresa lo ve como «Soporte Dromux» (no se oculta ni se atribuye a otra persona).
+- Sin margen ni tope para el operario (cantidad fabricada y material entregado): un operario que trabaja solo no debe depender del administrador para registrar. Riesgo aceptado; cada registro guarda su autor.
+- Sin segundo factor para la cuenta de soporte por ahora.
+- Sitio: `erp.dromux.com` (provisorio). Supabase gratuito hasta producción plena; luego Pro (sin respaldos automáticos mientras tanto).
+
 ## 25/11/2026 — Stock: ver por pantalla, registrar con módulo completo
 Problema: dar permisos de Stock pantalla por pantalla para registrar movimientos era confuso y exigía separar el control interno de los movimientos. Decisión del propietario: Ver se da por pantalla; Crear/Editar/Eliminar en cualquier pantalla de Stock otorga el módulo completo, porque todos los movimientos quedan registrados con quién los hizo (`actor_id`). Consecuencia: no se hace la migración 048b; Roles aplica la regla solo y la explica en pantalla.

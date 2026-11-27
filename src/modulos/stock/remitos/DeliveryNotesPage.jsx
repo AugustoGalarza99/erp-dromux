@@ -24,7 +24,7 @@ import { formatQuantity } from "../compartido/stockNumber";
 import { listSales } from "../../ventas/compartido/sales";
 import DeliveryNoteComposer from "./DeliveryNoteComposer";
 import StockShell from "../compartido/StockShell";
-import { lotLabel } from "../../../compartido/utilidades/display";
+import { lotLabel, dateTimeEs } from "../../../compartido/utilidades/display";
 import "./deliveryNotes.css";
 
 const kinds = {
@@ -143,13 +143,12 @@ export default function DeliveryNotesPage() {
   async function printNote(note) {
     try {
       const { downloadDeliveryNotePdf } = await import("./deliveryNotePdf");
-      const productName = jobs.find(
-        (job) => job.id === note.job_id,
-      )?.product_id;
+      const job = jobs.find((entry) => entry.id === note.job_id);
+      const product = items.find((item) => item.id === job?.product_id);
       downloadDeliveryNotePdf(
         note,
         activeCompany?.name,
-        items.find((item) => item.id === productName)?.name,
+        job && `OF ${job.number} · ${product?.name ?? "Producto"}`,
       );
     } catch (error) {
       notifyError(error);
@@ -268,7 +267,7 @@ export default function DeliveryNotesPage() {
                 </h2>
                 <p>
                   {kinds[note.kind]} ·{" "}
-                  {new Date(note.created_at).toLocaleString("es-AR")}
+                  {dateTimeEs(note.created_at)}
                 </p>
               </div>
               <span className={`delivery-status ${note.status}`}>

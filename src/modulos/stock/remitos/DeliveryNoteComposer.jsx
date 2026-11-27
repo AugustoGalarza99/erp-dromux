@@ -10,6 +10,8 @@ import { formatQuantity } from '../compartido/stockNumber';
 import { itemTypeLabels } from '../items/itemTypes';
 import { lotLabel } from '../../../compartido/utilidades/display';
 import { LINE_LIMITS } from '../../../compartido/utilidades/limits';
+import ListPager, { usePagedList } from '../../../compartido/componentes/ListPager';
+import '../../../compartido/componentes/moduleShell.css';
 import './deliveryNotes.css';
 
 const newLine = (itemId = '', quantity = '', warehouseId = '', lotCode = '') => ({
@@ -225,7 +227,11 @@ export default function DeliveryNoteComposer({
         : ['materia_prima', 'semielaborado', 'insumo'].includes(item.item_type),
   );
 
+  // Solo se reinicia al cambiar de empresa. Al abrir no, porque borraría las líneas sugeridas.
+  const shownCompany = useRef(activeCompanyId);
   useEffect(() => {
+    if (shownCompany.current === activeCompanyId) return;
+    shownCompany.current = activeCompanyId;
     setRequestId(crypto.randomUUID());
     setLines([newLine()]);
   }, [activeCompanyId]);
@@ -352,6 +358,30 @@ export default function DeliveryNoteComposer({
         })
     : [];
 
+  // Un remito puede tener cientos de líneas: se muestran (y consultan stock) de a una página.
+  const linePager = usePagedList(lines, { pageSize: 10, resetKey: `${kind}|${jobId}` });
+  const reviewPager = usePagedList(reviewRows, { pageSize: 25, resetKey: String(reviewing) });
+  const withoutWarehouse = lines.filter((line) => line.itemId && !line.warehouseId).length;
+
+  const isIncomplete = (line) =>
+    !allowedItems.some((item) => item.id === line.itemId) ||
+    !line.warehouseId ||
+    !validAmount(line.quantity) ||
+    (items.find((item) => item.id === line.itemId)?.track_lots && !line.lotCode);
+
+  function addLine() {
+    setLines((current) => [...current, newLine()]);
+    linePager.setPage(Math.floor(lines.length / linePager.size));
+  }
+
+  function removeWithoutWarehouse() {
+    setLines((current) => {
+      const kept = current.filter((line) => !line.itemId || line.warehouseId);
+      return kept.length ? kept : [newLine()];
+    });
+    linePager.setPage(0);
+  }
+
   async function submit(event) {
     event.preventDefault();
     const saleLines =
@@ -376,17 +406,17 @@ export default function DeliveryNoteComposer({
                 ),
           ))) ||
       (kind === 'produccion' && !selectedJob) ||
-      (kind !== 'venta' &&
-        (!lines.length ||
-          lines.some(
-            (line) =>
-              !allowedItems.some((item) => item.id === line.itemId) ||
-              !line.warehouseId ||
-              !validAmount(line.quantity) ||
-              (items.find((item) => item.id === line.itemId)?.track_lots && !line.lotCode),
-          )))
+      (kind !== 'venta' && (!lines.length || lines.some(isIncomplete)))
     ) {
-      notifyError(new Error('Revisá el destino, ítems, depósitos, lotes y cantidades.'));
+      const first = kind === 'venta' ? -1 : lines.findIndex(isIncomplete);
+      if (first >= 0) linePager.setPage(Math.floor(first / linePager.size));
+      notifyError(
+        new Error(
+          first >= 0
+            ? `Revisá el ítem ${first + 1}: falta elegir ítem, depósito, lote o cantidad.`
+            : 'Revisá el destino, ítems, depósitos, lotes y cantidades.',
+        ),
+      );
       return;
     }
     // Primer envío: se muestra el resumen. Recién el segundo emite el remito.
@@ -469,6 +499,7 @@ export default function DeliveryNoteComposer({
             <option value="">Seleccionar orden activa…</option>
             {activeJobs.map((job) => (
               <option key={job.id} value={job.id}>
+                OF {job.number}{' · '}
                 {items.find((item) => item.id === job.product_id)?.name ?? 'Producto'}
                 {' · '}
                 {new Date(job.created_at).toLocaleDateString('es-AR')}
@@ -569,13 +600,26 @@ export default function DeliveryNoteComposer({
           })}
         </>
       )}
+      {kind !== 'venta' && lines.length > linePager.size && (
+        <div className="delivery-lines-summary">
+          <p>
+            <strong>{lines.length} ítems</strong>
+            {withoutWarehouse > 0 && ` · ${withoutWarehouse} sin depósito elegido`}
+          </p>
+          {withoutWarehouse > 0 && (
+            <button type="button" className="button outline" onClick={removeWithoutWarehouse}>
+              Quitar los {withoutWarehouse} sin depósito
+            </button>
+          )}
+        </div>
+      )}
       {kind !== 'venta' &&
-        lines.map((line, index) => (
+        linePager.visible.map((line, index) => (
           <LineEditor
             key={line.key}
             companyId={activeCompanyId}
             line={line}
-            index={index}
+            index={linePager.page * linePager.size + index}
             items={allowedItems}
             warehouses={warehouses}
             onUpdate={(values) =>
@@ -590,12 +634,15 @@ export default function DeliveryNoteComposer({
             }
           />
         ))}
+      {kind !== 'venta' && lines.length > linePager.size && (
+        <ListPager pager={linePager} noun="ítems" sizes={[10, 25, 50]} />
+      )}
       {kind !== 'venta' && (
         <button
           type="button"
           className="button outline"
           disabled={lines.length >= LINE_LIMITS.deliveryNote}
-          onClick={() => setLines((current) => [...current, newLine()])}
+          onClick={addLine}
         >
           <Plus size={16} /> Agregar ítem
         </button>
@@ -611,7 +658,7 @@ export default function DeliveryNoteComposer({
             {kind === 'venta' && selectedSale && ` · Venta Nº ${selectedSale.number}`}
           </p>
           <ul>
-            {reviewRows.map((row) => (
+            {reviewPager.visible.map((row) => (
               <li key={row.key}>
                 <span>
                   <strong>{row.name}</strong>
@@ -621,6 +668,9 @@ export default function DeliveryNoteComposer({
               </li>
             ))}
           </ul>
+          {reviewRows.length > reviewPager.size && (
+            <ListPager pager={reviewPager} noun="ítems" sizes={[25, 50, 100]} />
+          )}
           <p className="delivery-review-effect">
             {kind === 'venta'
               ? 'No se descuenta stock: la venta ya lo hizo. Solo queda documentada la entrega.'

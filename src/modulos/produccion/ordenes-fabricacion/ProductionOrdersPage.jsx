@@ -12,7 +12,7 @@ import {
   friendlyError,
 } from "../../../compartido/utilidades/notifications";
 import { formatQuantity } from "../../stock/compartido/stockNumber";
-import { lotLabel } from "../../../compartido/utilidades/display";
+import { lotLabel, dateTimeEs } from "../../../compartido/utilidades/display";
 import ProductionShell from "../compartido/ProductionShell";
 import ListPager, { usePagedList } from "../../../compartido/componentes/ListPager";
 import { listStockLots } from "../../stock/compartido/stock";
@@ -945,7 +945,7 @@ export default function ProductionOrdersPage() {
               <strong>{byId[run.product_id]?.name ?? "Producto"}</strong>
               <span>
                 {formatQuantity(run.quantity)} ·{" "}
-                {new Date(run.created_at).toLocaleString("es-AR")}
+                {dateTimeEs(run.created_at)}
               </span>
               {(role === "administrador" || can("costos_produccion", "ver")) && (
                 <small>

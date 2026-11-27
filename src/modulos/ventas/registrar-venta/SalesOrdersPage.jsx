@@ -5,7 +5,7 @@ import { Plus, ReceiptText, ShoppingBag, Trash2 } from 'lucide-react';
 import { useAuth } from '../../../compartido/contextos/AuthContext';
 import { notifyError, notifySuccess, friendlyError } from '../../../compartido/utilidades/notifications';
 import { formatQuantity } from '../../stock/compartido/stockNumber';
-import { lotLabel } from '../../../compartido/utilidades/display';
+import { lotLabel, dateTimeEs } from '../../../compartido/utilidades/display';
 import { listStockLots } from '../../stock/compartido/stock';
 import { listProductionBalances, listProductionWarehouses } from '../../produccion/compartido/production';
 import {
@@ -415,7 +415,7 @@ export default function SalesOrdersPage() {
         {!salesQuery.data?.length && <p className="sales-muted">Aún no hay ventas registradas.</p>}
         {salesQuery.data?.map((sale) => <div className="sales-history" key={sale.id}>
           <strong>Venta Nº {sale.number} · {sale.customer_name}</strong>
-          <small>{new Date(sale.created_at).toLocaleString('es-AR')} · $ {money(sale.total)}</small>
+          <small>{dateTimeEs(sale.created_at)} · $ {money(sale.total)}</small>
           {(sale.sale_adjustments ?? []).some((entry) => entry.kind === 'anulacion') && (
             <span className="sales-badge canceled">Anulada</span>
           )}

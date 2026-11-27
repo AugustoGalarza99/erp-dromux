@@ -1,11 +1,12 @@
 import { jsPDF } from 'jspdf';
+import { dateTimeEs } from '../../../compartido/utilidades/display';
 import { autoTable } from 'jspdf-autotable';
 
 const amount = (value) => Number(value).toLocaleString('es-AR', {
   maximumFractionDigits: 6,
 });
 
-export function downloadDeliveryNotePdf(note, companyName, productName) {
+export function downloadDeliveryNotePdf(note, companyName, jobLabel) {
   const pdf = new jsPDF({ unit: 'mm', format: 'a4', compress: true });
   pdf.setFillColor(22, 56, 68);
   pdf.rect(0, 0, 210, 7, 'F');
@@ -19,12 +20,12 @@ export function downloadDeliveryNotePdf(note, companyName, productName) {
   pdf.setFontSize(10);
   const lines = [
     `Empresa: ${companyName || 'Empresa'}`,
-    `Fecha: ${new Date(note.created_at).toLocaleString('es-AR')}`,
+    `Fecha: ${dateTimeEs(note.created_at)}`,
     `Destino: ${note.recipient}`,
     `Tipo: ${{ produccion: 'Para fabricación', materiales: 'Materiales',
       productos: 'Semielaborados y productos', venta: 'Entrega de venta' }[note.kind]}`,
     ...(note.sale?.number ? [`Venta Nº ${note.sale.number} · ${note.sale.customer_name}`] : []),
-    ...(productName ? [`Orden de fabricación: ${productName}`] : []),
+    ...(jobLabel ? [`Orden de fabricación: ${jobLabel}`] : []),
     `Observaciones: ${note.note}`,
   ];
   let y = 35;

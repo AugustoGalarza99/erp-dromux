@@ -9,6 +9,7 @@
     "release": "node scripts/release.mjs",
     "preview": "vite preview",
     "dev:nueva": "vite --host 0.0.0.0 --mode nueva",
+    "build:nueva": "vite build --mode nueva",
     "base:probar": "node supabase/base_nueva/pruebas/cargar.mjs && node supabase/base_nueva/pruebas/revisar.mjs && node supabase/base_nueva/pruebas/flujo.mjs && node supabase/base_nueva/pruebas/cambios.mjs",
     "base:frontend": "node supabase/base_nueva/pruebas/frontend.mjs && node supabase/base_nueva/pruebas/viejos.mjs",
     "base:registro": "node supabase/base_nueva/registro/documentar.mjs"

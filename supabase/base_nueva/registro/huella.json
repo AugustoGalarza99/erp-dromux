@@ -16,18 +16,18 @@
   },
   {
     "categoria": "funciones",
-    "cantidad": 202,
-    "huella": "43c33ff5e6a70def19490602b37785f3"
+    "cantidad": 205,
+    "huella": "0b1ca48cb5ae71aed567c0cd2a5c399f"
   },
   {
     "categoria": "indices",
-    "cantidad": 214,
-    "huella": "357dac35cb97467243f84604cda8cc63"
+    "cantidad": 215,
+    "huella": "8b868f030e21dfb3d994562d2bac1b42"
   },
   {
     "categoria": "permisos_funciones",
-    "cantidad": 202,
-    "huella": "c5e6f451e0cc3c3695377123bf80a175"
+    "cantidad": 205,
+    "huella": "6d7f56bf23fa1366e502667e74c25d1f"
   },
   {
     "categoria": "permisos_tablas",
@@ -42,6 +42,6 @@
   {
     "categoria": "restricciones",
     "cantidad": 552,
-    "huella": "445aebf1de16450d30a26fe15bc84b7f"
+    "huella": "9849ffbce79b1a3703d7ecae49a6f2ab"
   }
 ]

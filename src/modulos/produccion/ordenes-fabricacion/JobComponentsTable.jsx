@@ -23,7 +23,8 @@ export default function JobComponentsTable({
   items,
   active,
 }) {
-  const [filter, setFilter] = useState("pending");
+  // Orden activa: interesa lo que falta entregar. Cerrada: lo usado frente a la fórmula.
+  const [filter, setFilter] = useState(active ? "pending" : "all");
   const [search, setSearch] = useState("");
   const itemOf = (id) => items.find((item) => item.id === id);
 
@@ -52,12 +53,14 @@ export default function JobComponentsTable({
       name: itemOf(row.id)?.name ?? "Insumo",
       code: itemOf(row.id)?.code ?? "",
       unit: itemOf(row.id)?.units?.symbol ?? "",
-      done: row.pending <= 0.000001,
+      done: active
+        ? row.pending <= 0.000001
+        : !row.extra && Math.abs(row.issued - row.expected) <= 0.000001,
     }));
-  }, [expected, net, allocations, items]);
+  }, [expected, net, allocations, items, active]);
 
   const counts = {
-    pending: rows.filter((row) => !row.done).length,
+    pending: rows.filter((row) => !row.done && (active || !row.extra)).length,
     done: rows.filter((row) => row.done && !row.extra).length,
     extra: rows.filter((row) => row.extra).length,
   };
@@ -69,7 +72,7 @@ export default function JobComponentsTable({
     const words = normalize(search).split(/\s+/).filter(Boolean);
     return rows
       .filter((row) => (filter === "all"
-        || (filter === "pending" && !row.done)
+        || (filter === "pending" && !row.done && (active || !row.extra))
         || (filter === "done" && row.done && !row.extra)
         || (filter === "extra" && row.extra))
         && words.every((word) => normalize(`${row.name} ${row.code}`).includes(word)))
@@ -79,8 +82,8 @@ export default function JobComponentsTable({
 
   const pager = usePagedList(filtered, { pageSize: 15, resetKey: `${filter}|${search}` });
   const segments = [
-    ["pending", "Pendientes", counts.pending],
-    ["done", "Cubiertos", counts.done],
+    ["pending", active ? "Pendientes" : "Con diferencia", counts.pending],
+    ["done", active ? "Cubiertos" : "Según fórmula", counts.done],
     ...(counts.extra ? [["extra", "Adicionales", counts.extra]] : []),
     ["all", "Todos", rows.length],
   ];
@@ -90,19 +93,22 @@ export default function JobComponentsTable({
     <details className="job-components" open={rows.length <= 8 || undefined}>
       <summary>
         <PackageCheck size={16} aria-hidden="true" />
-        Insumos de la fórmula · {covered} de {total} cubiertos
+        Insumos de la fórmula ·{" "}
+        {active ? `${covered} de ${total} cubiertos` : `${covered} de ${total} según lo previsto`}
         {counts.extra > 0 && ` · ${counts.extra} adicionales`}
       </summary>
-      <div
-        className="job-progress-bar"
-        role="progressbar"
-        aria-valuemin={0}
-        aria-valuemax={100}
-        aria-valuenow={percent}
-        aria-label="Insumos cubiertos"
-      >
-        <span style={{ width: `${percent}%` }} />
-      </div>
+      {active && (
+        <div
+          className="job-progress-bar"
+          role="progressbar"
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={percent}
+          aria-label="Insumos cubiertos"
+        >
+          <span style={{ width: `${percent}%` }} />
+        </div>
+      )}
 
       {rows.length > 8 && (
         <div className="job-components-tools">
@@ -133,14 +139,14 @@ export default function JobComponentsTable({
               <tr>
                 <th scope="col">Insumo</th>
                 <th scope="col" className="is-num">Previsto</th>
-                <th scope="col" className="is-num">Entregado</th>
+                <th scope="col" className="is-num">{active ? "Entregado" : "Usado"}</th>
                 {active && <th scope="col" className="is-num">Asignado</th>}
                 <th scope="col">Estado</th>
               </tr>
             </thead>
             <tbody>
               {pager.visible.map((row) => (
-                <tr key={row.id} className={row.done ? "" : "is-attention"}>
+                <tr key={row.id} className={row.done || !active ? "" : "is-attention"}>
                   <td className="is-name" data-label="Insumo">
                     <strong>{row.name}</strong>
                     <small>{row.code}{row.extra ? " · adicional" : ""}</small>
@@ -160,7 +166,7 @@ export default function JobComponentsTable({
                     )}
                   </td>
                   <td className="is-num" data-label="Previsto">{row.extra ? "—" : `${formatQuantity(row.expected)} ${row.unit}`}</td>
-                  <td className="is-num" data-label="Entregado">{formatQuantity(row.issued.toFixed(6))} {row.unit}</td>
+                  <td className="is-num" data-label={active ? "Entregado" : "Usado"}>{formatQuantity(row.issued.toFixed(6))} {row.unit}</td>
                   {active && (
                     <td className="is-num" data-label="Asignado">{formatQuantity(row.assigned.toFixed(6))} {row.unit}</td>
                   )}
@@ -168,7 +174,13 @@ export default function JobComponentsTable({
                     {row.extra ? (
                       <span className="mod-chip">Adicional</span>
                     ) : row.done ? (
-                      <span className="mod-chip is-ok">Cubierto</span>
+                      <span className="mod-chip is-ok">{active ? "Cubierto" : "Según fórmula"}</span>
+                    ) : !active ? (
+                      <span className="mod-chip">
+                        {row.issued <= 0.000001
+                          ? "No se usó"
+                          : `Se usó ${formatQuantity(Math.abs(row.issued - row.expected).toFixed(6))} ${row.unit} ${row.issued > row.expected ? "más" : "menos"}`}
+                      </span>
                     ) : (
                       <span className="mod-chip is-urgent">
                         Falta {formatQuantity(row.pending.toFixed(6))} {row.unit}

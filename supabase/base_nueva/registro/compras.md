@@ -63,7 +63,7 @@ Reglas:
 Reglas:
 - `CHECK ((cantidad > (0)::numeric))`
 - `CHECK (((cantidad_recibida >= (0)::numeric) AND (cantidad_recibida <= cantidad)))`
-- `CHECK (((linea >= 1) AND (linea <= 40)))`
+- `CHECK (((linea >= 1) AND (linea <= 200)))`
 - `CHECK ((precio_unitario >= (0)::numeric))`
 - `UNIQUE (empresa_id, orden_compra_id, item_id)`
 
